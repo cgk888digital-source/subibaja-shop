@@ -2,51 +2,33 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
-import { Pagination, Navigation } from "swiper/modules"
+import { Pagination } from "swiper/modules"
 import "swiper/css"
 import "swiper/css/pagination"
-import "swiper/css/navigation"
-import { MessageCircle, ShieldCheck, Truck, ChevronLeft, Play, Info } from "lucide-react"
+import { ChevronLeft, Heart, Ruler, Palette, AlignLeft, Info } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params?.id as string
-  
+
   const [product, setProduct] = useState<any>(null)
   const [exchangeRate, setExchangeRate] = useState(36.50)
   const [loading, setLoading] = useState(true)
   const [selectedSize, setSelectedSize] = useState("")
   const [selectedColor, setSelectedColor] = useState("")
 
-  useEffect(() => {
-    if (!id) return
-    fetchData()
-  }, [id])
+  useEffect(() => { if (id) fetchData() }, [id])
 
   async function fetchData() {
     try {
       setLoading(true)
-      
-      // 1. Fetch Tasa
       const { data: settings } = await supabase.from('settings').select('*').eq('id', 'exchange_rate').single()
       if (settings) setExchangeRate(settings.value)
-
-      // 2. Fetch Producto
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single()
-
+      const { data } = await supabase.from('products').select('*').eq('id', id).single()
       if (data) setProduct(data)
     } catch (err) {
       console.error(err)
@@ -62,112 +44,219 @@ export default function ProductDetailPage() {
     }
   }, [product])
 
-  const handleWhatsApp = () => {
+  const handleOrder = () => {
+    if (!product) return
     const priceBs = (product.price * exchangeRate).toFixed(0)
-    const message = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${product.price} (${priceBs} Bs)\nTalla: ${selectedSize}\n\n¿Tienen disponibilidad?`
-    const encoded = encodeURIComponent(message)
-    window.open(`https://wa.me/584141234567?text=${encoded}`, '_blank')
+    const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
+    const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
+    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${product.price} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
+    window.open(`https://wa.me/584141234567?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
+  // ── LOADING ──
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50/20">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-blue-600 font-bold animate-pulse">Cargando detalles...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div
+          className="w-8 h-8 rounded-full border-2 border-t-blue-900 animate-spin"
+          style={{ borderColor: '#BDE0FE', borderTopColor: '#1e3a5f' }}
+        />
       </div>
     )
   }
 
+  // ── NOT FOUND ──
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-white">
-        <Info className="size-12 text-blue-500 mb-6" />
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Producto no encontrado</h2>
-        <Button asChild className="bg-blue-600 rounded-2xl h-14 px-8 font-bold mt-4">
-          <Link href="/">Volver a la tienda</Link>
-        </Button>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-slate-50 p-8 text-center">
+        <Info className="size-10 text-gray-300" />
+        <p className="text-gray-500 text-sm font-medium">Producto no encontrado</p>
+        <Link href="/">
+          <button
+            className="rounded-full text-[9px] font-bold tracking-widest text-blue-900 px-8 transition-transform active:scale-95"
+            style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+          >
+            VOLVER
+          </button>
+        </Link>
       </div>
     )
   }
 
+  const images: string[] = product.images?.length > 0 ? product.images : [product.image_url]
+
   return (
-    <div className="flex flex-col min-h-screen bg-white font-['Lato',sans-serif]">
-      {/* Header flotante */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 p-4 flex justify-between items-center">
-        <button onClick={() => router.back()} className="p-3 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg active:scale-90 transition-transform">
-          <ChevronLeft className="size-6 text-gray-800" />
-        </button>
-        <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg">
-          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Tasa: {exchangeRate} Bs</p>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-[430px] mx-auto relative">
+
+        {/* ── HEADER FLOTANTE ── */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-30 px-4 pt-5 flex justify-between items-center pointer-events-none">
+          <button
+            onClick={() => router.back()}
+            className="pointer-events-auto p-2.5 bg-white/90 backdrop-blur-md rounded-2xl shadow-sm transition-transform active:scale-90"
+          >
+            <ChevronLeft className="size-5 text-gray-800" />
+          </button>
+          <button className="pointer-events-auto p-2.5 bg-white/90 backdrop-blur-md rounded-2xl shadow-sm">
+            <Heart className="size-5 text-gray-300" />
+          </button>
         </div>
-      </div>
 
-      <section className="relative w-full aspect-[4/5] bg-gray-100">
-        <Swiper pagination={{ clickable: true }} modules={[Pagination, Navigation]} className="w-full h-full">
-          <SwiperSlide>
-            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
-          </SwiperSlide>
-        </Swiper>
-      </section>
+        {/* ── IMAGEN INMERSIVA: 50vh, bleed-edge sin márgenes ── */}
+        <section className="relative w-full overflow-hidden bg-slate-100" style={{ height: '50vh' }}>
+          <Swiper
+            pagination={{ clickable: true }}
+            modules={[Pagination]}
+            className="w-full h-full"
+          >
+            {images.map((img: string, i: number) => (
+              <SwiperSlide key={i}>
+                <img
+                  src={img}
+                  alt={product.title}
+                  className="w-full h-full object-cover"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </section>
 
-      <main className="px-6 py-8 flex-1 pb-32">
-        <div className="space-y-2 mb-6">
-          <Badge className="bg-blue-50 text-blue-600 border-0 px-3 py-1 font-black text-[10px] tracking-widest">
-            {product.stock_status === 'in_stock' ? 'EN STOCK' : 'AGOTADO'}
-          </Badge>
-          <h1 className="text-3xl font-black text-gray-900 leading-tight font-['Poppins']">
+        {/* ── PANEL DE CONTENIDO: sube 24px sobre la imagen ── */}
+        <div className="relative -mt-6 z-10 bg-white rounded-t-3xl px-6 pt-8 pb-36">
+
+          {/* Badge stock + categoría */}
+          <div className="flex items-center gap-2 mb-4">
+            <span
+              className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase"
+              style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
+            >
+              {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
+            </span>
+            {product.category && (
+              <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">
+                {product.category}
+              </span>
+            )}
+          </div>
+
+          {/* ── NOMBRE: serif, boutique ── */}
+          <h1
+            className="text-2xl font-bold text-gray-900 leading-snug mb-5"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
             {product.title}
           </h1>
-          <div className="flex items-baseline gap-3">
-            <p className="text-3xl font-black text-blue-600 font-['Poppins']">${product.price}</p>
-            <p className="text-xl font-bold text-slate-400">{(product.price * exchangeRate).toFixed(0)} Bs</p>
+
+          {/* ── PRECIO: text-4xl azul oscuro + Bs gris debajo ── */}
+          <div className="flex flex-col mb-8">
+            <span className="text-4xl font-black text-blue-900 leading-none">
+              ${product.price}
+            </span>
+            <span className="text-sm text-gray-400 font-medium mt-1">
+              {(product.price * exchangeRate).toFixed(0)} Bs
+            </span>
           </div>
+
+          {/* ── TALLAS: chips pequeños ── */}
+          {product.sizes?.length > 0 && (
+            <div className="mb-7">
+              <div className="flex items-center gap-2 mb-3">
+                <Ruler className="size-3.5 text-gray-300" />
+                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Talla</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((size: string) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className="px-4 rounded-full text-xs font-bold transition-all active:scale-95"
+                    style={{
+                      height: '30px',
+                      backgroundColor: selectedSize === size ? '#BDE0FE' : '#f8fafc',
+                      color: selectedSize === size ? '#1e3a5f' : '#94a3b8',
+                      border: `1.5px solid ${selectedSize === size ? '#93c5fd' : '#e2e8f0'}`,
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── COLORES: swatches circulares ── */}
+          {product.colors?.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-3">
+                <Palette className="size-3.5 text-gray-300" />
+                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Color</span>
+              </div>
+              <div className="flex gap-3">
+                {product.colors.map((color: string) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    title={color}
+                    className="w-8 h-8 rounded-full transition-all active:scale-95"
+                    style={{
+                      backgroundColor: color,
+                      outline: `2px solid ${selectedColor === color ? '#93c5fd' : 'transparent'}`,
+                      outlineOffset: '3px',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* divisor */}
+          <div className="h-px bg-slate-100 mb-4" />
+
+          {/* ── ACORDEÓN: Descripción + Cuidados ── */}
+          <Accordion>
+            <AccordionItem value="description">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <AlignLeft className="size-3.5 text-gray-300" />
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    Descripción
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-400 text-sm leading-relaxed">
+                {product.description || "Diseñado para brindar la mayor comodidad y estilo a los más pequeños."}
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="care">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <AlignLeft className="size-3.5 text-gray-300" />
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    Cuidados
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-gray-400 text-sm leading-relaxed">
+                {product.care_instructions || "Lavar a mano con agua fría. No usar blanqueador. Planchar a temperatura baja."}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
         </div>
 
-        {product.sizes && product.sizes.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Tallas Disponibles</h3>
-            <div className="grid grid-cols-4 gap-3">
-              {product.sizes.map((size: string) => (
-                <button
-                  key={size} onClick={() => setSelectedSize(size)}
-                  className={`h-12 rounded-xl border flex items-center justify-center text-base font-black transition-all ${
-                    selectedSize === size ? "border-blue-500 bg-blue-500 text-white shadow-lg" : "border-gray-100 text-gray-700 bg-slate-50"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ── BOTÓN CÁPSULA FLOTANTE: exactamente igual al de la home ── */}
+        <div className="fixed bottom-6 inset-x-0 flex justify-center z-50">
+          <button
+            onClick={handleOrder}
+            disabled={product.stock_status !== 'in_stock'}
+            className="rounded-full text-[9px] font-bold tracking-widest text-blue-900 px-10 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+          >
+            {product.stock_status === 'in_stock' ? 'LO QUIERO' : 'AGOTADO'}
+          </button>
+        </div>
 
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="description" className="border-slate-100">
-            <AccordionTrigger className="text-gray-800 font-black text-sm uppercase tracking-widest">Descripción</AccordionTrigger>
-            <AccordionContent className="text-gray-500 leading-relaxed text-sm">
-              {product.description || "Nuestros productos están diseñados para brindar la mayor comodidad y estilo a los más pequeños."}
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="shipping" className="border-slate-100">
-            <AccordionTrigger className="text-gray-800 font-black text-sm uppercase tracking-widest">Envíos</AccordionTrigger>
-            <AccordionContent className="text-gray-500 leading-relaxed text-sm">
-              <div className="flex items-center gap-2 mb-2"><Truck className="size-4 text-blue-500" /> <p>Envíos a todo el país.</p></div>
-              <div className="flex items-center gap-2"><ShieldCheck className="size-4 text-green-500" /> <p>Garantía de calidad Subibaja.</p></div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </main>
-
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md p-4 bg-white/80 backdrop-blur-xl border-t border-slate-100 shadow-2xl z-50 rounded-t-[32px]">
-        <Button 
-          className="w-full h-16 bg-[#25D366] hover:bg-[#1ebd5b] text-white rounded-2xl gap-3 font-black text-lg shadow-xl shadow-green-100 transition-all active:scale-95"
-          onClick={handleWhatsApp}
-          disabled={product.stock_status !== 'in_stock'}
-        >
-          <MessageCircle className="size-6" /> 
-          {product.stock_status === 'in_stock' ? 'Apartar por WhatsApp' : 'Agotado'}
-        </Button>
       </div>
     </div>
   )
