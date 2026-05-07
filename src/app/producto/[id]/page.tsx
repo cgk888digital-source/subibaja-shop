@@ -83,7 +83,7 @@ export default function ProductDetailPage() {
     )
   }
 
-  const images: string[] = product.images?.length > 0 ? product.images : [product.image_url]
+  const images: string[] = product.gallery_urls?.length > 0 ? product.gallery_urls : [product.image_url]
 
   return (
     <div className="min-h-screen bg-slate-50">

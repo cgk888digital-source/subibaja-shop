@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import {
   Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote,
-  Type, Ruler, Info, Search, X, Plus, ChevronDown,
+  Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette,
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -34,6 +34,8 @@ export default function AdminPage() {
     title: "", price: "", category: "Zapatos de Niña", sizes: "",
     image_url: "", stock_quantity: "10", description: ""
   })
+  const [colors, setColors] = useState<string[]>([])
+  const [colorPick, setColorPick] = useState("#BDE0FE")
   const [saleForm, setSaleForm] = useState({
     productId: "", productTitle: "", productCategory: "",
     amount: "", method: "$ Efectivo"
@@ -155,10 +157,19 @@ export default function AdminPage() {
       if (!file) return
       setUploading(true)
       const fileName = `${Date.now()}.${file.name.split('.').pop()}`
-      await supabase.storage.from('product-images').upload(`products/${fileName}`, file)
-      const { data } = supabase.storage.from('product-images').getPublicUrl(`products/${fileName}`)
-      setFormData({ ...formData, image_url: data.publicUrl })
-    } catch (err: any) { alert(err.message) } finally { setUploading(false) }
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`products/${fileName}`, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`products/${fileName}`)
+      setFormData(prev => ({ ...prev, image_url: data.publicUrl }))
+    } catch (err: any) {
+      alert(err.message || 'Error al subir imagen')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleSaveProduct = async () => {
@@ -170,9 +181,12 @@ export default function AdminPage() {
         category: formData.category, image_url: formData.image_url,
         description: formData.description,
         sizes: formData.sizes.split(',').map(s => s.trim()).filter(Boolean),
+        colors,
         stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock'
       }])
       setFormData({ title: "", price: "", category: "Zapatos de Niña", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+      setColors([])
+      setColorPick("#BDE0FE")
       fetchInitialData()
       setActiveTab("inventory")
     } catch (err: any) { alert(err.message) } finally { setSaving(false) }
@@ -428,6 +442,58 @@ export default function AdminPage() {
                 <div className="space-y-1.5">
                   <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tallas (separadas por coma)</Label>
                   <div className="relative"><Ruler className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" /><Input placeholder="24, 25, 26" value={formData.sizes} onChange={(e) => setFormData({ ...formData, sizes: e.target.value })} className="h-14 rounded-2xl bg-slate-50 border-0 pl-12 font-medium" /></div>
+                </div>
+
+                {/* Colores */}
+                <div className="space-y-2">
+                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Colores disponibles</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-shrink-0">
+                      <Palette className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300 pointer-events-none z-10" />
+                      <input
+                        type="color"
+                        value={colorPick}
+                        onChange={e => setColorPick(e.target.value)}
+                        className="h-14 w-24 rounded-2xl bg-slate-50 border-0 pl-12 cursor-pointer opacity-0 absolute inset-0"
+                      />
+                      <div
+                        className="h-14 w-24 rounded-2xl flex items-center justify-end pr-3 border-2 border-transparent"
+                        style={{ backgroundColor: colorPick + '30', borderColor: colorPick }}
+                      >
+                        <div className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: colorPick }} />
+                      </div>
+                      <input
+                        type="color"
+                        value={colorPick}
+                        onChange={e => setColorPick(e.target.value)}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { if (!colors.includes(colorPick)) setColors([...colors, colorPick]) }}
+                      className="h-14 flex-1 rounded-2xl font-black text-[10px] tracking-widest transition-transform active:scale-95"
+                      style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
+                    >
+                      + AGREGAR
+                    </button>
+                  </div>
+                  {colors.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {colors.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setColors(colors.filter(x => x !== c))}
+                          className="flex items-center gap-2 h-8 pl-2 pr-3 rounded-full border-2 text-[10px] font-black transition-transform active:scale-95"
+                          style={{ borderColor: c, color: '#475569' }}
+                        >
+                          <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: c }} />
+                          <X className="size-2.5" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
