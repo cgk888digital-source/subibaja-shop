@@ -12,6 +12,7 @@ import {
 } from "recharts"
 import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabase"
+import Link from "next/link"
 
 const ADMIN_PASSWORD = "SUBIBAJA2024"
 const CAT_COLORS = ["#BDE0FE", "#60a5fa", "#1d4ed8", "#93c5fd", "#bfdbfe"]
@@ -112,7 +113,7 @@ export default function DashboardPage() {
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("settings").select("*").eq("id", "exchange_rate").single(),
       supabase.from("categories").select("*").order("created_at", { ascending: true }),
-      supabase.from("products").select("id,title,category").order("title"),
+      supabase.from("products").select("id,title,category,stock_quantity").order("title"),
     ])
     if (s)     setSales(s)
     if (ex)    setExpenses(ex)
@@ -120,6 +121,54 @@ export default function DashboardPage() {
     if (cats)  setCategories(cats)
     if (prods) setProducts(prods)
     setLoading(false)
+  }
+
+  const loadDemoData = () => {
+    const now = new Date()
+    const isoDate = (offsetDays: number) => {
+      const d = new Date()
+      d.setDate(now.getDate() - offsetDays)
+      return d.toISOString().split("T")[0]
+    }
+    const isoDateTime = (offsetDays: number, hour: number, min: number) => {
+      const d = new Date()
+      d.setDate(now.getDate() - offsetDays)
+      d.setHours(hour, min, 0)
+      return d.toISOString()
+    }
+
+    const mockSales = [
+      { id: "s1", amount_usd: 35.00, amount_bs: 35.00 * exchangeRate, payment_method: "$ Efectivo", exchange_rate: exchangeRate, product_title: "Zapato Charol Rosa", category: "Zapatos de Niña", created_at: isoDateTime(0, 10, 30) },
+      { id: "s2", amount_usd: 120.00, amount_bs: 120.00 * exchangeRate, payment_method: "Zelle", exchange_rate: exchangeRate, product_title: "Vestido Comunión Gala", category: "Primera Comunión", created_at: isoDateTime(0, 14, 15) },
+      { id: "s3", amount_usd: 45.00, amount_bs: 45.00 * exchangeRate, payment_method: "Pago Móvil (Bs)", exchange_rate: exchangeRate, product_title: "Conjunto Lino Bebé", category: "Ropa", created_at: isoDateTime(1, 11, 0) },
+      { id: "s4", amount_usd: 28.00, amount_bs: 28.00 * exchangeRate, payment_method: "$ Efectivo", exchange_rate: exchangeRate, product_title: "Sandalia Gladiadora", category: "Zapatos de Niña", created_at: isoDateTime(1, 16, 45) },
+      { id: "s5", amount_usd: 95.00, amount_bs: 95.00 * exchangeRate, payment_method: "Zelle", exchange_rate: exchangeRate, product_title: "Tocado Flor Comunión", category: "Primera Comunión", created_at: isoDateTime(2, 9, 15) },
+      { id: "s6", amount_usd: 30.00, amount_bs: 30.00 * exchangeRate, payment_method: "$ Efectivo", exchange_rate: exchangeRate, product_title: "Blusa Encaje Infantil", category: "Ropa", created_at: isoDateTime(2, 15, 30) },
+      { id: "s7", amount_usd: 40.00, amount_bs: 40.00 * exchangeRate, payment_method: "Pago Móvil (Bs)", exchange_rate: exchangeRate, product_title: "Mocasín Cuero Niño", category: "Zapatos de Niña", created_at: isoDateTime(3, 12, 0) },
+      { id: "s8", amount_usd: 150.00, amount_bs: 150.00 * exchangeRate, payment_method: "Zelle", exchange_rate: exchangeRate, product_title: "Vestido Encaje Importado", category: "Primera Comunión", created_at: isoDateTime(3, 16, 20) },
+      { id: "s9", amount_usd: 55.00, amount_bs: 55.00 * exchangeRate, payment_method: "$ Efectivo", exchange_rate: exchangeRate, product_title: "Chaqueta Jean Parches", category: "Ropa", created_at: isoDateTime(4, 10, 45) },
+      { id: "s10", amount_usd: 35.00, amount_bs: 35.00 * exchangeRate, payment_method: "Pago Móvil (Bs)", exchange_rate: exchangeRate, product_title: "Zapato Tenis Blanco", category: "Zapatos de Niña", created_at: isoDateTime(4, 14, 0) },
+      { id: "s11", amount_usd: 110.00, amount_bs: 110.00 * exchangeRate, payment_method: "Zelle", exchange_rate: exchangeRate, product_title: "Vestido Organza Premium", category: "Primera Comunión", created_at: isoDateTime(5, 11, 30) },
+      { id: "s12", amount_usd: 25.00, amount_bs: 25.00 * exchangeRate, product_title: "Venta Directa Manual", category: "Ropa", payment_method: "$ Efectivo", exchange_rate: exchangeRate, created_at: isoDateTime(5, 17, 10) },
+      { id: "s13", amount_usd: 42.00, amount_bs: 42.00 * exchangeRate, payment_method: "$ Efectivo", exchange_rate: exchangeRate, product_title: "Bota Charol Hebilla", category: "Zapatos de Niña", created_at: isoDateTime(6, 13, 15) },
+      { id: "s14", amount_usd: 60.00, amount_bs: 60.00 * exchangeRate, payment_method: "Zelle", exchange_rate: exchangeRate, product_title: "Vestido Bordado Punto Cruz", category: "Ropa", created_at: isoDateTime(6, 15, 50) }
+    ]
+
+    const mockExpenses = [
+      { id: "e1", description: "Compra de mercancía calzado Caracas", amount_usd: 180.00, amount_bs: 180.00 * exchangeRate, expense_date: isoDate(1), exchange_rate: exchangeRate },
+      { id: "e2", description: "Flete / Transporte nacional", amount_usd: 45.00, amount_bs: 45.00 * exchangeRate, expense_date: isoDate(2), exchange_rate: exchangeRate },
+      { id: "e3", description: "Bolsas boutique personalizadas x100", amount_usd: 25.00, amount_bs: 25.00 * exchangeRate, expense_date: isoDate(3), exchange_rate: exchangeRate },
+      { id: "e4", description: "Servicio de publicidad Instagram Ads", amount_usd: 50.00, amount_bs: 50.00 * exchangeRate, expense_date: isoDate(5), exchange_rate: exchangeRate },
+      { id: "e5", description: "Pago de servicios / Limpieza local", amount_usd: 30.00, amount_bs: 30.00 * exchangeRate, expense_date: isoDate(6), exchange_rate: exchangeRate }
+    ]
+
+    setSales(mockSales)
+    setExpenses(mockExpenses)
+  }
+
+  const deleteExpense = async (id: string) => {
+    await supabase.from("expenses").delete().eq("id", id)
+    fetchAll()
   }
 
   const saveExpense = async () => {
@@ -133,11 +182,6 @@ export default function DashboardPage() {
     setForm({ description: "", amount: "", date: iso(new Date()) })
     fetchAll()
     setSaving(false)
-  }
-
-  const deleteExpense = async (id: string) => {
-    await supabase.from("expenses").delete().eq("id", id)
-    fetchAll()
   }
 
   // ── Período + filtros globales ──
@@ -230,7 +274,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-50 font-['Lato',sans-serif] pb-16">
 
       {/* ── HEADER ── */}
-      <div className="bg-white/95 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-100">
+      <div className="bg-white/95 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-100 no-print">
         <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="p-2.5 rounded-2xl bg-slate-50 transition-transform active:scale-90">
@@ -265,8 +309,24 @@ export default function DashboardPage() {
         <div className="max-w-2xl mx-auto p-5 space-y-5">
 
           {/* ── FILTROS GLOBALES ── */}
-          <div className="bg-white rounded-[28px] shadow-sm p-4 space-y-3">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Filtrar análisis</p>
+          <div className="bg-white rounded-[28px] shadow-sm p-4 space-y-3 no-print">
+            <div className="flex justify-between items-center">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Filtrar análisis</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={loadDemoData}
+                  className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-[9px] font-black tracking-wider hover:bg-amber-100 transition-all uppercase active:scale-95 cursor-pointer"
+                >
+                  ⚡ Cargar Demo
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-[9px] font-black tracking-wider hover:bg-slate-100 transition-all uppercase active:scale-95 cursor-pointer"
+                >
+                  🖨️ PDF / IMPRIMIR
+                </button>
+              </div>
+            </div>
             <div className="flex gap-2">
 
               {/* Categoría */}
@@ -353,6 +413,59 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              body {
+                background-color: white !important;
+                color: black !important;
+                font-size: 11px !important;
+              }
+              nav, button, input, select, header, .sticky, .no-print, .relative button, .relative svg, button svg, .absolute {
+                display: none !important;
+              }
+              .max-w-2xl {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+              }
+              .shadow-sm, .shadow-xl {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+              }
+              .bg-white {
+                background-color: white !important;
+              }
+              .text-slate-900, .text-slate-800 {
+                color: black !important;
+              }
+            }
+          `}} />
+
+          {/* ── ALERTA DE STOCK BAJO ── */}
+          {(() => {
+            const lowStockCount = products.filter(p => p.stock_quantity !== undefined && p.stock_quantity !== null && p.stock_quantity <= 3).length;
+            if (lowStockCount > 0) {
+              return (
+                <div className="bg-amber-50/50 border border-amber-100 rounded-[28px] p-4 flex items-center justify-between no-print">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100/50 flex items-center justify-center text-amber-600 text-sm">⚠️</div>
+                    <div>
+                      <p className="text-xs font-black text-amber-800">Alerta de Inventario Bajo</p>
+                      <p className="text-[10px] text-amber-600 font-bold">{lowStockCount} {lowStockCount === 1 ? 'producto tiene' : 'productos tienen'} 3 unidades o menos.</p>
+                    </div>
+                  </div>
+                  <Link href="/admin">
+                    <button className="text-[9px] font-black text-amber-700 bg-amber-200/50 px-3 py-1.5 rounded-xl uppercase tracking-wider active:scale-95 transition-transform cursor-pointer">
+                      Ver Stock
+                    </button>
+                  </Link>
+                </div>
+              )
+            }
+            return null;
+          })()}
 
           {/* ── RESULTADO NETO ── */}
           <div className="rounded-[32px] p-6 relative overflow-hidden"

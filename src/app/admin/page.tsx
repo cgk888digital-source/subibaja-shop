@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import {
   Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote,
-  Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette,
+  Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette, Smartphone, Ticket,
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -47,6 +47,17 @@ export default function AdminPage() {
   const [newCatName, setNewCatName] = useState("")
   const [newCatIcon, setNewCatIcon] = useState("Tag")
   const [savingCat, setSavingCat] = useState(false)
+  
+  // Loyalty and Gift card state variables
+  const [customerPhone, setCustomerPhone] = useState("")
+  const [loyaltyMembers, setLoyaltyMembers] = useState<any[]>([])
+  const [rewardForm, setRewardForm] = useState({ title: "", description: "", pointsRequired: "", image_url: "" })
+  const [giftCardForm, setGiftCardForm] = useState({ code: "", balance: "" })
+  const [savingReward, setSavingReward] = useState(false)
+  const [savingGift, setSavingGift] = useState(false)
+  const [rewards, setRewards] = useState<any[]>([])
+  const [uploadingRewardImg, setUploadingRewardImg] = useState(false)
+
   const dropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -88,7 +99,75 @@ export default function AdminPage() {
         setCategories(cats)
         if (cats.length > 0 && !formData.category) setFormData(f => ({ ...f, category: cats[0].name }))
       }
+      
+      // Fetch loyalty members and rewards
+      const { data: members } = await supabase.from('loyalty_members').select('*').order('created_at', { ascending: false })
+      if (members) setLoyaltyMembers(members)
+      const { data: rewardsData } = await supabase.from('rewards').select('*').order('created_at', { ascending: false })
+      if (rewardsData) setRewards(rewardsData)
     } catch (err) { console.error(err) } finally { setLoading(false) }
+  }
+
+  const handleSaveReward = async () => {
+    if (!rewardForm.title || !rewardForm.pointsRequired || !rewardForm.image_url) { alert("Faltan datos del premio"); return }
+    try {
+      setSavingReward(true)
+      await supabase.from('rewards').insert([{
+        title: rewardForm.title,
+        description: rewardForm.description,
+        points_required: parseInt(rewardForm.pointsRequired),
+        image_url: rewardForm.image_url,
+        is_active: true
+      }])
+      setRewardForm({ title: "", description: "", pointsRequired: "", image_url: "" })
+      fetchInitialData()
+      alert("¡Premio publicado en el catálogo!")
+    } catch (err: any) { alert(err.message) } finally { setSavingReward(false) }
+  }
+
+  const handleCreateGiftCard = async () => {
+    if (!giftCardForm.code || !giftCardForm.balance) { alert("Faltan datos de tarjeta"); return }
+    try {
+      setSavingGift(true)
+      await supabase.from('gift_cards').insert([{
+        code: giftCardForm.code.trim().toUpperCase(),
+        balance: parseFloat(giftCardForm.balance),
+        initial_value: parseFloat(giftCardForm.balance),
+        is_active: true
+      }])
+      setGiftCardForm({ code: "", balance: "" })
+      alert("¡Tarjeta de regalo creada con éxito!")
+    } catch (err: any) { alert(err.message) } finally { setSavingGift(false) }
+  }
+
+  const generateRandomGiftCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    let code = "SB-"
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    setGiftCardForm({ ...giftCardForm, code })
+  }
+
+  const handleRewardImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0]
+      if (!file) return
+      setUploadingRewardImg(true)
+      const fileName = `rewards_${Date.now()}.${file.name.split('.').pop()}`
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`products/${fileName}`, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`products/${fileName}`)
+      setRewardForm(prev => ({ ...prev, image_url: data.publicUrl }))
+    } catch (err: any) {
+      alert(err.message || 'Error al subir imagen del premio')
+    } finally {
+      setUploadingRewardImg(false)
+    }
   }
 
   async function handleSaveCategory() {
@@ -145,7 +224,22 @@ export default function AdminPage() {
           }).eq('id', saleForm.productId)
         }
       }
+
+      // Award points if customer is registered in loyalty club
+      if (customerPhone.trim()) {
+        const cleanPhone = customerPhone.trim()
+        const { data: member } = await supabase.from('loyalty_members').select('*').eq('phone', cleanPhone).single()
+        if (member) {
+          const pointsEarned = Math.round(amountUsd)
+          await supabase.from('loyalty_members').update({ points: member.points + pointsEarned }).eq('id', member.id)
+          alert(`¡Venta registrada! Se sumaron ${pointsEarned} puntos al club de ${member.name}.`)
+        } else {
+          alert("Venta registrada. El teléfono ingresado no está registrado en el Club de Puntos.")
+        }
+      }
+
       setSaleForm({ productId: "", productTitle: "", productCategory: "", amount: "", method: "$ Efectivo" })
+      setCustomerPhone("")
       setProductSearch("")
       fetchInitialData()
     } catch (err) { console.error(err) }
@@ -241,10 +335,10 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="bg-slate-100/80 p-1 rounded-2xl flex gap-1">
-          {['dashboard', 'inventory', 'upload'].map((tab) => (
+          {['dashboard', 'inventory', 'upload', 'club'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === tab ? 'bg-white shadow-md text-blue-600' : 'text-slate-400'}`}>
-              {tab === 'dashboard' ? 'Ventas' : tab === 'inventory' ? 'Stock' : 'Cargar'}
+              {tab === 'dashboard' ? 'Ventas' : tab === 'inventory' ? 'Stock' : tab === 'upload' ? 'Cargar' : 'Club'}
             </button>
           ))}
           <Link href="/admin/dashboard" className="flex-1">
@@ -340,6 +434,18 @@ export default function AdminPage() {
                 </Select>
               </div>
 
+              {/* Teléfono Cliente para Club Puntos */}
+              <div className="relative">
+                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                <input
+                  type="tel"
+                  placeholder="Teléfono Cliente (Opcional - Club Puntos)"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="w-full h-12 rounded-xl bg-slate-50 pl-11 pr-4 text-xs font-semibold outline-none border-0 placeholder:text-slate-300 text-slate-700"
+                />
+              </div>
+
               <button onClick={handleRegisterSale} disabled={!saleForm.amount}
                 className="w-full rounded-full font-bold tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95"
                 style={{ height: '44px', backgroundColor: '#BDE0FE' }}>
@@ -377,10 +483,17 @@ export default function AdminPage() {
                   <h4 className="font-black text-slate-800 text-sm line-clamp-1">{product.title}</h4>
                   <p className="text-xs font-black text-blue-500">${product.price}</p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className={`px-2.5 py-0.5 rounded-full font-black text-[10px] ${(product.stock_quantity || 0) > 3 ? 'bg-sky-50 text-sky-600' : 'bg-orange-50 text-orange-500'}`}>
-                    {product.stock_quantity ?? 0}
-                  </span>
+                <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    {(product.stock_quantity ?? 0) <= 3 && (
+                      <span className="animate-pulse bg-red-50 text-rose-500 px-2 py-0.5 rounded-full font-black text-[8px] tracking-wide border border-rose-100">
+                        STOCK BAJO
+                      </span>
+                    )}
+                    <span className={`px-2.5 py-0.5 rounded-full font-black text-[10px] ${(product.stock_quantity || 0) > 3 ? 'bg-sky-50 text-sky-600' : 'bg-orange-50 text-orange-500'}`}>
+                      {product.stock_quantity ?? 0}
+                    </span>
+                  </div>
                   <Switch checked={product.stock_status === 'in_stock'} className="scale-75"
                     onCheckedChange={async (v) => {
                       await supabase.from('products').update({ stock_status: v ? 'in_stock' : 'out_of_stock' }).eq('id', product.id)
@@ -586,6 +699,143 @@ export default function AdminPage() {
                 {saving ? 'PUBLICANDO...' : 'PUBLICAR PRODUCTO'}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ── TAB CLUB ── */}
+        {activeTab === 'club' && (
+          <div className="space-y-6 animate-fade-in">
+
+            {/* Generar Tarjeta de Regalo */}
+            <div className="bg-white rounded-[32px] shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Ticket className="size-5 text-blue-400" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Generar Tarjeta de Regalo</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350" />
+                    <Input
+                      placeholder="Código (Ej: SB-REGALO-100)"
+                      value={giftCardForm.code}
+                      onChange={(e) => setGiftCardForm({ ...giftCardForm, code: e.target.value })}
+                      className="h-12 rounded-xl bg-slate-50 border-0 pl-11 font-mono font-bold text-xs uppercase"
+                    />
+                  </div>
+                  <button
+                    onClick={generateRandomGiftCode}
+                    className="px-3 rounded-xl border border-slate-200 text-[10px] font-black tracking-wider uppercase text-slate-505 hover:bg-slate-50 active:scale-95 transition-transform cursor-pointer"
+                  >
+                    🎲 Aleatorio
+                  </button>
+                </div>
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350" />
+                  <Input
+                    placeholder="Monto USD inicial"
+                    type="number"
+                    value={giftCardForm.balance}
+                    onChange={(e) => setGiftCardForm({ ...giftCardForm, balance: e.target.value })}
+                    className="h-12 rounded-xl bg-slate-50 border-0 pl-11 font-black text-xs"
+                  />
+                </div>
+                <button
+                  onClick={handleCreateGiftCard}
+                  disabled={savingGift || !giftCardForm.code || !giftCardForm.balance}
+                  className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
+                  style={{ backgroundColor: '#BDE0FE' }}
+                >
+                  {savingGift ? 'GENERANDO...' : 'CREAR TARJETA DE REGALO'}
+                </button>
+              </div>
+            </div>
+
+            {/* Registrar Premio del Club */}
+            <div className="bg-white rounded-[32px] shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Gift className="size-5 text-blue-400" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Publicar Premio del Club</h3>
+              </div>
+              <div className="space-y-4">
+                {/* Reward Image Upload */}
+                <div className="relative border-2 border-dashed border-slate-100 rounded-2xl p-6 bg-slate-50 flex flex-col items-center justify-center aspect-video overflow-hidden">
+                  {rewardForm.image_url ? (
+                    <img src={rewardForm.image_url} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <div className="bg-white p-3 rounded-2xl shadow-xs mb-2"><Camera className="text-blue-400 size-5" /></div>
+                      <span className="text-slate-400 font-bold text-xs">Foto del Premio</span>
+                    </>
+                  )}
+                  <input type="file" accept="image/*" onChange={handleRewardImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploadingRewardImg} />
+                  {uploadingRewardImg && <div className="absolute inset-0 bg-white/70 flex items-center justify-center"><Loader2 className="animate-spin text-blue-400 size-6" /></div>}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Type className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                    <Input
+                      placeholder="Título del Premio (Ej: Lazo de regalo)"
+                      value={rewardForm.title}
+                      onChange={(e) => setRewardForm({ ...rewardForm, title: e.target.value })}
+                      className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-semibold text-slate-700"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Info className="absolute left-4 top-4 size-4 text-slate-350 pointer-events-none" />
+                    <textarea
+                      placeholder="Descripción / Restricciones del premio"
+                      value={rewardForm.description}
+                      onChange={(e) => setRewardForm({ ...rewardForm, description: e.target.value })}
+                      className="w-full min-h-[80px] rounded-xl bg-slate-50 border-0 pl-11 pt-3.5 text-xs font-medium outline-none resize-none placeholder:text-slate-400 text-slate-750"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Star className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                    <Input
+                      placeholder="Puntos requeridos (Ej: 100)"
+                      type="number"
+                      value={rewardForm.pointsRequired}
+                      onChange={(e) => setRewardForm({ ...rewardForm, pointsRequired: e.target.value })}
+                      className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-black text-slate-700"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSaveReward}
+                    disabled={savingReward || uploadingRewardImg || !rewardForm.title || !rewardForm.pointsRequired || !rewardForm.image_url}
+                    className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
+                    style={{ backgroundColor: '#BDE0FE' }}
+                  >
+                    {savingReward ? 'PUBLICANDO...' : 'PUBLICAR PREMIO'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Listado de Miembros del Club */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Miembros del Club ({loyaltyMembers.length})</p>
+              {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-slate-300" /></div>
+              ) : loyaltyMembers.length === 0 ? (
+                <div className="bg-white rounded-3xl p-6 text-center text-slate-350 text-xs font-bold">No hay miembros registrados aún</div>
+              ) : (
+                loyaltyMembers.map(m => (
+                  <div key={m.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">{m.name}</p>
+                      <p className="text-[9px] text-slate-400 mt-0.5">{m.phone} · Unido el {new Date(m.created_at).toLocaleDateString('es-VE')}</p>
+                    </div>
+                    <div className="bg-[#BDE0FE40] border border-[#BDE0FE80] px-3 py-1 rounded-xl text-center flex-shrink-0">
+                      <span className="text-xs font-black text-blue-900 font-['Poppins']">{m.points}</span>
+                      <span className="text-[7px] font-black text-blue-800 uppercase block tracking-wider">PTS</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
           </div>
         )}
 

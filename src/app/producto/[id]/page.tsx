@@ -20,8 +20,17 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSize, setSelectedSize] = useState("")
   const [selectedColor, setSelectedColor] = useState("")
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [justLiked, setJustLiked] = useState(false)
 
   useEffect(() => { if (id) fetchData() }, [id])
+
+  useEffect(() => {
+    const saved = localStorage.getItem("subibaja_favorites")
+    if (saved) {
+      try { setFavorites(JSON.parse(saved)) } catch (e) { console.error(e) }
+    }
+  }, [])
 
   async function fetchData() {
     try {
@@ -43,6 +52,20 @@ export default function ProductDetailPage() {
       if (product.colors?.length > 0) setSelectedColor(product.colors[0])
     }
   }, [product])
+
+  const toggleFavorite = () => {
+    if (!product) return
+    setFavorites(prev => {
+      const isFav = prev.includes(product.id)
+      const next = isFav ? prev.filter(f => f !== product.id) : [...prev, product.id]
+      localStorage.setItem("subibaja_favorites", JSON.stringify(next))
+      if (!isFav) {
+        setJustLiked(true)
+        setTimeout(() => setJustLiked(false), 500)
+      }
+      return next
+    })
+  }
 
   const handleOrder = () => {
     if (!product) return
@@ -84,21 +107,27 @@ export default function ProductDetailPage() {
   }
 
   const images: string[] = product.gallery_urls?.length > 0 ? product.gallery_urls : [product.image_url]
+  const isFavorite = product ? favorites.includes(product.id) : false
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-[430px] mx-auto relative">
 
-        {/* ── HEADER FLOTANTE ── */}
+        {/* ── HEADER FLOTANTE CON GLASSMORPHISM ── */}
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-30 px-4 pt-5 flex justify-between items-center pointer-events-none">
           <button
             onClick={() => router.back()}
-            className="pointer-events-auto p-2.5 bg-white/90 backdrop-blur-md rounded-2xl shadow-sm transition-transform active:scale-90"
+            className="pointer-events-auto p-2.5 bg-white/75 backdrop-blur-md border border-white/20 rounded-2xl shadow-sm transition-all active:scale-90"
           >
             <ChevronLeft className="size-5 text-gray-800" />
           </button>
-          <button className="pointer-events-auto p-2.5 bg-white/90 backdrop-blur-md rounded-2xl shadow-sm">
-            <Heart className="size-5 text-gray-300" />
+          <button 
+            onClick={toggleFavorite}
+            className={`pointer-events-auto p-2.5 bg-white/75 backdrop-blur-md border border-white/20 rounded-2xl shadow-sm transition-all active:scale-110 ${
+              isFavorite ? 'text-rose-500' : 'text-gray-300'
+            } ${justLiked ? 'animate-heartbeat' : ''}`}
+          >
+            <Heart className={`size-5 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
         </div>
 
@@ -122,12 +151,12 @@ export default function ProductDetailPage() {
         </section>
 
         {/* ── PANEL DE CONTENIDO: sube 24px sobre la imagen ── */}
-        <div className="relative -mt-6 z-10 bg-white rounded-t-3xl px-6 pt-8 pb-36">
+        <div className="relative -mt-6 z-10 bg-white rounded-t-3xl px-6 pt-8 pb-36 shadow-xl">
 
           {/* Badge stock + categoría */}
           <div className="flex items-center gap-2 mb-4">
             <span
-              className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase"
+              className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm"
               style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
             >
               {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
@@ -169,7 +198,7 @@ export default function ProductDetailPage() {
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className="px-4 rounded-full text-xs font-bold transition-all active:scale-95"
+                    className="px-4 rounded-full text-xs font-bold transition-all active:scale-95 shadow-sm"
                     style={{
                       height: '30px',
                       backgroundColor: selectedSize === size ? '#BDE0FE' : '#f8fafc',
@@ -197,7 +226,7 @@ export default function ProductDetailPage() {
                     key={color}
                     onClick={() => setSelectedColor(color)}
                     title={color}
-                    className="w-8 h-8 rounded-full transition-all active:scale-95"
+                    className="w-8 h-8 rounded-full transition-all active:scale-95 shadow-sm"
                     style={{
                       backgroundColor: color,
                       outline: `2px solid ${selectedColor === color ? '#93c5fd' : 'transparent'}`,
@@ -245,13 +274,18 @@ export default function ProductDetailPage() {
 
         </div>
 
-        {/* ── BOTÓN CÁPSULA FLOTANTE: exactamente igual al de la home ── */}
+        {/* ── BOTÓN CÁPSULA FLOTANTE PREMIUM ── */}
         <div className="fixed bottom-6 inset-x-0 flex justify-center z-50">
           <button
             onClick={handleOrder}
             disabled={product.stock_status !== 'in_stock'}
-            className="rounded-full text-[9px] font-bold tracking-widest text-blue-900 px-10 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+            className="rounded-full text-[10px] font-black tracking-[0.15em] text-blue-900 px-12 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl border border-white/20"
+            style={{ 
+              height: '38px', 
+              backgroundColor: 'rgba(189, 224, 254, 0.9)', 
+              backdropFilter: 'blur(8px)', 
+              WebkitBackdropFilter: 'blur(8px)' 
+            }}
           >
             {product.stock_status === 'in_stock' ? 'LO QUIERO' : 'AGOTADO'}
           </button>
