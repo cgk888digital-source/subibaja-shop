@@ -7,7 +7,8 @@ import { supabase } from "@/lib/supabase"
 
 export default function LoyaltyPage() {
   const router = useRouter()
-  
+  const [showVipModal, setShowVipModal] = useState(true)
+
   // States for loyalty
   const [phone, setPhone] = useState("")
   const [name, setName] = useState("")
@@ -117,7 +118,6 @@ export default function LoyaltyPage() {
   return (
     <div className="min-h-screen bg-slate-50 font-['Lato',sans-serif] pb-24">
       <div className="max-w-[430px] mx-auto relative">
-        
         {/* Header con Glassmorphism */}
         <header className="bg-white/75 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100/50">
           <div className="w-full px-5 h-16 flex items-center justify-between">
@@ -128,13 +128,33 @@ export default function LoyaltyPage() {
               <ChevronLeft className="size-5 text-gray-800" />
             </button>
             <h1 className="text-sm font-black text-blue-900 tracking-wider uppercase flex items-center gap-1.5 font-['Poppins']">
-              <Crown className="size-4 text-amber-400 fill-amber-400" /> Club Subibaja
+              <Sparkles className="size-4 text-amber-400 fill-amber-400 animate-pulse" /> Clientes VIP
             </h1>
             <div className="w-9 h-9" /> {/* Spacer */}
           </div>
         </header>
 
         <main className="p-4 space-y-6">
+
+          {/* Banner de Información VIP */}
+          <button 
+            onClick={() => setShowVipModal(true)}
+            className="w-full bg-gradient-to-r from-blue-900 to-indigo-950 text-white rounded-[24px] p-4 text-left shadow-lg relative overflow-hidden active:scale-95 transition-all group"
+          >
+            <div className="absolute right-[-15px] bottom-[-15px] opacity-10 pointer-events-none group-hover:scale-110 transition-transform">
+              <Crown className="size-32 rotate-12 text-[#BDE0FE]" />
+            </div>
+            <div className="flex justify-between items-center z-10 relative">
+              <div className="space-y-1">
+                <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] uppercase">Beneficios Exclusivos</span>
+                <h3 className="text-sm font-black font-['Poppins'] tracking-tight flex items-center gap-1">
+                  ✨ Ver Programa VIP Subibaja
+                </h3>
+                <p className="text-[10px] text-slate-300 font-medium">Conoce cómo ganar 25% de descuento en tus compras.</p>
+              </div>
+              <Sparkles className="size-5 text-amber-300 fill-amber-300 animate-pulse" />
+            </div>
+          </button>
 
           {/* ── CARD SECCIÓN FIDELIZACIÓN ── */}
           <section className="bg-white rounded-[32px] shadow-sm p-6 space-y-5">
@@ -463,19 +483,19 @@ export default function LoyaltyPage() {
             </Link>
 
             {/* Categorías */}
-            <button className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
+            <Link href="/?openCategories=true" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
               <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
                 <Tag className="size-4 text-blue-900/60" />
               </div>
               <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Categorías</span>
-            </button>
+            </Link>
 
-            {/* Club Puntos — activo */}
+            {/* Clientes VIP — activo */}
             <Link href="/puntos" className="flex flex-col items-center gap-1">
               <div className="w-10 h-8 rounded-2xl bg-white/30 flex items-center justify-center">
                 <Crown className="size-4 text-blue-900" />
               </div>
-              <span className="text-[9px] font-black text-blue-900 tracking-wide">Club Puntos</span>
+              <span className="text-[9px] font-black text-blue-900 tracking-wide">Clientes VIP</span>
             </Link>
 
             {/* Admin */}
@@ -488,6 +508,103 @@ export default function LoyaltyPage() {
 
           </div>
         </nav>
+
+        {/* Modal Pop-up Programa Clientes VIP */}
+        {showVipModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop Blur Overlay */}
+            <div 
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"
+              onClick={() => setShowVipModal(false)}
+            />
+            
+            {/* Modal Card Container */}
+            <div className="relative w-full max-w-[380px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 text-center z-10 transition-all duration-300 animate-in fade-in zoom-in-95 slide-in-from-bottom-10">
+              
+              {/* Top Sparkles and Crown Visual */}
+              <div className="mx-auto w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 relative shadow-sm border border-amber-100/50">
+                <Crown className="size-8 fill-current" />
+                <Sparkles className="size-5 text-amber-400 fill-amber-400 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              
+              <div className="space-y-1">
+                <span className="text-[9px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">PROGRAMA EXCLUSIVO</span>
+                <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2">
+                  ✨ PROGRAMA VIP SUBIBAJA ✨
+                </h3>
+              </div>
+
+              {/* Modal Body Content (Scrollable for smaller mobile screens) */}
+              <div className="text-left bg-slate-50 rounded-2xl p-4.5 space-y-4 border border-slate-100 max-h-[320px] overflow-y-auto no-scrollbar">
+                
+                {/* Intro */}
+                <div className="flex items-start gap-2.5">
+                  <span className="text-base leading-none">💖</span>
+                  <p className="text-[11px] font-bold text-slate-800 leading-relaxed">
+                    En Subibaja premiamos tu fidelidad.
+                  </p>
+                </div>
+
+                <div className="border-t border-slate-200/50 my-1" />
+
+                {/* How it works */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base leading-none">🛍️</span>
+                    <h4 className="text-[11px] font-black text-blue-900 uppercase tracking-wider font-['Poppins']">¿Cómo funciona?</h4>
+                  </div>
+                  <ul className="space-y-2 pl-1">
+                    <li className="flex items-start gap-2 text-[10.5px] text-slate-600 font-bold leading-relaxed">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Con una compra mínima de <strong>$30</strong>, entras automáticamente a nuestro programa VIP.</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-[10.5px] text-slate-600 font-bold leading-relaxed">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Por cada compra de <strong>$30 o más</strong>, acumulas <strong>100 puntos</strong>.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="border-t border-slate-200/50 my-1" />
+
+                {/* Reward */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base leading-none">🎉</span>
+                    <h4 className="text-[11px] font-black text-blue-900 uppercase tracking-wider font-['Poppins']">Tu recompensa</h4>
+                  </div>
+                  <ul className="space-y-2 pl-1">
+                    <li className="flex items-start gap-2 text-[10.5px] text-slate-600 font-bold leading-relaxed">
+                      <span className="text-emerald-500 mt-1">•</span>
+                      <span>Al llegar a <strong>400 puntos</strong> (equivalente a 4 compras calificadas), recibirás un <strong>25% de descuento</strong> en tu próxima compra.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="border-t border-slate-200/50 my-1" />
+
+                {/* Bottom Slogans */}
+                <div className="text-center space-y-2 pt-1">
+                  <p className="text-[10px] font-black text-indigo-950">
+                    ✨ ¡Mientras más compras, más beneficios disfrutas!
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-normal">
+                    Compra • Acumula puntos <br/>• Disfruta recompensas 💕
+                  </p>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowVipModal(false)}
+                className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center"
+                style={{ backgroundColor: '#BDE0FE' }}
+              >
+                ¡ENTENDIDO!
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

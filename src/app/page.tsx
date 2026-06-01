@@ -15,6 +15,9 @@ const CAT_ICONS: Record<string, React.ElementType> = {
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("Todos")
+  const [activeSubCategory, setActiveSubCategory] = useState("Todos")
+  const [activeLeafCategory, setActiveLeafCategory] = useState("Todos")
+  const [showCategoryDrawer, setShowCategoryDrawer] = useState(false)
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [exchangeRate, setExchangeRate] = useState(36.50)
@@ -28,6 +31,14 @@ export default function Home() {
     const saved = localStorage.getItem("subibaja_favorites")
     if (saved) {
       try { setFavorites(JSON.parse(saved)) } catch (e) { console.error(e) }
+    }
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get("openCategories") === "true") {
+        setShowCategoryDrawer(true)
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      }
     }
   }, [])
 
@@ -59,10 +70,37 @@ export default function Home() {
   }
 
   const filteredProducts = products.filter(p => {
-    const matchesCategory = activeCategory === "Todos" || p.category === activeCategory
+    // 1. Search Query Filter
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchesCategory && matchesSearch
+    if (!matchesSearch) return false
+
+    // 2. Category Hierarchy Filter
+    if (activeCategory === "Todos") return true
+
+    // Check main category match
+    if (p.category !== activeCategory) return false
+
+    // If main category matches, check subcategory
+    if (activeSubCategory === "Todos") return true
+
+    const mainCatObj = categories.find(c => c.name === activeCategory && !c.parent_id)
+    if (!mainCatObj) return true // safeguard
+
+    const subCatObj = categories.find(c => c.name === activeSubCategory && c.parent_id === mainCatObj.id)
+    if (!subCatObj) return true // safeguard
+
+    // If subcategory is selected, check leaf category
+    if (activeLeafCategory === "Todos") {
+      // Must match subcategory itself OR any of its leaf children
+      const leafIds = categories.filter(c => c.parent_id === subCatObj.id).map(c => c.id)
+      return p.category_id === subCatObj.id || leafIds.includes(p.category_id)
+    }
+
+    const leafCatObj = categories.find(c => c.name === activeLeafCategory && c.parent_id === subCatObj.id)
+    if (!leafCatObj) return true // safeguard
+
+    return p.category_id === leafCatObj.id
   })
 
   return (
@@ -73,7 +111,7 @@ export default function Home() {
 
         {/* Header con Glassmorphism */}
         <header className="bg-white/75 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100/50">
-          <div className="w-full px-5 h-16 flex items-center justify-between">
+          <div className="w-full px-5 h-16 flex items-center justify-center">
             <Image
               src="/Logo.jpg.jpeg"
               alt="Subibaja"
@@ -82,9 +120,6 @@ export default function Home() {
               className="rounded-full object-cover"
               priority
             />
-            <div className="px-3 py-1.5 rounded-full" style={{ backgroundColor: '#BDE0FE40' }}>
-              <p className="text-[9px] font-black text-blue-800 uppercase tracking-widest">Tasa: {exchangeRate} Bs</p>
-            </div>
           </div>
         </header>
 
@@ -128,13 +163,15 @@ export default function Home() {
           </div>
 
           <div className="px-4 mt-6">
-
-            {/* Categorías */}
+            {/* Categorías Principales */}
             <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Categorías</h3>
-            <div className="flex overflow-x-auto gap-2.5 pb-6 no-scrollbar">
-              {/* Todos — siempre primero */}
+            <div className="flex overflow-x-auto gap-2.5 pb-3 no-scrollbar">
               <button
-                onClick={() => setActiveCategory("Todos")}
+                onClick={() => {
+                  setActiveCategory("Todos");
+                  setActiveSubCategory("Todos");
+                  setActiveLeafCategory("Todos");
+                }}
                 className={`h-7 px-4 rounded-full whitespace-nowrap text-[11px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
                   activeCategory === "Todos" ? 'text-blue-900 shadow-sm scale-105' : 'bg-white text-gray-400 shadow-sm hover:text-gray-600'
                 }`}
@@ -143,12 +180,16 @@ export default function Home() {
                 <LayoutGrid className="size-3" />
                 <span>Todos</span>
               </button>
-              {categories.map((cat) => {
+              {categories.filter(c => !c.parent_id).map((cat) => {
                 const IconComp = CAT_ICONS[cat.icon] || Tag
                 return (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveCategory(cat.name)}
+                    onClick={() => {
+                      setActiveCategory(cat.name);
+                      setActiveSubCategory("Todos");
+                      setActiveLeafCategory("Todos");
+                    }}
                     className={`h-7 px-4 rounded-full whitespace-nowrap text-[11px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
                       activeCategory === cat.name ? 'text-blue-900 shadow-sm scale-105' : 'bg-white text-gray-400 shadow-sm hover:text-gray-600'
                     }`}
@@ -160,6 +201,76 @@ export default function Home() {
                 )
               })}
             </div>
+
+            {/* Subcategorías de Nivel 2 */}
+            {(() => {
+              const mainCat = categories.find(c => c.name === activeCategory && !c.parent_id)
+              if (!mainCat) return null
+              const subCats = categories.filter(c => c.parent_id === mainCat.id)
+              if (subCats.length === 0) return null
+              return (
+                <div className="flex overflow-x-auto gap-2 pb-3 pt-1 no-scrollbar animate-fade-in">
+                  <button
+                    onClick={() => {
+                      setActiveSubCategory("Todos");
+                      setActiveLeafCategory("Todos");
+                    }}
+                    className={`h-6 px-3 rounded-full whitespace-nowrap text-[10px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                      activeSubCategory === "Todos" ? 'bg-[#BDE0FE]/40 text-blue-900 border border-[#BDE0FE]/50' : 'bg-white text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <span>Todo {activeCategory}</span>
+                  </button>
+                  {subCats.map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => {
+                        setActiveSubCategory(sub.name);
+                        setActiveLeafCategory("Todos");
+                      }}
+                      className={`h-6 px-3 rounded-full whitespace-nowrap text-[10px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                        activeSubCategory === sub.name ? 'bg-[#BDE0FE]/40 text-blue-900 border border-[#BDE0FE]/50' : 'bg-white text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <span>{sub.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )
+            })()}
+
+            {/* Tipo de Producto de Nivel 3 */}
+            {(() => {
+              const mainCat = categories.find(c => c.name === activeCategory && !c.parent_id)
+              if (!mainCat) return null
+              const subCat = categories.find(c => c.name === activeSubCategory && c.parent_id === mainCat.id)
+              if (!subCat) return null
+              const leafCats = categories.filter(c => c.parent_id === subCat.id)
+              if (leafCats.length === 0) return null
+              return (
+                <div className="flex overflow-x-auto gap-2 pb-4 pt-0.5 no-scrollbar animate-fade-in">
+                  <button
+                    onClick={() => setActiveLeafCategory("Todos")}
+                    className={`h-5 px-2.5 rounded-full whitespace-nowrap text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                      activeLeafCategory === "Todos" ? 'bg-amber-100/50 text-amber-900 border border-amber-200/50' : 'bg-white text-slate-350 hover:text-slate-500'
+                    }`}
+                  >
+                    <span>Todo {activeSubCategory}</span>
+                  </button>
+                  {leafCats.map((leaf) => (
+                    <button
+                      key={leaf.id}
+                      onClick={() => setActiveLeafCategory(leaf.name)}
+                      className={`h-5 px-2.5 rounded-full whitespace-nowrap text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                        activeLeafCategory === leaf.name ? 'bg-amber-100/50 text-amber-900 border border-amber-200/50' : 'bg-white text-slate-350 hover:text-slate-500'
+                      }`}
+                    >
+                      <span>{leaf.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )
+            })()}
 
             {/* Grid de Productos */}
             {loading ? (
@@ -362,19 +473,22 @@ export default function Home() {
             </Link>
 
             {/* Categorías */}
-            <button className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
+            <button 
+              onClick={() => setShowCategoryDrawer(true)}
+              className="flex flex-col items-center gap-1 transition-opacity active:opacity-70"
+            >
               <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
                 <GridIcon className="size-4 text-blue-900/60" />
               </div>
               <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Categorías</span>
             </button>
 
-            {/* Club Puntos */}
+            {/* Clientes VIP */}
             <Link href="/puntos" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
               <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
                 <Crown className="size-4 text-blue-900/60" />
               </div>
-              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Club Puntos</span>
+              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Clientes VIP</span>
             </Link>
 
             {/* Admin */}
@@ -387,6 +501,113 @@ export default function Home() {
 
           </div>
         </nav>
+
+        {/* Drawer de Categorías Jerárquicas */}
+        {showCategoryDrawer && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print">
+            {/* Overlay click to close */}
+            <div className="absolute inset-0" onClick={() => setShowCategoryDrawer(false)} />
+            
+            {/* Sliding Panel */}
+            <div 
+              className="relative w-full max-w-[430px] bg-white rounded-t-[36px] shadow-2xl p-6 pb-10 flex flex-col gap-5 max-h-[80vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
+              style={{ fontFamily: "'Lato', sans-serif" }}
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-black text-slate-900 text-lg font-['Poppins']">Explorar Categorías</h3>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Todas nuestras colecciones</p>
+                </div>
+                <button 
+                  onClick={() => setShowCategoryDrawer(false)}
+                  className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Categorías List */}
+              <div className="flex flex-col gap-4 py-2">
+                {categories.filter(c => !c.parent_id).map((mainCat) => {
+                  const mainCatSubs = categories.filter(sub => sub.parent_id === mainCat.id)
+                  const MainIcon = CAT_ICONS[mainCat.icon] || Tag
+                  
+                  return (
+                    <div key={mainCat.id} className="bg-slate-50/50 rounded-3xl p-4 border border-slate-100/50 space-y-3">
+                      {/* Main Cat Item */}
+                      <button
+                        onClick={() => {
+                          setActiveCategory(mainCat.name);
+                          setActiveSubCategory("Todos");
+                          setActiveLeafCategory("Todos");
+                          setShowCategoryDrawer(false);
+                        }}
+                        className="w-full flex items-center gap-3 text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-[#BDE0FE]/30 text-blue-900 flex items-center justify-center shadow-xs">
+                          <MainIcon className="size-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-black text-slate-800 text-sm tracking-tight group-hover:text-blue-600 transition-colors uppercase">{mainCat.name}</span>
+                        </div>
+                        <span className="text-[9px] font-black text-blue-500 bg-blue-50/50 px-2 py-0.5 rounded-full border border-blue-100/30">VER TODO</span>
+                      </button>
+
+                      {/* Subcategories (Level 2) list */}
+                      {mainCatSubs.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2 pl-2">
+                          {mainCatSubs.map((subCat) => {
+                            const leafChildren = categories.filter(leaf => leaf.parent_id === subCat.id)
+                            
+                            return (
+                              <div key={subCat.id} className="flex flex-col gap-1 py-1 px-2 bg-white rounded-2xl border border-slate-100/50 shadow-2xs">
+                                <button
+                                  onClick={() => {
+                                    setActiveCategory(mainCat.name);
+                                    setActiveSubCategory(subCat.name);
+                                    setActiveLeafCategory("Todos");
+                                    setShowCategoryDrawer(false);
+                                  }}
+                                  className="text-[11px] font-bold text-slate-700 hover:text-blue-600 text-left truncate w-full"
+                                >
+                                  {subCat.name}
+                                </button>
+                                
+                                {/* Leaf items inside drawer (Level 3) */}
+                                {leafChildren.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {leafChildren.slice(0, 3).map((leaf) => (
+                                      <button
+                                        key={leaf.id}
+                                        onClick={() => {
+                                          setActiveCategory(mainCat.name);
+                                          setActiveSubCategory(subCat.name);
+                                          setActiveLeafCategory(leaf.name);
+                                          setShowCategoryDrawer(false);
+                                        }}
+                                        className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md hover:bg-[#BDE0FE]/20 hover:text-blue-800 transition-all uppercase tracking-wide"
+                                      >
+                                        {leaf.name}
+                                      </button>
+                                    ))}
+                                    {leafChildren.length > 3 && (
+                                      <span className="text-[7px] font-bold text-slate-300 px-1 py-0.5">+{leafChildren.length - 3}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

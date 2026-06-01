@@ -31,9 +31,13 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false)
 
   const [formData, setFormData] = useState({
-    title: "", price: "", category: "Zapatos de Niña", sizes: "",
+    title: "", price: "", category: "Zapatos", sizes: "",
     image_url: "", stock_quantity: "10", description: ""
   })
+  const [selectedSubCat, setSelectedSubCat] = useState<any>(null)
+  const [selectedLeafCat, setSelectedLeafCat] = useState<any>(null)
+  const [showSubDropdown, setShowSubDropdown] = useState(false)
+  const [showLeafDropdown, setShowLeafDropdown] = useState(false)
   const [colors, setColors] = useState<string[]>([])
   const [colorPick, setColorPick] = useState("#BDE0FE")
   const [saleForm, setSaleForm] = useState({
@@ -46,6 +50,7 @@ export default function AdminPage() {
   const [showNewCatForm, setShowNewCatForm] = useState(false)
   const [newCatName, setNewCatName] = useState("")
   const [newCatIcon, setNewCatIcon] = useState("Tag")
+  const [newCatParentId, setNewCatParentId] = useState("")
   const [savingCat, setSavingCat] = useState(false)
   
   // Loyalty and Gift card state variables
@@ -60,6 +65,11 @@ export default function AdminPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
+
+  const mainCategories = categories.filter(c => !c.parent_id)
+  const currentMainCat = categories.find(c => c.name === formData.category && !c.parent_id)
+  const subCategories = currentMainCat ? categories.filter(c => c.parent_id === currentMainCat.id) : []
+  const leafCategories = selectedSubCat ? categories.filter(c => c.parent_id === selectedSubCat.id) : []
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -79,6 +89,8 @@ export default function AdminPage() {
       }
       if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node)) {
         setShowCatDropdown(false)
+        setShowSubDropdown(false)
+        setShowLeafDropdown(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -97,7 +109,10 @@ export default function AdminPage() {
       const { data: cats } = await supabase.from('categories').select('*').order('created_at', { ascending: true })
       if (cats) {
         setCategories(cats)
-        if (cats.length > 0 && !formData.category) setFormData(f => ({ ...f, category: cats[0].name }))
+        if (cats.length > 0 && !formData.category) {
+          const mainCats = cats.filter(c => !c.parent_id)
+          if (mainCats.length > 0) setFormData(f => ({ ...f, category: mainCats[0].name }))
+        }
       }
       
       // Fetch loyalty members and rewards
@@ -174,12 +189,19 @@ export default function AdminPage() {
     if (!newCatName.trim()) return
     try {
       setSavingCat(true)
-      await supabase.from('categories').insert([{ name: newCatName.trim(), icon: newCatIcon }])
+      const insertData: any = { name: newCatName.trim(), icon: newCatIcon }
+      if (newCatParentId) insertData.parent_id = newCatParentId
+      await supabase.from('categories').insert([insertData])
       const { data: cats } = await supabase.from('categories').select('*').order('created_at', { ascending: true })
       if (cats) setCategories(cats)
-      setFormData(f => ({ ...f, category: newCatName.trim() }))
+      if (!newCatParentId) {
+        setFormData(f => ({ ...f, category: newCatName.trim() }))
+        setSelectedSubCat(null)
+        setSelectedLeafCat(null)
+      }
       setNewCatName("")
       setNewCatIcon("Tag")
+      setNewCatParentId("")
       setShowNewCatForm(false)
     } catch (err: any) { alert(err.message) } finally { setSavingCat(false) }
   }
@@ -232,9 +254,9 @@ export default function AdminPage() {
         if (member) {
           const pointsEarned = Math.round(amountUsd)
           await supabase.from('loyalty_members').update({ points: member.points + pointsEarned }).eq('id', member.id)
-          alert(`¡Venta registrada! Se sumaron ${pointsEarned} puntos al club de ${member.name}.`)
+          alert(`¡Venta registrada! Se sumaron ${pointsEarned} puntos al programa VIP de ${member.name}.`)
         } else {
-          alert("Venta registrada. El teléfono ingresado no está registrado en el Club de Puntos.")
+          alert("Venta registrada. El teléfono ingresado no está registrado en el programa Clientes VIP.")
         }
       }
 
@@ -266,19 +288,30 @@ export default function AdminPage() {
     }
   }
 
+  const getSelectedCategoryId = () => {
+    if (selectedLeafCat) return selectedLeafCat.id
+    if (selectedSubCat) return selectedSubCat.id
+    const mainCat = categories.find(c => c.name === formData.category && !c.parent_id)
+    return mainCat ? mainCat.id : null
+  }
+
   const handleSaveProduct = async () => {
     if (!formData.title || !formData.price || !formData.image_url) { alert("Faltan datos"); return }
     try {
       setSaving(true)
       await supabase.from('products').insert([{
         title: formData.title, price: parseFloat(formData.price),
-        category: formData.category, image_url: formData.image_url,
+        category: formData.category,
+        category_id: getSelectedCategoryId(),
+        image_url: formData.image_url,
         description: formData.description,
         sizes: formData.sizes.split(',').map(s => s.trim()).filter(Boolean),
         colors,
         stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock'
       }])
-      setFormData({ title: "", price: "", category: "Zapatos de Niña", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+      setSelectedSubCat(null)
+      setSelectedLeafCat(null)
       setColors([])
       setColorPick("#BDE0FE")
       fetchInitialData()
@@ -610,17 +643,17 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría</Label>
+                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría Principal</Label>
                   <div className="relative" ref={catDropdownRef}>
                     {/* Trigger */}
                     <button
                       type="button"
-                      onClick={() => { setShowCatDropdown(v => !v); setShowNewCatForm(false) }}
+                      onClick={() => { setShowCatDropdown(v => !v); setShowNewCatForm(false); setShowSubDropdown(false); setShowLeafDropdown(false) }}
                       className="w-full h-14 rounded-2xl bg-slate-50 px-5 flex items-center justify-between font-bold text-sm text-slate-700"
                     >
                       <div className="flex items-center gap-3">
                         {(() => {
-                          const cat = categories.find(c => c.name === formData.category)
+                          const cat = mainCategories.find(c => c.name === formData.category)
                           const IconComp = cat ? (CAT_ICONS[cat.icon] || Tag) : Tag
                           return <><IconComp className="size-4 text-blue-400" /><span>{formData.category || 'Selecciona categoría'}</span></>
                         })()}
@@ -631,11 +664,16 @@ export default function AdminPage() {
                     {/* Dropdown list */}
                     {showCatDropdown && (
                       <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100">
-                        {categories.map(cat => {
+                        {mainCategories.map(cat => {
                           const IconComp = CAT_ICONS[cat.icon] || Tag
                           return (
                             <button key={cat.id} type="button"
-                              onClick={() => { setFormData({ ...formData, category: cat.name }); setShowCatDropdown(false) }}
+                              onClick={() => {
+                                setFormData({ ...formData, category: cat.name });
+                                setSelectedSubCat(null);
+                                setSelectedLeafCat(null);
+                                setShowCatDropdown(false);
+                              }}
                               className={`w-full px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left ${formData.category === cat.name ? 'bg-blue-50' : ''}`}
                             >
                               <IconComp className="size-4 text-blue-400 flex-shrink-0" />
@@ -665,6 +703,21 @@ export default function AdminPage() {
                           onChange={(e) => setNewCatName(e.target.value)}
                           className="w-full h-12 rounded-xl bg-slate-50 border-0 px-4 font-bold text-sm outline-none placeholder:text-slate-300"
                         />
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Pertenece a (Opcional)</p>
+                          <select
+                            value={newCatParentId}
+                            onChange={(e) => setNewCatParentId(e.target.value)}
+                            className="w-full h-11 rounded-xl bg-slate-50 border-0 px-3 font-semibold text-xs text-slate-700 outline-none"
+                          >
+                            <option value="">Ninguna (Categoría Principal)</option>
+                            {categories.map(c => (
+                              <option key={c.id} value={c.id}>
+                                {c.parent_id ? `  └─ ${c.name}` : c.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <div>
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Elige un icono</p>
                           <div className="grid grid-cols-6 gap-2">
@@ -691,6 +744,75 @@ export default function AdminPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Subcategory Level 2 */}
+                {subCategories.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Subcategoría</Label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setShowSubDropdown(v => !v); setShowLeafDropdown(false); setShowCatDropdown(false) }}
+                        className="w-full h-14 rounded-2xl bg-slate-50 px-5 flex items-center justify-between font-bold text-sm text-slate-700"
+                      >
+                        <span className="truncate">{selectedSubCat ? selectedSubCat.name : 'Selecciona subcategoría'}</span>
+                        <ChevronDown className={`size-4 text-slate-400 transition-transform duration-200 ${showSubDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showSubDropdown && (
+                        <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100 max-h-60 overflow-y-auto">
+                          {subCategories.map(sub => (
+                            <button key={sub.id} type="button"
+                              onClick={() => {
+                                setSelectedSubCat(sub);
+                                setSelectedLeafCat(null);
+                                setShowSubDropdown(false);
+                              }}
+                              className={`w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left ${selectedSubCat?.id === sub.id ? 'bg-blue-50' : ''}`}
+                            >
+                              <span className="text-sm font-bold text-slate-700">{sub.name}</span>
+                              {selectedSubCat?.id === sub.id && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Leaf Category / Type Level 3 */}
+                {selectedSubCat && leafCategories.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Producto</Label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setShowLeafDropdown(v => !v); setShowSubDropdown(false); setShowCatDropdown(false) }}
+                        className="w-full h-14 rounded-2xl bg-slate-50 px-5 flex items-center justify-between font-bold text-sm text-slate-700"
+                      >
+                        <span className="truncate">{selectedLeafCat ? selectedLeafCat.name : 'Selecciona tipo'}</span>
+                        <ChevronDown className={`size-4 text-slate-400 transition-transform duration-200 ${showLeafDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showLeafDropdown && (
+                        <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100 max-h-60 overflow-y-auto">
+                          {leafCategories.map(leaf => (
+                            <button key={leaf.id} type="button"
+                              onClick={() => {
+                                setSelectedLeafCat(leaf);
+                                setShowLeafDropdown(false);
+                              }}
+                              className={`w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left ${selectedLeafCat?.id === leaf.id ? 'bg-blue-50' : ''}`}
+                            >
+                              <span className="text-sm font-bold text-slate-700">{leaf.name}</span>
+                              {selectedLeafCat?.id === leaf.id && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button onClick={handleSaveProduct} disabled={saving || uploading}

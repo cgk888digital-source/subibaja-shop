@@ -22,6 +22,7 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
   const [justLiked, setJustLiked] = useState(false)
+  const [categories, setCategories] = useState<any[]>([])
 
   useEffect(() => { if (id) fetchData() }, [id])
 
@@ -35,10 +36,14 @@ export default function ProductDetailPage() {
   async function fetchData() {
     try {
       setLoading(true)
-      const { data: settings } = await supabase.from('settings').select('*').eq('id', 'exchange_rate').single()
+      const [{ data: settings }, { data: prodData }, { data: catsData }] = await Promise.all([
+        supabase.from('settings').select('*').eq('id', 'exchange_rate').single(),
+        supabase.from('products').select('*').eq('id', id).single(),
+        supabase.from('categories').select('*').order('created_at', { ascending: true })
+      ])
       if (settings) setExchangeRate(settings.value)
-      const { data } = await supabase.from('products').select('*').eq('id', id).single()
-      if (data) setProduct(data)
+      if (prodData) setProduct(prodData)
+      if (catsData) setCategories(catsData)
     } catch (err) {
       console.error(err)
     } finally {
@@ -106,6 +111,23 @@ export default function ProductDetailPage() {
     )
   }
 
+  const getBreadcrumbs = () => {
+    if (!product || !product.category_id || categories.length === 0) {
+      return product?.category ? [product.category] : []
+    }
+    const path: string[] = []
+    let curr = categories.find(c => c.id === product.category_id)
+    while (curr) {
+      path.unshift(curr.name)
+      if (curr.parent_id) {
+        curr = categories.find(c => c.id === curr.parent_id)
+      } else {
+        curr = null
+      }
+    }
+    return path
+  }
+
   const images: string[] = product.gallery_urls?.length > 0 ? product.gallery_urls : [product.image_url]
   const isFavorite = product ? favorites.includes(product.id) : false
 
@@ -161,10 +183,17 @@ export default function ProductDetailPage() {
             >
               {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
             </span>
-            {product.category && (
-              <span className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">
-                {product.category}
-              </span>
+            {getBreadcrumbs().length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[280px] py-1">
+                {getBreadcrumbs().map((bc, idx, arr) => (
+                  <div key={idx} className="flex items-center gap-1.5 flex-shrink-0">
+                    {idx > 0 && <span className="text-slate-300 text-[8px] font-black">/</span>}
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${idx === arr.length - 1 ? "text-blue-900" : "text-slate-300"}`}>
+                      {bc}
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
