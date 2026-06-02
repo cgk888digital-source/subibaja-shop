@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin } from "lucide-react"
+import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp } from "lucide-react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination, Autoplay } from "swiper/modules"
@@ -25,6 +25,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
   const [justLiked, setJustLiked] = useState<string | null>(null)
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false)
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetchData()
@@ -110,17 +112,201 @@ export default function Home() {
       <div className="max-w-[430px] mx-auto flex flex-col min-h-screen pb-24 font-['Lato',sans-serif]">
 
         {/* Header con Glassmorphism */}
-        <header className="bg-white/75 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100/50">
-          <div className="w-full px-5 h-16 flex items-center justify-center">
-            <Image
-              src="/Logo.jpg.jpeg"
-              alt="Subibaja"
-              width={44}
-              height={44}
-              className="rounded-full object-cover"
-              priority
-            />
+        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/50">
+          <div className="w-full px-5 h-16 flex items-center justify-between">
+            {/* Logo a la izquierda */}
+            <Link href="/" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
+              <Image
+                src="/Logo.jpg.jpeg"
+                alt="Subibaja"
+                width={38}
+                height={38}
+                className="rounded-full object-cover border border-slate-100 shadow-sm"
+                priority
+              />
+              <span className="font-['Poppins'] font-black text-blue-900 text-xs tracking-widest uppercase">Subibaja</span>
+            </Link>
+
+            {/* Menú Hamburguesa a la derecha */}
+            <button
+              onClick={() => setShowHamburgerMenu(!showHamburgerMenu)}
+              className="size-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:bg-slate-100 active:scale-90 transition-all cursor-pointer"
+              aria-label="Abrir Menú"
+            >
+              {showHamburgerMenu ? (
+                <X className="size-4.5 transition-transform duration-300 rotate-90" />
+              ) : (
+                <Menu className="size-4.5 transition-transform duration-300" />
+              )}
+            </button>
           </div>
+
+          {/* Menú Desplegable Hamburguesa (Dropdown) */}
+          {showHamburgerMenu && (
+            <div className="absolute top-16 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-slate-200/60 shadow-2xl rounded-b-[28px] overflow-hidden flex flex-col font-['Lato',sans-serif] max-h-[75vh]">
+              {/* Contenedor con Scroll si excede altura */}
+              <div className="overflow-y-auto p-5 pb-7 flex flex-col gap-5 max-h-[calc(75vh-1rem)] no-scrollbar">
+                
+                {/* 1. Navegación Principal */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">Navegación</span>
+                  <Link 
+                    href="/" 
+                    onClick={() => setShowHamburgerMenu(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    <HomeIcon className="size-3.5 text-blue-900" />
+                    <span>Inicio</span>
+                  </Link>
+                  <Link 
+                    href="/puntos" 
+                    onClick={() => setShowHamburgerMenu(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    <Crown className="size-3.5 text-amber-500 fill-amber-100" />
+                    <span>Clientes VIP</span>
+                  </Link>
+
+                </div>
+
+                <div className="h-[1px] bg-slate-100 w-full" />
+
+                {/* 2. Categorías / Acordeón */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-2 mb-1">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Colecciones</span>
+                    <button 
+                      onClick={() => {
+                        setActiveCategory("Todos");
+                        setActiveSubCategory("Todos");
+                        setActiveLeafCategory("Todos");
+                        setShowHamburgerMenu(false);
+                      }}
+                      className="text-[8px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase"
+                    >
+                      Ver Todo
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    {categories.filter(c => !c.parent_id).map((mainCat) => {
+                      const mainCatSubs = categories.filter(sub => sub.parent_id === mainCat.id);
+                      const MainIcon = CAT_ICONS[mainCat.icon] || Tag;
+                      const isExpanded = expandedCategories[mainCat.id] || false;
+
+                      return (
+                        <div key={mainCat.id} className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
+                          {/* Botón de la Categoría Principal */}
+                          <div className="flex items-center justify-between w-full px-3 py-2.5">
+                            <button
+                              onClick={() => {
+                                setActiveCategory(mainCat.name);
+                                setActiveSubCategory("Todos");
+                                setActiveLeafCategory("Todos");
+                                setShowHamburgerMenu(false);
+                              }}
+                              className="flex items-center gap-3 text-left group flex-1 min-w-0"
+                            >
+                              <div className="w-7.5 h-7.5 rounded-xl bg-[#BDE0FE]/30 text-blue-900 flex items-center justify-center flex-shrink-0">
+                                <MainIcon className="size-3.5" />
+                              </div>
+                              <span className="font-black text-slate-800 text-[10.5px] tracking-tight group-hover:text-blue-600 transition-colors uppercase truncate">
+                                {mainCat.name}
+                              </span>
+                            </button>
+                            {mainCatSubs.length > 0 && (
+                              <button
+                                onClick={() => setExpandedCategories(prev => ({ ...prev, [mainCat.id]: !isExpanded }))}
+                                className="size-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 active:scale-95 transition-all cursor-pointer flex-shrink-0"
+                              >
+                                {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Subcategorías desplegables */}
+                          {isExpanded && mainCatSubs.length > 0 && (
+                            <div className="bg-white border-t border-slate-100/50 p-2.5 pl-4.5 flex flex-col gap-3 animate-fade-in">
+                              {mainCatSubs.map((subCat) => {
+                                const leafChildren = categories.filter(leaf => leaf.parent_id === subCat.id);
+                                return (
+                                  <div key={subCat.id} className="flex flex-col gap-1">
+                                    <button
+                                      onClick={() => {
+                                        setActiveCategory(mainCat.name);
+                                        setActiveSubCategory(subCat.name);
+                                        setActiveLeafCategory("Todos");
+                                        setShowHamburgerMenu(false);
+                                      }}
+                                      className="text-[9.5px] font-black text-slate-700 hover:text-blue-600 text-left transition-colors uppercase tracking-wide"
+                                    >
+                                      {subCat.name}
+                                    </button>
+
+                                    {/* Nivel 3: Hojas (tags) */}
+                                    {leafChildren.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-0.5">
+                                        {leafChildren.map((leaf) => (
+                                          <button
+                                            key={leaf.id}
+                                            onClick={() => {
+                                              setActiveCategory(mainCat.name);
+                                              setActiveSubCategory(subCat.name);
+                                              setActiveLeafCategory(leaf.name);
+                                              setShowHamburgerMenu(false);
+                                            }}
+                                            className="text-[7.5px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100 hover:bg-[#BDE0FE]/20 hover:text-blue-800 hover:border-blue-200/50 transition-all uppercase tracking-wide cursor-pointer"
+                                          >
+                                            {leaf.name}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="h-[1px] bg-slate-100 w-full" />
+
+                {/* 3. Redes y Contacto */}
+                <div className="flex flex-col items-center gap-2.5">
+                  <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Síguenos en Redes</span>
+                  <div className="flex items-center gap-3">
+                    {/* Instagram */}
+                    <a 
+                      href="https://instagram.com/subibaja_shop" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-rose-500 active:scale-90 transition-all"
+                    >
+                      <svg className="size-3 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                      </svg>
+                    </a>
+                    {/* Whatsapp */}
+                    <a 
+                      href="https://wa.me/584141234567" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-emerald-500 active:scale-90 transition-all"
+                    >
+                      <svg className="size-3 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.284 3.509 8.486-.002 6.66-5.338 11.999-11.946 11.999-2.005-.001-3.973-.504-5.714-1.463L0 24zm6.59-4.846c1.66.986 3.292 1.503 4.908 1.504 5.342 0 9.688-4.348 9.69-9.69.001-2.588-1.004-5.02-2.83-6.847-1.826-1.827-4.256-2.83-6.846-2.831-5.345 0-9.691 4.348-9.693 9.692-.001 1.737.478 3.426 1.385 4.903l-1.026 3.743 3.841-1.007zm11.367-5.64c-.327-.164-1.938-.956-2.264-1.075-.328-.118-.567-.177-.805.177-.239.354-.925 1.166-1.134 1.402-.208.236-.417.266-.745.102-.327-.164-1.383-.509-2.636-1.627-.975-.87-1.633-1.946-1.824-2.274-.192-.329-.02-.507.143-.671.147-.147.328-.383.493-.574.165-.192.22-.32.329-.533.109-.214.055-.4-.028-.564-.082-.164-.805-1.94-.105-2.65-.296-.693-.578-.6-.805-.611-.208-.01-.447-.012-.686-.012-.239 0-.627.09-1.015.513-.388.423-1.482 1.45-1.482 3.535 0 2.085 1.52 4.093 1.731 4.38.21.286 2.99 4.566 7.244 6.398 1.011.436 1.802.696 2.42.893 1.016.323 1.941.277 2.673.168.814-.121 1.938-.792 2.21-1.52.272-.729.272-1.353.191-1.482-.081-.13-.297-.208-.624-.372z"/>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
         </header>
 
         <main className="flex-1">
@@ -130,12 +316,15 @@ export default function Home() {
             <Swiper pagination={{ clickable: true }} autoplay={{ delay: 5000 }} modules={[Pagination, Autoplay]} className="w-full h-full">
               <SwiperSlide>
                 <div className="relative w-full h-full">
-                  <img
-                    src="https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?auto=format&fit=crop&q=100&w=1200"
+                  <video
+                    src="/video-fachada-tienda.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
                     className="w-full h-full object-cover"
-                    alt="Nuevos Ingresos"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent flex flex-col justify-end p-8 pb-12 text-center items-center">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent flex flex-col justify-end p-8 pb-12 text-center items-center">
                     <h2 className="text-3xl font-black text-white leading-tight font-['Poppins'] tracking-tighter">Nuevos Ingresos</h2>
                   </div>
                 </div>
@@ -491,13 +680,7 @@ export default function Home() {
               <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Clientes VIP</span>
             </Link>
 
-            {/* Admin */}
-            <Link href="/admin" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
-              <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
-                <User className="size-4 text-blue-900/60" />
-              </div>
-              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Admin</span>
-            </Link>
+
 
           </div>
         </nav>
