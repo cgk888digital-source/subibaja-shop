@@ -534,26 +534,7 @@ export default function Home() {
 
           </div>
 
-          {/* Sección de Video: Nuestras Instalaciones */}
-          <section className="mt-8 px-4">
-            <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Nuestras Instalaciones</h3>
-            <div className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100/50 flex flex-col gap-3">
-              <div className="relative w-full rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center shadow-inner">
-                <video 
-                  src="/video shop.mp4" 
-                  controls 
-                  playsInline 
-                  className="w-full h-auto rounded-2xl max-h-[480px] object-contain"
-                  preload="metadata"
-                />
-              </div>
-              <div className="px-1 pt-1">
-                <p className="text-slate-400 text-xs leading-normal">
-                  ¡Ven y conócenos! Te invitamos a dar un recorrido virtual por nuestra tienda física y descubrir todas las colecciones que tenemos preparadas para ti.
-                </p>
-              </div>
-            </div>
-          </section>
+
 
           {/* Sección de Ubicación */}
           <section className="mt-8 px-4">
