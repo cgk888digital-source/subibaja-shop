@@ -78,7 +78,7 @@ export default function ProductDetailPage() {
     const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
     const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
     const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${product.price} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
-    window.open(`https://wa.me/584141234567?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   // ── LOADING ──

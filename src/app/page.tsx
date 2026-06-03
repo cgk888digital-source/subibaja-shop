@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp } from "lucide-react"
+import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent } from "lucide-react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination, Autoplay } from "swiper/modules"
@@ -18,6 +18,7 @@ export default function Home() {
   const [activeSubCategory, setActiveSubCategory] = useState("Todos")
   const [activeLeafCategory, setActiveLeafCategory] = useState("Todos")
   const [showCategoryDrawer, setShowCategoryDrawer] = useState(false)
+  const [showOffersDrawer, setShowOffersDrawer] = useState(false)
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [exchangeRate, setExchangeRate] = useState(36.50)
@@ -38,6 +39,10 @@ export default function Home() {
       const params = new URLSearchParams(window.location.search)
       if (params.get("openCategories") === "true") {
         setShowCategoryDrawer(true)
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      } else if (params.get("openOffers") === "true") {
+        setShowOffersDrawer(true)
         const newUrl = window.location.pathname
         window.history.replaceState({}, '', newUrl)
       }
@@ -284,7 +289,7 @@ export default function Home() {
                       href="https://instagram.com/subibaja_shop" 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-rose-500 active:scale-90 transition-all"
+                      className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:text-rose-500 active:scale-90 transition-all"
                     >
                       <svg className="size-3 fill-current" viewBox="0 0 24 24">
                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
@@ -292,10 +297,10 @@ export default function Home() {
                     </a>
                     {/* Whatsapp */}
                     <a 
-                      href="https://wa.me/584141234567" 
+                      href="https://wa.me/584241999482" 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-emerald-500 active:scale-90 transition-all"
+                      className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:text-emerald-500 active:scale-90 transition-all"
                     >
                       <svg className="size-3 fill-current" viewBox="0 0 24 24">
                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.284 3.509 8.486-.002 6.66-5.338 11.999-11.946 11.999-2.005-.001-3.973-.504-5.714-1.463L0 24zm6.59-4.846c1.66.986 3.292 1.503 4.908 1.504 5.342 0 9.688-4.348 9.69-9.69.001-2.588-1.004-5.02-2.83-6.847-1.826-1.827-4.256-2.83-6.846-2.831-5.345 0-9.691 4.348-9.693 9.692-.001 1.737.478 3.426 1.385 4.903l-1.026 3.743 3.841-1.007zm11.367-5.64c-.327-.164-1.938-.956-2.264-1.075-.328-.118-.567-.177-.805.177-.239.354-.925 1.166-1.134 1.402-.208.236-.417.266-.745.102-.327-.164-1.383-.509-2.636-1.627-.975-.87-1.633-1.946-1.824-2.274-.192-.329-.02-.507.143-.671.147-.147.328-.383.493-.574.165-.192.22-.32.329-.533.109-.214.055-.4-.028-.564-.082-.164-.805-1.94-.105-2.65-.296-.693-.578-.6-.805-.611-.208-.01-.447-.012-.686-.012-.239 0-.627.09-1.015.513-.388.423-1.482 1.45-1.482 3.535 0 2.085 1.52 4.093 1.731 4.38.21.286 2.99 4.566 7.244 6.398 1.011.436 1.802.696 2.42.893 1.016.323 1.941.277 2.673.168.814-.121 1.938-.792 2.21-1.52.272-.729.272-1.353.191-1.482-.081-.13-.297-.208-.624-.372z"/>
@@ -534,7 +539,67 @@ export default function Home() {
 
           </div>
 
+          {/* Sección de Tarjeta de Regalo */}
+          <section className="mt-8 px-4 animate-fade-in">
+            <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Tarjeta de Regalo</h3>
+            <div className="bg-white rounded-[32px] p-5 shadow-sm border border-slate-100/80 flex flex-col gap-4">
+              
+              {/* Diseñar el Gift Card Físico/Virtual Visual */}
+              <div className="relative aspect-[1.58/1] w-full rounded-[24px] overflow-hidden shadow-md border border-blue-50 flex bg-gradient-to-r from-blue-50/50 to-white select-none">
+                {/* Lado Izquierdo: Imagen de Niños */}
+                <div className="w-1/2 h-full relative">
+                  <img 
+                    src="/giftcard_kids.png" 
+                    alt="Niños Subibaja" 
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Overlay sutil para mezclar con el azul/blanco */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10" />
+                </div>
+                
+                {/* Lado Derecho: Detalles de la Tarjeta */}
+                <div className="w-1/2 p-4 flex flex-col justify-between items-start text-left bg-white/40 backdrop-blur-xs">
+                  <div className="space-y-0.5">
+                    <span className="text-[7px] font-black tracking-widest text-blue-500 uppercase block font-['Poppins']">Gift Card Virtual</span>
+                    <h4 className="text-sm font-black font-['Poppins'] text-blue-900 tracking-tight leading-none uppercase">Subibaja</h4>
+                  </div>
+                  
+                  <div className="w-full">
+                    <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">VALOR</span>
+                    <span className="text-3xl font-black font-['Poppins'] text-blue-900 leading-none">$50</span>
+                    <span className="text-[8px] font-bold text-slate-400 block mt-0.5">USD</span>
+                  </div>
+                  
+                  <div className="text-[8px] font-mono text-blue-300 font-bold tracking-wider">
+                    SB-GIFT-KIDS50
+                  </div>
+                </div>
 
+                {/* Decoración: Sparkle o Crown de la tienda */}
+                <div className="absolute right-4 top-4 opacity-40">
+                  <Sparkles className="size-4.5 text-blue-400 fill-blue-100 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Descripción y botón de compra */}
+              <div className="space-y-4 px-1 text-center">
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                  ¿No sabes qué obsequiar? Regala estilo y sonrisas con nuestra **Gift Card de $50 USD**. El detalle perfecto para que elijan sus prendas y zapatos favoritos en nuestra tienda.
+                </p>
+                <button
+                  onClick={() => {
+                    const msg = "¡Hola Subibaja! Me gustaría adquirir la Tarjeta de Regalo virtual de $50 (Kids Gift Card) para obsequiar. ¿Cómo puedo realizar el pago?"
+                    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
+                  }}
+                  className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff]"
+                  style={{ backgroundColor: '#BDE0FE' }}
+                >
+                  <Gift className="size-3.5" /> COMPRAR GIFT CARD ($50)
+                </button>
+              </div>
+
+            </div>
+          </section>
 
           {/* Sección de Ubicación */}
           <section className="mt-8 px-4">
@@ -585,7 +650,7 @@ export default function Home() {
                 href="https://instagram.com/subibaja_shop" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-500 hover:text-rose-500 active:scale-90 transition-all"
+                className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-rose-500 active:scale-90 transition-all"
               >
                 <svg className="size-4 fill-current" viewBox="0 0 24 24">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
@@ -597,7 +662,7 @@ export default function Home() {
                 href="https://facebook.com/subibajashop" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-500 hover:text-blue-600 active:scale-90 transition-all"
+                className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-[#1877F2] active:scale-90 transition-all"
               >
                 <svg className="size-4 fill-current" viewBox="0 0 24 24">
                   <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
@@ -606,10 +671,10 @@ export default function Home() {
 
               {/* Whatsapp */}
               <a 
-                href="https://wa.me/584141234567" 
+                href="https://wa.me/584241999482" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-500 hover:text-emerald-500 active:scale-90 transition-all"
+                className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-emerald-500 active:scale-90 transition-all"
               >
                 <svg className="size-4 fill-current" viewBox="0 0 24 24">
                   <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.284 3.509 8.486-.002 6.66-5.338 11.999-11.946 11.999-2.005-.001-3.973-.504-5.714-1.463L0 24zm6.59-4.846c1.66.986 3.292 1.503 4.908 1.504 5.342 0 9.688-4.348 9.69-9.69.001-2.588-1.004-5.02-2.83-6.847-1.826-1.827-4.256-2.83-6.846-2.831-5.345 0-9.691 4.348-9.693 9.692-.001 1.737.478 3.426 1.385 4.903l-1.026 3.743 3.841-1.007zm11.367-5.64c-.327-.164-1.938-.956-2.264-1.075-.328-.118-.567-.177-.805.177-.239.354-.925 1.166-1.134 1.402-.208.236-.417.266-.745.102-.327-.164-1.383-.509-2.636-1.627-.975-.87-1.633-1.946-1.824-2.274-.192-.329-.02-.507.143-.671.147-.147.328-.383.493-.574.165-.192.22-.32.329-.533.109-.214.055-.4-.028-.564-.082-.164-.805-1.94-.105-2.65-.296-.693-.578-.6-.805-.611-.208-.01-.447-.012-.686-.012-.239 0-.627.09-1.015.513-.388.423-1.482 1.45-1.482 3.535 0 2.085 1.52 4.093 1.731 4.38.21.286 2.99 4.566 7.244 6.398 1.011.436 1.802.696 2.42.893 1.016.323 1.941.277 2.673.168.814-.121 1.938-.792 2.21-1.52.272-.729.272-1.353.191-1.482-.081-.13-.297-.208-.624-.372z"/>
@@ -623,48 +688,69 @@ export default function Home() {
           </footer>
         </main>
 
-        {/* Navegación Inferior con Glassmorphism */}
-        <nav 
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20"
-          style={{ 
-            backgroundColor: 'rgba(189, 224, 254, 0.85)', 
-            backdropFilter: 'blur(16px)', 
-            WebkitBackdropFilter: 'blur(16px)' 
-          }}
-        >
-          <div className="flex justify-around items-center h-[68px] px-4 pb-1">
-
-            {/* Inicio — activo */}
-            <Link href="/" className="flex flex-col items-center gap-1">
-              <div className="w-10 h-8 rounded-2xl bg-white/30 flex items-center justify-center">
-                <HomeIcon className="size-4 text-blue-900" />
-              </div>
-              <span className="text-[9px] font-black text-blue-900 tracking-wide">Inicio</span>
-            </Link>
-
-            {/* Categorías */}
-            <button 
-              onClick={() => setShowCategoryDrawer(true)}
-              className="flex flex-col items-center gap-1 transition-opacity active:opacity-70"
+            {/* Navegación Inferior con Glassmorphism */}
+            <nav 
+              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20"
+              style={{ 
+                backgroundColor: 'rgba(189, 224, 254, 0.85)', 
+                backdropFilter: 'blur(16px)', 
+                WebkitBackdropFilter: 'blur(16px)' 
+              }}
             >
-              <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
-                <GridIcon className="size-4 text-blue-900/60" />
+              <div className="flex justify-around items-center h-[68px] px-4 pb-1">
+
+                {/* Inicio */}
+                <button 
+                  onClick={() => {
+                    setShowCategoryDrawer(false);
+                    setShowOffersDrawer(false);
+                  }}
+                  className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
+                >
+                  <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${(!showCategoryDrawer && !showOffersDrawer) ? 'bg-white/30' : ''}`}>
+                    <HomeIcon className={`size-4 ${(!showCategoryDrawer && !showOffersDrawer) ? 'text-blue-900' : 'text-blue-900/60'}`} />
+                  </div>
+                  <span className={`text-[9px] tracking-wide ${(!showCategoryDrawer && !showOffersDrawer) ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Inicio</span>
+                </button>
+
+                {/* Categorías */}
+                <button 
+                  onClick={() => {
+                    setShowCategoryDrawer(true);
+                    setShowOffersDrawer(false);
+                  }}
+                  className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
+                >
+                  <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showCategoryDrawer ? 'bg-white/30' : ''}`}>
+                    <GridIcon className={`size-4 ${showCategoryDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
+                  </div>
+                  <span className={`text-[9px] tracking-wide ${showCategoryDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Categorías</span>
+                </button>
+
+                {/* Ofertas */}
+                <button 
+                  onClick={() => {
+                    setShowOffersDrawer(true);
+                    setShowCategoryDrawer(false);
+                  }}
+                  className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
+                >
+                  <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showOffersDrawer ? 'bg-white/30' : ''}`}>
+                    <Percent className={`size-4 ${showOffersDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
+                  </div>
+                  <span className={`text-[9px] tracking-wide ${showOffersDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Ofertas</span>
+                </button>
+
+                {/* Clientes VIP */}
+                <Link href="/puntos" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
+                  <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
+                    <Crown className="size-4 text-blue-900/60" />
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Clientes VIP</span>
+                </Link>
+
               </div>
-              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Categorías</span>
-            </button>
-
-            {/* Clientes VIP */}
-            <Link href="/puntos" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
-              <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
-                <Crown className="size-4 text-blue-900/60" />
-              </div>
-              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Clientes VIP</span>
-            </Link>
-
-
-
-          </div>
-        </nav>
+            </nav>
 
         {/* Drawer de Categorías Jerárquicas */}
         {showCategoryDrawer && (
@@ -769,6 +855,134 @@ export default function Home() {
                   )
                 })}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Drawer de Promociones VIP por Puntos */}
+        {showOffersDrawer && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print">
+            {/* Overlay click to close */}
+            <div className="absolute inset-0" onClick={() => setShowOffersDrawer(false)} />
+            
+            {/* Sliding Panel */}
+            <div 
+              className="relative w-full max-w-[430px] bg-white rounded-t-[36px] shadow-2xl p-6 pb-10 flex flex-col gap-5 max-h-[85vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
+              style={{ fontFamily: "'Lato', sans-serif" }}
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-black text-slate-900 text-lg font-['Poppins'] flex items-center gap-1.5">
+                    <Sparkles className="size-5 text-amber-400 fill-amber-400 animate-pulse" /> Promociones VIP
+                  </h3>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Canjea tus puntos por ofertas únicas</p>
+                </div>
+                <button 
+                  onClick={() => setShowOffersDrawer(false)}
+                  className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* List of Offers */}
+              <div className="flex flex-col gap-4 py-2 overflow-y-auto no-scrollbar max-h-[60vh]">
+                {[
+                  {
+                    title: "Zapato Charol Blanco",
+                    category: "Zapatos de Niña",
+                    points: 200,
+                    discount: "40% OFF",
+                    originalPrice: 35,
+                    promoPrice: 21,
+                    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800",
+                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Zapato Charol Blanco (40% OFF) por 200 puntos. ¿Cómo es el proceso?"
+                  },
+                  {
+                    title: "Bailarinas Glitter Silver",
+                    category: "Zapatos de Niña",
+                    points: 150,
+                    discount: "50% OFF",
+                    originalPrice: 22,
+                    promoPrice: 11,
+                    image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?q=80&w=800&auto=format&fit=crop",
+                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Bailarinas Glitter Silver (50% OFF) por 150 puntos. ¿Cómo es el proceso?"
+                  },
+                  {
+                    title: "Cintillo Floral Harmony",
+                    category: "Primera Comunión",
+                    points: 100,
+                    discount: "GRATIS",
+                    originalPrice: 12,
+                    promoPrice: 0,
+                    image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop",
+                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
+                  }
+                ].map((offer, idx) => {
+                  const bsPrice = (offer.promoPrice * exchangeRate).toFixed(0);
+                  const origBsPrice = (offer.originalPrice * exchangeRate).toFixed(0);
+                  return (
+                    <div key={idx} className="bg-white rounded-3xl p-4 flex gap-4 border border-slate-100/80 shadow-xs hover:border-blue-100 transition-colors">
+                      <img 
+                        src={offer.image} 
+                        alt={offer.title} 
+                        className="w-24 h-24 rounded-2xl object-cover flex-shrink-0 bg-slate-50 border border-slate-100"
+                      />
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest block truncate">{offer.category}</span>
+                            <span className="text-[9px] font-black text-rose-500 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                              {offer.discount}
+                            </span>
+                          </div>
+                          
+                          <h4 className="font-black text-slate-800 text-xs mt-1 leading-tight line-clamp-1">{offer.title}</h4>
+                          
+                          <div className="flex items-center gap-2 mt-1.5">
+                            {offer.promoPrice > 0 ? (
+                              <>
+                                <span className="text-sm font-black text-blue-900">${offer.promoPrice}</span>
+                                <span className="text-[10px] text-slate-400 line-through">${offer.originalPrice}</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md uppercase">¡Gratis!</span>
+                                <span className="text-[10px] text-slate-400 line-through">${offer.originalPrice}</span>
+                              </>
+                            )}
+                          </div>
+                          <span className="text-[8px] text-slate-400 font-bold">
+                            {offer.promoPrice > 0 ? `${bsPrice} Bs` : `0 Bs`} (antes: {origBsPrice} Bs)
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-3">
+                          <span className="h-7 px-2 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center gap-1 text-[8px] font-black text-amber-500 flex-shrink-0">
+                            <Crown className="size-3 fill-amber-500" /> {offer.points} PTS
+                          </span>
+                          <button
+                            onClick={() => window.open(`https://wa.me/584241999482?text=${encodeURIComponent(offer.msg)}`, '_blank')}
+                            className="flex-1 h-7 rounded-full text-[8px] font-black tracking-wider text-blue-900 uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-sm cursor-pointer"
+                            style={{ backgroundColor: '#BDE0FE' }}
+                          >
+                            RECLAMAR OFERTA
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Note / Terms */}
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-center">
+                <p className="text-[9px] text-slate-400 leading-normal font-bold">
+                  ⚠️ NOTA: Al reclamar, se verificará tu saldo de puntos con tu número de teléfono registrado en el Club VIP.
+                </p>
+              </div>
+
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { ChevronLeft, Crown, Gift, Gift as GiftIcon, Loader2, Search, Sparkles, Star, Smartphone, Tag, User, CheckCircle2, Ticket } from "lucide-react"
+import { ChevronLeft, Crown, Gift, Gift as GiftIcon, Loader2, Search, Sparkles, Star, Smartphone, Tag, User, CheckCircle2, Ticket, Percent } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
@@ -107,12 +107,12 @@ export default function LoyaltyPage() {
   const handleClaimReward = (reward: any) => {
     if (!member || member.points < reward.points_required) return
     const msg = `¡Hola Subibaja! Soy ${member.name} (Tlf: ${member.phone}) y me gustaría canjear mis puntos por el premio:\n\n*${reward.title}* (${reward.points_required} Puntos)\n\n¿Cómo procedemos con el canje?`
-    window.open(`https://wa.me/584141234567?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const handleBuyGiftCard = (amount: number) => {
     const msg = `¡Hola Subibaja! Me gustaría comprar una Tarjeta de Regalo virtual de $${amount} para obsequiar.`
-    window.open(`https://wa.me/584141234567?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   return (
@@ -488,6 +488,14 @@ export default function LoyaltyPage() {
                 <Tag className="size-4 text-blue-900/60" />
               </div>
               <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Categorías</span>
+            </Link>
+
+            {/* Ofertas */}
+            <Link href="/?openOffers=true" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
+              <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
+                <Percent className="size-4 text-blue-900/60" />
+              </div>
+              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Ofertas</span>
             </Link>
 
             {/* Clientes VIP — activo */}
