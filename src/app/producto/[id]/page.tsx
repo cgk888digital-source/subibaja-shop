@@ -9,6 +9,7 @@ import { ChevronLeft, Heart, Ruler, Palette, AlignLeft, Info } from "lucide-reac
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import CartFloatingButton from "@/components/CartFloatingButton"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -23,6 +24,7 @@ export default function ProductDetailPage() {
   const [favorites, setFavorites] = useState<string[]>([])
   const [justLiked, setJustLiked] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
+  const [isAdded, setIsAdded] = useState(false)
 
   useEffect(() => { if (id) fetchData() }, [id])
 
@@ -51,10 +53,62 @@ export default function ProductDetailPage() {
     }
   }
 
+  const getParsedSizes = () => {
+    if (!product) return []
+    let list = product.sizes || []
+    if (list.length === 1) {
+      const raw = list[0]
+      if (raw.includes(',') || raw.includes(' ')) {
+        list = raw.split(/[\s,]+/).map((s: string) => s.trim()).filter(Boolean)
+      }
+    }
+    if (list.length === 0) {
+      list = ['24', '26', '28']
+    }
+    return list
+  }
+
+  const getParsedColors = () => {
+    if (!product) return []
+    let list = product.colors || []
+    if (list.length === 1) {
+      const raw = list[0]
+      if (raw.includes(',') || raw.includes(' ')) {
+        list = raw.split(/[\s,]+/).map((c: string) => c.trim()).filter(Boolean)
+      }
+    }
+    // Si tiene menos de 2 colores, agregamos colores ficticios para la demo
+    if (list.length < 2) {
+      let defaultMock = ['#ffffff', '#BDE0FE', '#FAD2E1'] // Blanco, Azul, Rosa
+      const title = (product.title || '').toLowerCase()
+      if (title.includes('silver') || title.includes('glitter')) {
+        defaultMock = ['#E2E8F0', '#FFFFFF', '#BAE6FD'] // Plata, Blanco, Azul cielo
+      } else if (title.includes('harmony') || title.includes('cintillo') || title.includes('floral')) {
+        defaultMock = ['#FCE7F3', '#CCFBF1', '#FFFFFF'] // Rosa suave, Menta, Blanco
+      } else if (title.includes('blanco') || title.includes('charol')) {
+        defaultMock = ['#FFFFFF', '#0F172A', '#FECDD3'] // Blanco, Negro charol, Rosa pastel
+      } else if (title.includes('gold') || title.includes('mariposa')) {
+        defaultMock = ['#FEF08A', '#FDE2E4', '#E2E8F0'] // Oro, Oro rosa, Plata
+      } else if (title.includes('beige')) {
+        defaultMock = ['#F5F5DC', '#F1F5F9', '#FFFFFF'] // Beige, Crema/Nude, Blanco
+      } else if (title.includes('gala') || title.includes('vestido')) {
+        defaultMock = ['#FAD2E1', '#FFF5C3', '#E8E8FF'] // Rosa pastel, Amarillo pastel, Lavanda
+      } else if (title.includes('sinderella')) {
+        defaultMock = ['#BDE0FE', '#FFFFFF', '#FFCAD4'] // Azul Cenicienta, Blanco, Rosa suave
+      }
+
+      const extra = defaultMock.filter(c => !list.includes(c))
+      list = [...list, ...extra].slice(0, 3)
+    }
+    return list
+  }
+
   useEffect(() => {
     if (product) {
-      if (product.sizes?.length > 0) setSelectedSize(product.sizes[0])
-      if (product.colors?.length > 0) setSelectedColor(product.colors[0])
+      const parsedSizes = getParsedSizes()
+      const parsedColors = getParsedColors()
+      if (parsedSizes.length > 0) setSelectedSize(parsedSizes[0])
+      if (parsedColors.length > 0) setSelectedColor(parsedColors[0])
     }
   }, [product])
 
@@ -79,6 +133,35 @@ export default function ProductDetailPage() {
     const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
     const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${product.price} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
     window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  const handleAddToCart = () => {
+    if (!product) return
+    const cart = JSON.parse(localStorage.getItem('subibaja_cart') || '[]')
+    const existingIndex = cart.findIndex((item: any) => 
+      item.id === product.id && 
+      item.size === selectedSize && 
+      item.color === selectedColor
+    )
+    if (existingIndex > -1) {
+      cart[existingIndex].quantity += 1
+    } else {
+      cart.push({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image_url: product.image_url,
+        size: selectedSize,
+        color: selectedColor,
+        quantity: 1
+      })
+    }
+    localStorage.setItem('subibaja_cart', JSON.stringify(cart))
+    window.dispatchEvent(new Event('cart-updated'))
+    
+    // Feedback visual
+    setIsAdded(true)
+    setTimeout(() => setIsAdded(false), 2000)
   }
 
   // ── LOADING ──
@@ -216,23 +299,22 @@ export default function ProductDetailPage() {
           </div>
 
           {/* ── TALLAS: chips pequeños ── */}
-          {product.sizes?.length > 0 && (
+          {getParsedSizes().length > 0 && (
             <div className="mb-7">
               <div className="flex items-center gap-2 mb-3">
-                <Ruler className="size-3.5 text-gray-300" />
-                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Talla</span>
+                <Ruler className="size-3.5 text-gray-400" />
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Talla</span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {product.sizes.map((size: string) => (
+              <div className="flex flex-wrap gap-2.5">
+                {getParsedSizes().map((size: string) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className="px-4 rounded-full text-xs font-bold transition-all active:scale-95 shadow-sm"
+                    className="w-11 h-11 rounded-2xl text-xs font-black transition-all active:scale-95 shadow-2xs flex items-center justify-center cursor-pointer"
                     style={{
-                      height: '30px',
-                      backgroundColor: selectedSize === size ? '#BDE0FE' : '#f8fafc',
-                      color: selectedSize === size ? '#1e3a5f' : '#94a3b8',
-                      border: `1.5px solid ${selectedSize === size ? '#93c5fd' : '#e2e8f0'}`,
+                      backgroundColor: selectedSize === size ? '#1e3a5f' : '#f8fafc',
+                      color: selectedSize === size ? '#ffffff' : '#64748b',
+                      border: `1.5px solid ${selectedSize === size ? '#1e3a5f' : '#e2e8f0'}`,
                     }}
                   >
                     {size}
@@ -243,23 +325,23 @@ export default function ProductDetailPage() {
           )}
 
           {/* ── COLORES: swatches circulares ── */}
-          {product.colors?.length > 0 && (
+          {getParsedColors().length > 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">
-                <Palette className="size-3.5 text-gray-300" />
-                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Color</span>
+                <Palette className="size-3.5 text-gray-400" />
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Color</span>
               </div>
               <div className="flex gap-3">
-                {product.colors.map((color: string) => (
+                {getParsedColors().map((color: string) => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
                     title={color}
-                    className="w-8 h-8 rounded-full transition-all active:scale-95 shadow-sm"
+                    className={`size-8 rounded-full transition-all active:scale-90 cursor-pointer shadow-sm ${
+                      selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-900' : 'border border-slate-200'
+                    }`}
                     style={{
                       backgroundColor: color,
-                      outline: `2px solid ${selectedColor === color ? '#93c5fd' : 'transparent'}`,
-                      outlineOffset: '3px',
                     }}
                   />
                 ))}
@@ -304,11 +386,19 @@ export default function ProductDetailPage() {
         </div>
 
         {/* ── BOTÓN CÁPSULA FLOTANTE PREMIUM ── */}
-        <div className="fixed bottom-6 inset-x-0 flex justify-center z-50">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-30 px-6 flex gap-3 justify-center">
+          <button
+            onClick={handleAddToCart}
+            disabled={product.stock_status !== 'in_stock'}
+            className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-slate-700 bg-white border border-slate-200 transition-all active:scale-95 disabled:opacity-40 shadow-xl cursor-pointer"
+            style={{ height: '38px' }}
+          >
+            {isAdded ? '¡AÑADIDO!' : 'AÑADIR AL CARRITO'}
+          </button>
           <button
             onClick={handleOrder}
             disabled={product.stock_status !== 'in_stock'}
-            className="rounded-full text-[10px] font-black tracking-[0.15em] text-blue-900 px-12 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl border border-white/20"
+            className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-blue-900 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl border border-white/20 cursor-pointer"
             style={{ 
               height: '38px', 
               backgroundColor: 'rgba(189, 224, 254, 0.9)', 
@@ -316,9 +406,12 @@ export default function ProductDetailPage() {
               WebkitBackdropFilter: 'blur(8px)' 
             }}
           >
-            {product.stock_status === 'in_stock' ? 'LO QUIERO' : 'AGOTADO'}
+            {product.stock_status === 'in_stock' ? 'COMPRAR AHORA' : 'AGOTADO'}
           </button>
         </div>
+
+        {/* Carrito Flotante */}
+        <CartFloatingButton />
 
       </div>
     </div>

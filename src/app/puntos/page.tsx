@@ -4,6 +4,7 @@ import { ChevronLeft, Crown, Gift, Gift as GiftIcon, Loader2, Search, Sparkles, 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import CartFloatingButton from "@/components/CartFloatingButton"
 
 export default function LoyaltyPage() {
   const router = useRouter()
@@ -613,6 +614,9 @@ export default function LoyaltyPage() {
             </div>
           </div>
         )}
+
+        {/* Carrito Flotante */}
+        <CartFloatingButton />
 
       </div>
     </div>

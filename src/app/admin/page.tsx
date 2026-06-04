@@ -591,23 +591,50 @@ export default function AdminPage() {
                 </div>
 
                 {/* Colores */}
-                <div className="space-y-2">
-                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Colores disponibles</Label>
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center px-1">
+                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Colores disponibles</Label>
+                    <span className="text-[8px] text-slate-450 font-bold uppercase">Haz clic para agregar o eliminar</span>
+                  </div>
+
+                  {/* Preajustes Rápidos */}
+                  <div className="flex gap-2 items-center flex-wrap px-1">
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Preajustes:</span>
+                    {[
+                      { hex: '#FFFFFF', name: 'Blanco' },
+                      { hex: '#000000', name: 'Negro' },
+                      { hex: '#BDE0FE', name: 'Celeste' },
+                      { hex: '#FAD2E1', name: 'Rosa' },
+                      { hex: '#F5F5DC', name: 'Beige' },
+                      { hex: '#FEF08A', name: 'Dorado' },
+                      { hex: '#E2E8F0', name: 'Plata' },
+                      { hex: '#F87171', name: 'Rojo' },
+                    ].map(preset => {
+                      const isSelected = colorPick.toLowerCase() === preset.hex.toLowerCase()
+                      return (
+                        <button
+                          key={preset.hex}
+                          type="button"
+                          onClick={() => setColorPick(preset.hex)}
+                          title={preset.name}
+                          className={`size-6 rounded-full border transition-all active:scale-90 cursor-pointer ${
+                            isSelected ? 'ring-2 ring-offset-1 ring-blue-500 border-blue-500 scale-105 shadow-sm' : 'border-slate-200 hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: preset.hex }}
+                        />
+                      )
+                    })}
+                  </div>
+
+                  {/* Selector y Botón Agregar */}
                   <div className="flex items-center gap-3">
-                    <div className="relative flex-shrink-0">
-                      <Palette className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300 pointer-events-none z-10" />
-                      <input
-                        type="color"
-                        value={colorPick}
-                        onChange={e => setColorPick(e.target.value)}
-                        className="h-14 w-24 rounded-2xl bg-slate-50 border-0 pl-12 cursor-pointer opacity-0 absolute inset-0"
-                      />
-                      <div
-                        className="h-14 w-24 rounded-2xl flex items-center justify-end pr-3 border-2 border-transparent"
-                        style={{ backgroundColor: colorPick + '30', borderColor: colorPick }}
-                      >
-                        <div className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ backgroundColor: colorPick }} />
-                      </div>
+                    <div className="relative flex-shrink-0 w-24 h-14 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center cursor-pointer hover:bg-slate-100/50 transition-colors">
+                      <Palette className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none z-10" />
+                      
+                      {/* Círculo de color que muestra la selección actual */}
+                      <div className="w-7 h-7 rounded-full border-2 border-white shadow-sm ml-6 flex-shrink-0" style={{ backgroundColor: colorPick }} />
+                      
+                      {/* Input oculto que abarca todo el botón para abrir el selector nativo al tocar */}
                       <input
                         type="color"
                         value={colorPick}
@@ -615,27 +642,32 @@ export default function AdminPage() {
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       />
                     </div>
+
                     <button
                       type="button"
                       onClick={() => { if (!colors.includes(colorPick)) setColors([...colors, colorPick]) }}
-                      className="h-14 flex-1 rounded-2xl font-black text-[10px] tracking-widest transition-transform active:scale-95"
+                      className="h-14 flex-1 rounded-2xl font-black text-[10px] tracking-[0.12em] transition-all active:scale-95 shadow-xs cursor-pointer"
                       style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
                     >
-                      + AGREGAR
+                      + AGREGAR COLOR
                     </button>
                   </div>
+
+                  {/* Listado de colores agregados */}
                   {colors.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1">
+                    <div className="flex flex-wrap gap-2 pt-1.5 px-2 bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50">
                       {colors.map(c => (
                         <button
                           key={c}
                           type="button"
                           onClick={() => setColors(colors.filter(x => x !== c))}
-                          className="flex items-center gap-2 h-8 pl-2 pr-3 rounded-full border-2 text-[10px] font-black transition-transform active:scale-95"
-                          style={{ borderColor: c, color: '#475569' }}
+                          title="Click para eliminar"
+                          className="flex items-center gap-2 h-8 pl-2 pr-3.5 rounded-full border bg-white text-[9px] font-black transition-transform active:scale-95 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 shadow-3xs cursor-pointer group"
+                          style={{ borderColor: c }}
                         >
-                          <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: c }} />
-                          <X className="size-2.5" />
+                          <div className="w-3.5 h-3.5 rounded-full shadow-2xs group-hover:scale-90 transition-transform" style={{ backgroundColor: c }} />
+                          <span className="text-slate-500 group-hover:text-rose-600 font-mono text-[8px] uppercase">{c}</span>
+                          <X className="size-2.5 text-slate-400 group-hover:text-rose-500" />
                         </button>
                       ))}
                     </div>

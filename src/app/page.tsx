@@ -8,10 +8,71 @@ import "swiper/css"
 import "swiper/css/pagination"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import CartFloatingButton from "@/components/CartFloatingButton"
 
 const CAT_ICONS: Record<string, React.ElementType> = {
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
 }
+
+const FAQS = [
+  {
+    question: "¿Cómo saber la talla de zapato?",
+    answer: (
+      <p>
+        Dibuja en una hoja el contorno del pie y medir en centímetros desde la punta del dedo gordo hasta el centro del talón. Ubicarás en la tabla de tallas según los centímetros medidos la talla exacta.
+      </p>
+    )
+  },
+  {
+    question: "¿Cuáles son los métodos de pago?",
+    answer: (
+      <ul className="list-disc pl-4 space-y-0.5">
+        <li>Efectivo (Divisa)</li>
+        <li>Zelle</li>
+        <li>Venmo</li>
+        <li>Pago móvil</li>
+        <li>Punto de Venta</li>
+      </ul>
+    )
+  },
+  {
+    question: "¿Cuánto tiempo tengo para realizar el pago de mi compra y hacer el retiro en la tienda?",
+    answer: (
+      <div className="space-y-2">
+        <p>
+          • <strong>Pagos online (Zelle, Pago Móvil o Venmo):</strong> Una vez que realices tu compra en nuestra página web, puedes realizar tu pago inmediatamente. El apartado es inmediato y puedes retirar en tienda o solicitar el envío nacional o delivery en cualquier momento.
+        </p>
+        <p>
+          • <strong>Pago en efectivo:</strong> Tendrás 120 minutos o 2 horas para realizar el pago y retiro en nuestra tienda o solicitar el envío por delivery. Una vez culminado este lapso y no se haya recibido el pago o retirado el artículo, el mismo se devolverá automáticamente al stock. Si deseas volver a realizar la compra, no garantizamos la disponibilidad.
+        </p>
+      </div>
+    )
+  },
+  {
+    question: "¿Hacen envíos nacionales?",
+    answer: (
+      <p>
+        Sí, hacemos envíos nacionales (MRW). Los pedidos realizados antes de las 12:00 p.m. se envían el mismo día, pedidos realizados después de las 12:00 p.m. se despachan al siguiente día hábil. Las compras realizadas los viernes después de las 12:00 p.m. (aplica fin de semana), serán enviadas el día lunes.
+      </p>
+    )
+  },
+  {
+    question: "¿En cuánto tiempo llega mi delivery?",
+    answer: (
+      <p>
+        En estos momentos contamos con un solo repartidor, su ruta de entrega maneja varios destinos. <strong>IMPORTANTE:</strong> Su pedido puede ser entregado de forma inmediata, o puede demorar máximo un lapso de 2 horas en ser entregado.
+      </p>
+    )
+  },
+  {
+    question: "¿Realizan cambios?",
+    answer: (
+      <p>
+        Una vez efectuada la compra, tiene 3 días para hacer el cambio por: defecto, talla o modelo (bajo ningún concepto se hace devolución del dinero). Las piezas en: promoción, accesorios y trajes de baño NO tienen cambio.
+      </p>
+    )
+  }
+]
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("Todos")
@@ -28,6 +89,7 @@ export default function Home() {
   const [justLiked, setJustLiked] = useState<string | null>(null)
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -601,6 +663,45 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Sección de Preguntas Frecuentes */}
+          <section className="mt-8 px-5">
+            <h3 className="font-black text-gray-900 text-xl font-['Poppins'] mb-4 tracking-tight">
+              Preguntas Frecuentes
+            </h3>
+            <div className="flex flex-col border-t border-slate-200/60">
+              {FAQS.map((faq, idx) => {
+                const isOpen = openFaq === idx
+                return (
+                  <div key={idx} className="border-b border-slate-200/60">
+                    {/* Botón de Activación */}
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : idx)}
+                      className="w-full py-3.5 flex items-center justify-between text-left gap-4 focus:outline-none cursor-pointer group"
+                    >
+                      <span className="font-bold text-slate-800 text-[12.5px] leading-snug tracking-tight group-hover:text-blue-600 transition-colors">
+                        {faq.question}
+                      </span>
+                      <span className={`text-[16px] font-medium transition-colors duration-200 ${isOpen ? 'text-blue-500 font-bold' : 'text-slate-400'}`}>
+                        {isOpen ? '−' : '+'}
+                      </span>
+                    </button>
+
+                    {/* Contenido desplegable */}
+                    <div 
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        isOpen ? 'max-h-[350px] pb-4' : 'max-h-0'
+                      }`}
+                    >
+                      <div className="text-[11.5px] text-slate-500 leading-relaxed font-semibold">
+                        {faq.answer}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
           {/* Sección de Ubicación */}
           <section className="mt-8 px-4">
             <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Ubicación</h3>
@@ -986,6 +1087,9 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* Carrito Flotante */}
+        <CartFloatingButton />
 
       </div>
     </div>
