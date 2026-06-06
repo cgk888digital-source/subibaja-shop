@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import {
   Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote,
-  Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette, Smartphone, Ticket,
+  Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette, Smartphone, Ticket, User,
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -29,6 +29,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([])
+  const [uploadingGallery, setUploadingGallery] = useState(false)
 
   const [formData, setFormData] = useState({
     title: "", price: "", category: "Zapatos", sizes: "",
@@ -57,11 +59,15 @@ export default function AdminPage() {
   const [customerPhone, setCustomerPhone] = useState("")
   const [loyaltyMembers, setLoyaltyMembers] = useState<any[]>([])
   const [rewardForm, setRewardForm] = useState({ title: "", description: "", pointsRequired: "", image_url: "" })
-  const [giftCardForm, setGiftCardForm] = useState({ code: "", balance: "" })
+  const [giftCardForm, setGiftCardForm] = useState({ code: "", balance: "", ownerName: "", ownerPhone: "" })
+  const [giftCards, setGiftCards] = useState<any[]>([])
+  const [giftCardOrders, setGiftCardOrders] = useState<any[]>([])
   const [savingReward, setSavingReward] = useState(false)
   const [savingGift, setSavingGift] = useState(false)
   const [rewards, setRewards] = useState<any[]>([])
   const [uploadingRewardImg, setUploadingRewardImg] = useState(false)
+  const [generatedVoucher, setGeneratedVoucher] = useState<{ id: string, points: number, amount_usd: number } | null>(null)
+  const [generatingQr, setGeneratingQr] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
@@ -120,6 +126,10 @@ export default function AdminPage() {
       if (members) setLoyaltyMembers(members)
       const { data: rewardsData } = await supabase.from('rewards').select('*').order('created_at', { ascending: false })
       if (rewardsData) setRewards(rewardsData)
+      const { data: giftCardsData } = await supabase.from('gift_cards').select('*').order('created_at', { ascending: false })
+      if (giftCardsData) setGiftCards(giftCardsData)
+      const { data: giftCardOrdersData } = await supabase.from('gift_card_orders').select('*').order('created_at', { ascending: false })
+      if (giftCardOrdersData) setGiftCardOrders(giftCardOrdersData)
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
@@ -141,16 +151,28 @@ export default function AdminPage() {
   }
 
   const handleCreateGiftCard = async () => {
-    if (!giftCardForm.code || !giftCardForm.balance) { alert("Faltan datos de tarjeta"); return }
+    if (!giftCardForm.balance) { alert("Falta ingresar el monto"); return }
     try {
       setSavingGift(true)
+      let finalCode = giftCardForm.code.trim().toUpperCase()
+      if (!finalCode) {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        let generated = "SB-"
+        for (let i = 0; i < 8; i++) {
+          generated += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        finalCode = generated
+      }
       await supabase.from('gift_cards').insert([{
-        code: giftCardForm.code.trim().toUpperCase(),
+        code: finalCode,
         balance: parseFloat(giftCardForm.balance),
         initial_value: parseFloat(giftCardForm.balance),
-        is_active: true
+        is_active: true,
+        owner_name: giftCardForm.ownerName.trim() || null,
+        owner_phone: giftCardForm.ownerPhone.trim() || null
       }])
-      setGiftCardForm({ code: "", balance: "" })
+      setGiftCardForm({ code: "", balance: "", ownerName: "", ownerPhone: "" })
+      fetchInitialData()
       alert("¡Tarjeta de regalo creada con éxito!")
     } catch (err: any) { alert(err.message) } finally { setSavingGift(false) }
   }
@@ -267,6 +289,66 @@ export default function AdminPage() {
     } catch (err) { console.error(err) }
   }
 
+  const handleRegisterSaleAndGenerateQr = async () => {
+    if (!saleForm.amount) return
+    try {
+      setGeneratingQr(true)
+      const amountUsd = parseFloat(saleForm.amount)
+      const points = Math.round(amountUsd)
+      
+      // 1. Registrar venta
+      const { error: saleError } = await supabase.from('sales').insert([{
+        amount_usd: amountUsd,
+        amount_bs: amountUsd * exchangeRate,
+        payment_method: saleForm.method,
+        exchange_rate: exchangeRate,
+        product_id: saleForm.productId || null,
+        product_title: saleForm.productTitle || null,
+        category: saleForm.productCategory || null,
+      }])
+
+      if (saleError) throw saleError
+
+      // 2. Descontar stock
+      if (saleForm.productId) {
+        const prod = products.find(p => p.id === saleForm.productId)
+        if (prod) {
+          const newQty = Math.max(0, (prod.stock_quantity || 0) - 1)
+          await supabase.from('products').update({
+            stock_quantity: newQty,
+            stock_status: newQty === 0 ? 'out_of_stock' : 'in_stock'
+          }).eq('id', saleForm.productId)
+        }
+      }
+
+      // 3. Generar Voucher QR
+      const { data: voucherData, error: voucherError } = await supabase.from('points_vouchers').insert([{
+        points: points,
+        amount_usd: amountUsd,
+        is_used: false
+      }]).select().single()
+
+      if (voucherError) throw voucherError
+
+      setGeneratedVoucher({
+        id: voucherData.id,
+        points: voucherData.points,
+        amount_usd: amountUsd
+      })
+
+      // Reset form
+      setSaleForm({ productId: "", productTitle: "", productCategory: "", amount: "", method: "$ Efectivo" })
+      setCustomerPhone("")
+      setProductSearch("")
+      fetchInitialData()
+    } catch (err: any) { 
+      console.error(err)
+      alert("Error al registrar venta y generar QR: " + err.message)
+    } finally {
+      setGeneratingQr(false)
+    }
+  }
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0]
@@ -288,6 +370,37 @@ export default function AdminPage() {
     }
   }
 
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const files = e.target.files
+      if (!files || files.length === 0) return
+      setUploadingGallery(true)
+      
+      const newUrls: string[] = []
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const fileName = `${Date.now()}_gallery_${i}.${file.name.split('.').pop()}`
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(`products/${fileName}`, file)
+        if (uploadError) throw uploadError
+        const { data } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(`products/${fileName}`)
+        newUrls.push(data.publicUrl)
+      }
+      setGalleryUrls(prev => [...prev, ...newUrls])
+    } catch (err: any) {
+      alert(err.message || 'Error al subir imágenes de galería')
+    } finally {
+      setUploadingGallery(false)
+    }
+  }
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryUrls(prev => prev.filter((_, i) => i !== index))
+  }
+
   const getSelectedCategoryId = () => {
     if (selectedLeafCat) return selectedLeafCat.id
     if (selectedSubCat) return selectedSubCat.id
@@ -307,13 +420,15 @@ export default function AdminPage() {
         description: formData.description,
         sizes: formData.sizes.split(',').map(s => s.trim()).filter(Boolean),
         colors,
-        stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock'
+        stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
+        gallery_urls: galleryUrls
       }])
       setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
       setColors([])
       setColorPick("#BDE0FE")
+      setGalleryUrls([])
       fetchInitialData()
       setActiveTab("inventory")
     } catch (err: any) { alert(err.message) } finally { setSaving(false) }
@@ -479,11 +594,32 @@ export default function AdminPage() {
                 />
               </div>
 
-              <button onClick={handleRegisterSale} disabled={!saleForm.amount}
-                className="w-full rounded-full font-bold tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95"
-                style={{ height: '44px', backgroundColor: '#BDE0FE' }}>
-                REGISTRAR VENTA
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleRegisterSale} 
+                  disabled={!saleForm.amount || generatingQr}
+                  className="flex-1 rounded-full font-bold tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase cursor-pointer"
+                  style={{ height: '44px', backgroundColor: '#BDE0FE80' }}
+                >
+                  Solo Registrar
+                </button>
+                <button 
+                  onClick={handleRegisterSaleAndGenerateQr} 
+                  disabled={!saleForm.amount || generatingQr}
+                  className="flex-1 rounded-full font-black tracking-widest text-[#1e3a5f] disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase flex items-center justify-center gap-1 cursor-pointer"
+                  style={{ height: '44px', backgroundColor: '#BDE0FE' }}
+                >
+                  {generatingQr ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" /> Creando...
+                    </>
+                  ) : (
+                    <>
+                      <Ticket className="size-3.5" /> Registrar y QR
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Últimas ventas */}
@@ -542,17 +678,63 @@ export default function AdminPage() {
         {activeTab === 'upload' && (
           <div className="bg-white rounded-[40px] shadow-sm">
             <div className="p-7 space-y-7">
-              <div className="relative border-2 border-dashed border-slate-100 rounded-[32px] p-10 bg-slate-50 flex flex-col items-center justify-center aspect-video overflow-hidden">
-                {formData.image_url ? (
-                  <img src={formData.image_url} className="absolute inset-0 w-full h-full object-cover" />
-                ) : (
-                  <>
-                    <div className="bg-white p-4 rounded-3xl shadow-sm mb-3"><Camera className="text-blue-400 size-7" /></div>
-                    <span className="text-slate-500 font-bold text-sm">Toca para subir foto</span>
-                  </>
-                )}
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading} />
-                {uploading && <div className="absolute inset-0 bg-white/70 flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-blue-400 size-8" /></div>}
+              {/* Foto Principal */}
+              <div className="space-y-2.5">
+                <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Foto Principal</Label>
+                <div className="relative border-2 border-dashed border-slate-100 rounded-[32px] p-10 bg-slate-50 flex flex-col items-center justify-center aspect-video overflow-hidden">
+                  {formData.image_url ? (
+                    <img src={formData.image_url} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <div className="bg-white p-4 rounded-3xl shadow-sm mb-3"><Camera className="text-blue-400 size-7" /></div>
+                      <span className="text-slate-500 font-bold text-sm">Toca para subir foto</span>
+                    </>
+                  )}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploading} />
+                  {uploading && <div className="absolute inset-0 bg-white/70 flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-blue-400 size-8" /></div>}
+                </div>
+              </div>
+
+              {/* Galería de Fotos Secundarias */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center px-1">
+                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Galería de fotos (Secundarias)</Label>
+                  <span className="text-[8px] text-slate-450 font-bold uppercase">Aparecerán en el carrusel</span>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-3">
+                  {galleryUrls.map((url, index) => (
+                    <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-2xs group bg-slate-50">
+                      <img src={url} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryImage(index)}
+                        className="absolute top-1.5 right-1.5 p-1 bg-white/95 text-rose-500 rounded-full shadow-sm active:scale-110 transition-transform cursor-pointer animate-fade-in"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Botón para añadir foto */}
+                  <div className="relative aspect-square border border-dashed border-slate-200 hover:border-blue-300 rounded-2xl flex flex-col items-center justify-center bg-slate-50/50 hover:bg-blue-50/10 cursor-pointer transition-all">
+                    <Plus className="size-4 text-slate-400" />
+                    <span className="text-[7.5px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Añadir</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryUpload}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      disabled={uploadingGallery}
+                    />
+                    {uploadingGallery && (
+                      <div className="absolute inset-0 bg-white/75 flex items-center justify-center rounded-2xl">
+                        <Loader2 className="animate-spin text-blue-400 size-4.5" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-5">
@@ -894,15 +1076,119 @@ export default function AdminPage() {
                     className="h-12 rounded-xl bg-slate-50 border-0 pl-11 font-black text-xs"
                   />
                 </div>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                  <Input
+                    placeholder="Nombre del Cliente (Dueño)"
+                    value={giftCardForm.ownerName}
+                    onChange={(e) => setGiftCardForm({ ...giftCardForm, ownerName: e.target.value })}
+                    className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-semibold text-slate-700"
+                  />
+                </div>
+                <div className="relative">
+                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                  <Input
+                    placeholder="Teléfono del Cliente (Dueño)"
+                    value={giftCardForm.ownerPhone}
+                    onChange={(e) => setGiftCardForm({ ...giftCardForm, ownerPhone: e.target.value })}
+                    className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-semibold text-slate-700"
+                  />
+                </div>
                 <button
                   onClick={handleCreateGiftCard}
-                  disabled={savingGift || !giftCardForm.code || !giftCardForm.balance}
+                  disabled={savingGift || !giftCardForm.balance}
                   className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
                   style={{ backgroundColor: '#BDE0FE' }}
                 >
                   {savingGift ? 'GENERANDO...' : 'CREAR TARJETA DE REGALO'}
                 </button>
               </div>
+            </div>
+
+            {/* Listado de Tarjetas de Regalo */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tarjetas de Regalo ({giftCards.length})</p>
+              {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-slate-300" /></div>
+              ) : giftCards.length === 0 ? (
+                <div className="bg-white rounded-3xl p-6 text-center text-slate-350 text-xs font-bold">No hay tarjetas de regalo creadas aún</div>
+              ) : (
+                giftCards.map(gc => (
+                  <div key={gc.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-slate-800 tracking-wide">{gc.code}</span>
+                        {!gc.is_active && (
+                          <span className="bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Inactiva</span>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-slate-400 mt-0.5 truncate font-bold">
+                        {gc.owner_name ? `Dueño: ${gc.owner_name}` : 'Sin dueño asignado'}
+                        {gc.owner_phone ? ` (${gc.owner_phone})` : ''}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-xs font-black text-blue-900 font-['Poppins']">${Number(gc.balance).toFixed(2)}</span>
+                      <span className="text-[7px] text-slate-400 block font-bold">inicial: ${Number(gc.initial_value).toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Pedidos de Gift Cards */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Pedidos de Gift Cards ({giftCardOrders.length})</p>
+              {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-slate-300" /></div>
+              ) : giftCardOrders.length === 0 ? (
+                <div className="bg-white rounded-3xl p-6 text-center text-slate-350 text-xs font-bold">No hay pedidos pendientes aún</div>
+              ) : (
+                giftCardOrders.map(order => (
+                  <div key={order.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between border border-slate-100 hover:border-blue-100">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-slate-700">{order.name}</p>
+                        {order.status === 'pending' ? (
+                          <span className="bg-amber-50/80 text-amber-600 border border-amber-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider">Pendiente</span>
+                        ) : (
+                          <span className="bg-emerald-50 border border-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider">Creado</span>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-slate-400 mt-0.5 truncate font-medium">
+                        {order.phone} · {order.email}
+                      </p>
+                      <p className="text-[8px] text-slate-350 font-bold mt-1">
+                        Pedido el {new Date(order.created_at).toLocaleDateString('es-VE')}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
+                      <span className="text-sm font-black text-blue-900 font-['Poppins']">${Number(order.amount).toFixed(0)}</span>
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={async () => {
+                            // Populate Generator Inputs
+                            setGiftCardForm({
+                              code: `SB-GIFT-${order.amount}-${Math.floor(1000 + Math.random() * 9000)}`,
+                              balance: order.amount.toString(),
+                              ownerName: order.name,
+                              ownerPhone: order.phone
+                            });
+                            // Mark order as completed
+                            await supabase.from('gift_card_orders').update({ status: 'completed' }).eq('id', order.id);
+                            fetchInitialData();
+                            // Scroll to top of page
+                            window.scrollTo({ top: 120, behavior: 'smooth' });
+                          }}
+                          className="bg-[#BDE0FE]/40 border border-[#BDE0FE]/60 text-blue-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
+                        >
+                          Procesar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Registrar Premio del Club */}
@@ -976,14 +1262,40 @@ export default function AdminPage() {
                 <div className="bg-white rounded-3xl p-6 text-center text-slate-350 text-xs font-bold">No hay miembros registrados aún</div>
               ) : (
                 loyaltyMembers.map(m => (
-                  <div key={m.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
-                    <div>
+                  <div key={m.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between border border-slate-100/55 hover:border-blue-100">
+                    <div className="min-w-0 flex-1 pr-2">
                       <p className="text-xs font-bold text-slate-700">{m.name}</p>
-                      <p className="text-[9px] text-slate-400 mt-0.5">{m.phone} · Unido el {new Date(m.created_at).toLocaleDateString('es-VE')}</p>
+                      <p className="text-[9px] text-slate-400 mt-0.5 font-bold">{m.phone} · Unido el {new Date(m.created_at).toLocaleDateString('es-VE')}</p>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => {
+                            const personalLink = `${window.location.origin}/puntos?phone=${m.phone}`
+                            navigator.clipboard.writeText(personalLink)
+                            alert("¡Enlace copiado al portapapeles!")
+                          }}
+                          className="text-[8px] font-black tracking-wider text-blue-900 bg-blue-50/50 hover:bg-[#BDE0FE]/35 px-2 py-1 rounded border border-blue-100/20 transition-all active:scale-95 cursor-pointer uppercase"
+                        >
+                          Copiar Enlace
+                        </button>
+                        <button
+                          onClick={() => {
+                            const personalLink = `${window.location.origin}/puntos?phone=${m.phone}`
+                            const msg = `¡Hola ${m.name}! Te compartimos tu enlace personal para consultar tus puntos acumulados y ver los premios disponibles en el Club VIP de Subibaja: ${personalLink}`
+                            let cleanPhone = m.phone.replace(/[^0-9]/g, '');
+                            if (cleanPhone.startsWith('0')) {
+                              cleanPhone = '58' + cleanPhone.substring(1);
+                            }
+                            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank')
+                          }}
+                          className="text-[8px] font-black tracking-wider text-emerald-800 bg-emerald-50/50 hover:bg-emerald-100/50 px-2 py-1 rounded border border-emerald-100/20 transition-all active:scale-95 cursor-pointer uppercase"
+                        >
+                          Enviar WhatsApp
+                        </button>
+                      </div>
                     </div>
                     <div className="bg-[#BDE0FE40] border border-[#BDE0FE80] px-3 py-1 rounded-xl text-center flex-shrink-0">
                       <span className="text-xs font-black text-blue-900 font-['Poppins']">{m.points}</span>
-                      <span className="text-[7px] font-black text-blue-800 uppercase block tracking-wider">PTS</span>
+                      <span className="text-[7px] font-black text-blue-800 uppercase block tracking-wider font-bold">PTS</span>
                     </div>
                   </div>
                 ))
@@ -994,6 +1306,55 @@ export default function AdminPage() {
         )}
 
       </div>
+
+      {/* Modal QR Code de Puntos */}
+      {generatedVoucher && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 animate-fade-in"
+            onClick={() => setGeneratedVoucher(null)}
+          />
+          <div className="relative w-full max-w-[380px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 text-center z-10 animate-in fade-in zoom-in-95 slide-in-from-bottom-10">
+            <div className="mx-auto w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-900 relative shadow-sm border border-blue-100/30">
+              <Crown className="size-6 fill-blue-100 text-blue-900" />
+              <Sparkles className="size-4 text-amber-400 fill-amber-400 absolute -top-1 -right-1 animate-pulse" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Código QR de Puntos</span>
+              <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2 uppercase">
+                ¡Escanea para acumular!
+              </h3>
+              <p className="text-[11px] text-slate-405 font-bold">
+                Compra de ${generatedVoucher.amount_usd.toFixed(2)} USD = {generatedVoucher.points} Puntos
+              </p>
+            </div>
+
+            {/* QR Image Container */}
+            <div className="mx-auto bg-slate-50 p-4 rounded-3xl border border-slate-100/80 shadow-inner flex items-center justify-center w-64 h-64">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                  `${window.location.origin}/puntos?claim=${generatedVoucher.id}`
+                )}`}
+                alt="QR Points Voucher"
+                className="w-full h-full object-contain rounded-xl"
+              />
+            </div>
+
+            <p className="text-[9px] text-slate-400 leading-normal font-semibold px-4">
+              El cliente debe escanear este código con su celular para sumar los puntos a su cuenta VIP o registrarse.
+            </p>
+
+            <button
+              onClick={() => setGeneratedVoucher(null)}
+              className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center cursor-pointer"
+              style={{ backgroundColor: '#BDE0FE' }}
+            >
+              Cerrar y Continuar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

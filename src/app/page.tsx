@@ -359,7 +359,7 @@ export default function Home() {
                     </a>
                     {/* Whatsapp */}
                     <a 
-                      href="https://wa.me/584241999482" 
+                      href="https://wa.me/584142274385" 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="size-7.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:text-emerald-500 active:scale-90 transition-all"
@@ -648,16 +648,14 @@ export default function Home() {
                 <p className="text-xs text-slate-500 leading-relaxed font-medium">
                   ¿No sabes qué obsequiar? Regala estilo y sonrisas con nuestra **Gift Card de $50 USD**. El detalle perfecto para que elijan sus prendas y zapatos favoritos en nuestra tienda.
                 </p>
-                <button
-                  onClick={() => {
-                    const msg = "¡Hola Subibaja! Me gustaría adquirir la Tarjeta de Regalo virtual de $50 (Kids Gift Card) para obsequiar. ¿Cómo puedo realizar el pago?"
-                    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
-                  }}
-                  className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff]"
-                  style={{ backgroundColor: '#BDE0FE' }}
-                >
-                  <Gift className="size-3.5" /> COMPRAR GIFT CARD ($50)
-                </button>
+                <Link href="/giftcard" className="block w-full">
+                  <button
+                    className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
+                    style={{ backgroundColor: '#BDE0FE' }}
+                  >
+                    <Gift className="size-3.5" /> VER TARJETAS DE REGALO
+                  </button>
+                </Link>
               </div>
 
             </div>
@@ -772,7 +770,7 @@ export default function Home() {
 
               {/* Whatsapp */}
               <a 
-                href="https://wa.me/584241999482" 
+                href="https://wa.me/584142274385" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="size-10 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-emerald-500 active:scale-90 transition-all"
@@ -1064,7 +1062,7 @@ export default function Home() {
                             <Crown className="size-3 fill-amber-500" /> {offer.points} PTS
                           </span>
                           <button
-                            onClick={() => window.open(`https://wa.me/584241999482?text=${encodeURIComponent(offer.msg)}`, '_blank')}
+                            onClick={() => window.open(`https://wa.me/584142274385?text=${encodeURIComponent(offer.msg)}`, '_blank')}
                             className="flex-1 h-7 rounded-full text-[8px] font-black tracking-wider text-blue-900 uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-sm cursor-pointer"
                             style={{ backgroundColor: '#BDE0FE' }}
                           >

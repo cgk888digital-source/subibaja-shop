@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
-import { Pagination } from "swiper/modules"
+import { Pagination, Navigation } from "swiper/modules"
 import "swiper/css"
 import "swiper/css/pagination"
+import "swiper/css/navigation"
 import { ChevronLeft, Heart, Ruler, Palette, AlignLeft, Info } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
@@ -132,7 +133,7 @@ export default function ProductDetailPage() {
     const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
     const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
     const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${product.price} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
-    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const handleAddToCart = () => {
@@ -211,7 +212,7 @@ export default function ProductDetailPage() {
     return path
   }
 
-  const images: string[] = product.gallery_urls?.length > 0 ? product.gallery_urls : [product.image_url]
+  const images: string[] = product.gallery_urls?.length > 0 ? [product.image_url, ...product.gallery_urls] : [product.image_url]
   const isFavorite = product ? favorites.includes(product.id) : false
 
   return (
@@ -240,8 +241,17 @@ export default function ProductDetailPage() {
         <section className="relative w-full overflow-hidden bg-slate-100" style={{ height: '50vh' }}>
           <Swiper
             pagination={{ clickable: true }}
-            modules={[Pagination]}
+            navigation={true}
+            modules={[Pagination, Navigation]}
             className="w-full h-full"
+            style={{
+              // Custom colors for swiper pagination and navigation
+              ['--swiper-navigation-color' as any]: '#1e3a5f',
+              ['--swiper-navigation-size' as any]: '20px',
+              ['--swiper-pagination-color' as any]: '#1e3a5f',
+              ['--swiper-pagination-bullet-inactive-color' as any]: '#cbd5e1',
+              ['--swiper-pagination-bullet-inactive-opacity' as any]: '0.6',
+            }}
           >
             {images.map((img: string, i: number) => (
               <SwiperSlide key={i}>

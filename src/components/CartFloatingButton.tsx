@@ -69,7 +69,7 @@ export default function CartFloatingButton() {
     })
 
     const msg = `¡Hola Subibaja! Me gustaría realizar un pedido con los siguientes artículos:\n\n${itemsText}\n*Total:* $${totalUsd.toFixed(2)} (${totalBs} Bs)\n\n¿Tienen disponibilidad para coordinar el pago y entrega?`
-    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const totalItems = cart.reduce((acc, item) => acc + (item.quantity || 1), 0)

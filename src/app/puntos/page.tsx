@@ -26,9 +26,129 @@ export default function LoyaltyPage() {
   const [checkingGift, setCheckingGift] = useState(false)
   const [giftError, setGiftError] = useState("")
 
+  // States for claiming voucher
+  const [pendingVoucher, setPendingVoucher] = useState<{ id: string, points: number, amount_usd: number } | null>(null)
+  const [claimingVoucher, setClaimingVoucher] = useState(false)
+  const [voucherClaimedPoints, setVoucherClaimedPoints] = useState<number | null>(null)
+  const [voucherError, setVoucherError] = useState("")
+
   useEffect(() => {
     fetchRewards()
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search)
+      const phoneParam = searchParams.get("phone")
+      const claimParam = searchParams.get("claim")
+      const savedPhone = localStorage.getItem("subibaja_member_phone")
+      
+      if (claimParam) {
+        fetchVoucher(claimParam)
+      }
+      
+      if (phoneParam) {
+        autoCheckPoints(phoneParam)
+      } else if (savedPhone) {
+        autoCheckPoints(savedPhone)
+      }
+    }
   }, [])
+
+  const autoCheckPoints = async (phoneToQuery: string) => {
+    try {
+      setSearchingMember(true)
+      const cleanPhone = phoneToQuery.trim()
+      const { data } = await supabase.from('loyalty_members').select('*').eq('phone', cleanPhone).single()
+      if (data) {
+        setMember(data)
+        setPhone(cleanPhone)
+        localStorage.setItem("subibaja_member_phone", cleanPhone)
+      }
+    } catch (err) {
+      console.error("Error auto-checking points:", err)
+    } finally {
+      setSearchingMember(false)
+    }
+  }
+
+  const fetchVoucher = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('points_vouchers')
+        .select('*')
+        .eq('id', id)
+        .eq('is_used', false)
+        .single()
+        
+      if (error || !data) {
+        setVoucherError("Este código QR ya fue reclamado o no es válido.")
+        return
+      }
+      
+      setPendingVoucher({
+        id: data.id,
+        points: data.points,
+        amount_usd: Number(data.amount_usd || 0)
+      })
+    } catch (err) {
+      console.error("Error fetching voucher:", err)
+      setVoucherError("Error al validar el código QR de puntos.")
+    }
+  }
+
+  const claimVoucher = async (vId: string, memberPhone: string, memberName: string, currentPoints: number) => {
+    if (claimingVoucher || voucherClaimedPoints) return
+    try {
+      setClaimingVoucher(true)
+      
+      // 1. Mark voucher as used in database
+      const { error: vError } = await supabase
+        .from('points_vouchers')
+        .update({
+          is_used: true,
+          claimed_by: memberPhone,
+          claimed_at: new Date().toISOString()
+        })
+        .eq('id', vId)
+        .eq('is_used', false)
+
+      if (vError) {
+        throw new Error("El vale ya fue reclamado o no es válido.")
+      }
+
+      // 2. Add points to member
+      const pointsToClaim = pendingVoucher ? pendingVoucher.points : 0
+      const { error: memberError } = await supabase
+        .from('loyalty_members')
+        .update({
+          points: currentPoints + pointsToClaim
+        })
+        .eq('phone', memberPhone)
+
+      if (memberError) throw memberError
+
+      // 3. Update state
+      setVoucherClaimedPoints(pointsToClaim)
+      setMember((prev: any) => prev ? { ...prev, points: prev.points + pointsToClaim } : null)
+      setPendingVoucher(null)
+      
+      // Clean query parameters from URL
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href)
+        url.searchParams.delete("claim")
+        window.history.replaceState({}, document.title, url.pathname + url.search)
+      }
+    } catch (err: any) {
+      console.error("Error claiming voucher:", err)
+      alert(err.message || "Error al reclamar los puntos.")
+    } finally {
+      setClaimingVoucher(false)
+    }
+  }
+
+  useEffect(() => {
+    if (member && pendingVoucher) {
+      claimVoucher(pendingVoucher.id, member.phone, member.name, member.points)
+    }
+  }, [member, pendingVoucher])
 
   async function fetchRewards() {
     try {
@@ -54,6 +174,7 @@ export default function LoyaltyPage() {
       
       if (data) {
         setMember(data)
+        localStorage.setItem("subibaja_member_phone", cleanPhone)
       } else {
         setShowRegisterForm(true)
       }
@@ -76,6 +197,7 @@ export default function LoyaltyPage() {
       
       if (data) {
         setMember(data)
+        localStorage.setItem("subibaja_member_phone", phone.trim())
         setShowRegisterForm(false)
       }
     } catch (err: any) {
@@ -108,12 +230,12 @@ export default function LoyaltyPage() {
   const handleClaimReward = (reward: any) => {
     if (!member || member.points < reward.points_required) return
     const msg = `¡Hola Subibaja! Soy ${member.name} (Tlf: ${member.phone}) y me gustaría canjear mis puntos por el premio:\n\n*${reward.title}* (${reward.points_required} Puntos)\n\n¿Cómo procedemos con el canje?`
-    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const handleBuyGiftCard = (amount: number) => {
     const msg = `¡Hola Subibaja! Me gustaría comprar una Tarjeta de Regalo virtual de $${amount} para obsequiar.`
-    window.open(`https://wa.me/584241999482?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   return (
@@ -169,6 +291,34 @@ export default function LoyaltyPage() {
               </div>
             </div>
 
+            {pendingVoucher && (
+              <div className="bg-amber-50/60 border border-amber-100/50 rounded-2xl p-4 space-y-2 animate-fade-in">
+                <div className="flex items-center gap-2 text-amber-700">
+                  <Sparkles className="size-4 text-amber-500 fill-amber-500 animate-pulse" />
+                  <p className="text-[10px] font-black uppercase tracking-wider">¡Puntos por reclamar!</p>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
+                  Escaneaste un QR de compra. Tienes <strong className="text-amber-600 font-extrabold">{pendingVoucher.points} puntos</strong> pendientes de tu compra de hoy.
+                </p>
+                <p className="text-[9px] text-slate-400 font-semibold leading-normal">
+                  Por favor, ingresa tu teléfono abajo (o regístrate si eres nuevo) para acreditarlos en tu cuenta VIP.
+                </p>
+              </div>
+            )}
+
+            {voucherError && (
+              <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex justify-between items-center animate-fade-in">
+                <p className="text-[11px] text-rose-600 font-bold">{voucherError}</p>
+                <button 
+                  type="button"
+                  onClick={() => setVoucherError("")} 
+                  className="text-rose-450 hover:text-rose-600 font-bold text-[9px] uppercase cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
+
             {!member ? (
               <form onSubmit={handleCheckPoints} className="space-y-3">
                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -215,10 +365,14 @@ export default function LoyaltyPage() {
                   <Crown className="absolute -bottom-6 -right-6 size-24 text-blue-100/30 rotate-12 pointer-events-none" />
                 </div>
 
-                <div className="flex gap-2">
+                 <div className="flex gap-2">
                   <button
-                    onClick={() => setMember(null)}
-                    className="flex-1 h-9 rounded-xl border border-slate-200 text-slate-500 font-black text-[9px] tracking-wider uppercase active:scale-95 transition-transform"
+                    onClick={() => {
+                      setMember(null);
+                      setPhone("");
+                      localStorage.removeItem("subibaja_member_phone");
+                    }}
+                    className="flex-1 h-9 rounded-xl border border-slate-200 text-slate-500 font-black text-[9px] tracking-wider uppercase active:scale-95 transition-transform cursor-pointer"
                   >
                     Salir / Otro teléfono
                   </button>
@@ -619,6 +773,45 @@ export default function LoyaltyPage() {
         <CartFloatingButton />
 
       </div>
+
+      {/* Modal Reclamo Exitoso de Puntos */}
+      {voucherClaimedPoints !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 animate-fade-in"
+            onClick={() => setVoucherClaimedPoints(null)}
+          />
+          <div className="relative w-full max-w-[380px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 text-center z-10 animate-in fade-in zoom-in-95 slide-in-from-bottom-10">
+            <div className="mx-auto w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 relative shadow-sm">
+              <CheckCircle2 className="size-8 animate-bounce" />
+              <Sparkles className="size-4 text-amber-400 fill-amber-400 absolute -top-1 -right-1 animate-pulse" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Reclamo Exitoso</span>
+              <h3 className="text-md font-black text-blue-900 font-['Poppins'] tracking-tight mt-2 uppercase">
+                ¡PUNTOS ACUMULADOS!
+              </h3>
+              <p className="text-xs text-slate-500 font-semibold px-2">
+                Hemos acreditado <strong className="text-emerald-600 font-extrabold">{voucherClaimedPoints} puntos</strong> a tu cuenta VIP por tu compra.
+              </p>
+              {member && (
+                <p className="text-[10px] text-slate-400 font-bold mt-1">
+                  Nuevo Saldo: {member.points} Puntos
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => setVoucherClaimedPoints(null)}
+              className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center cursor-pointer"
+              style={{ backgroundColor: '#BDE0FE' }}
+            >
+              ¡Excelente!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
