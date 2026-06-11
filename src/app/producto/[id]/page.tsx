@@ -127,17 +127,33 @@ export default function ProductDetailPage() {
     })
   }
 
+  const getActivePrice = () => {
+    if (!product) return 0
+    if (selectedSize && selectedColor && product.prices_by_size) {
+      const keyWithColor = `${selectedSize}_${selectedColor.toLowerCase()}`
+      if (product.prices_by_size[keyWithColor] !== undefined) {
+        return Number(product.prices_by_size[keyWithColor])
+      }
+    }
+    if (selectedSize && product.prices_by_size && product.prices_by_size[selectedSize] !== undefined) {
+      return Number(product.prices_by_size[selectedSize])
+    }
+    return Number(product.price)
+  }
+
   const handleOrder = () => {
     if (!product) return
-    const priceBs = (product.price * exchangeRate).toFixed(0)
+    const activePrice = getActivePrice()
+    const priceBs = (activePrice * exchangeRate).toFixed(0)
     const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
     const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
-    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${product.price} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
+    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${activePrice} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
     window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const handleAddToCart = () => {
     if (!product) return
+    const activePrice = getActivePrice()
     const cart = JSON.parse(localStorage.getItem('subibaja_cart') || '[]')
     const existingIndex = cart.findIndex((item: any) => 
       item.id === product.id && 
@@ -146,11 +162,12 @@ export default function ProductDetailPage() {
     )
     if (existingIndex > -1) {
       cart[existingIndex].quantity += 1
+      cart[existingIndex].price = activePrice
     } else {
       cart.push({
         id: product.id,
         title: product.title,
-        price: product.price,
+        price: activePrice,
         image_url: product.image_url,
         size: selectedSize,
         color: selectedColor,
@@ -301,11 +318,24 @@ export default function ProductDetailPage() {
           {/* ── PRECIO: text-4xl azul oscuro + Bs gris debajo ── */}
           <div className="flex flex-col mb-8">
             <span className="text-4xl font-black text-blue-900 leading-none">
-              ${product.price}
+              ${getActivePrice()}
             </span>
             <span className="text-sm text-gray-400 font-medium mt-1">
-              {(product.price * exchangeRate).toFixed(0)} Bs
+              {(getActivePrice() * exchangeRate).toFixed(0)} Bs
             </span>
+            {(() => {
+              if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
+                const uniquePrices = Array.from(new Set(Object.values(product.prices_by_size).map(v => Number(v))))
+                if (uniquePrices.length > 1) {
+                  return (
+                    <span className="text-[9px] text-[#BDE0FE] font-black uppercase tracking-widest mt-2 p-1 px-3 bg-blue-900/5 rounded-full inline-block w-fit">
+                      * El precio varía según la talla
+                    </span>
+                  )
+                }
+              }
+              return null
+            })()}
           </div>
 
           {/* ── TALLAS: chips pequeños ── */}
@@ -364,19 +394,21 @@ export default function ProductDetailPage() {
 
           {/* ── ACORDEÓN: Descripción + Cuidados ── */}
           <Accordion>
-            <AccordionItem value="description">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <AlignLeft className="size-3.5 text-gray-300" />
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    Descripción
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="text-gray-400 text-sm leading-relaxed">
-                {product.description || "Diseñado para brindar la mayor comodidad y estilo a los más pequeños."}
-              </AccordionContent>
-            </AccordionItem>
+            {product.description && product.description.trim() && (
+              <AccordionItem value="description">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <AlignLeft className="size-3.5 text-gray-300" />
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      Descripción
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-400 text-sm leading-relaxed">
+                  {product.description}
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
             <AccordionItem value="care">
               <AccordionTrigger className="hover:no-underline">

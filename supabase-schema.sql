@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     gallery_urls TEXT[] DEFAULT '{}',
     colors TEXT[] DEFAULT '{}',
     stock_status TEXT DEFAULT 'in_stock',
-    is_available BOOLEAN NOT NULL DEFAULT true
+    is_available BOOLEAN NOT NULL DEFAULT true,
+    prices_by_size JSONB DEFAULT '{}'
 );
 
 -- Enable RLS

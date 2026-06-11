@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import {
-  Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote,
+  Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote, Trash2,
   Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette, Smartphone, Ticket, User,
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
 } from "lucide-react"
@@ -36,6 +36,7 @@ export default function AdminPage() {
     title: "", price: "", category: "Zapatos", sizes: "",
     image_url: "", stock_quantity: "10", description: ""
   })
+  const [sizeGroups, setSizeGroups] = useState<{ sizes: string; price: string; color: string }[]>([])
   const [selectedSubCat, setSelectedSubCat] = useState<any>(null)
   const [selectedLeafCat, setSelectedLeafCat] = useState<any>(null)
   const [showSubDropdown, setShowSubDropdown] = useState(false)
@@ -409,21 +410,69 @@ export default function AdminPage() {
   }
 
   const handleSaveProduct = async () => {
-    if (!formData.title || !formData.price || !formData.image_url) { alert("Faltan datos"); return }
+    const activeGroups = sizeGroups.filter(g => g.sizes.trim() && g.price.trim())
+    const hasBasePrice = !!formData.price.trim()
+    const hasBaseSizes = !!formData.sizes.trim()
+    
+    if (!formData.title || !formData.image_url) { alert("Faltan datos (título o foto principal)"); return }
+    if (!hasBasePrice && activeGroups.length === 0) { alert("Debes ingresar un precio base o al menos un grupo de precios por talla"); return }
+
     try {
       setSaving(true)
+      
+      let finalPrice = parseFloat(formData.price) || 0
+      let finalSizes: string[] = formData.sizes.split(',').map(s => s.trim()).filter(Boolean)
+      const pricesBySizesObj: Record<string, number> = {}
+
+      // Procesar grupos de tallas si existen
+      if (activeGroups.length > 0) {
+        const groupSizes: string[] = []
+        activeGroups.forEach(g => {
+          const groupPrice = parseFloat(g.price) || 0
+          const sizesInGroup = g.sizes.split(',').map(s => s.trim()).filter(Boolean)
+          sizesInGroup.forEach(s => {
+            if (!groupSizes.includes(s)) {
+              groupSizes.push(s)
+            }
+            
+            if (g.color) {
+              pricesBySizesObj[`${s}_${g.color.toLowerCase()}`] = groupPrice
+            } else {
+              pricesBySizesObj[s] = groupPrice
+              colors.forEach(c => {
+                pricesBySizesObj[`${s}_${c.toLowerCase()}`] = groupPrice
+              })
+            }
+          })
+        })
+        
+        // Si no se especificaron tallas en el input principal, usar la unión de las tallas de los grupos
+        if (finalSizes.length === 0) {
+          finalSizes = groupSizes
+        }
+        
+        // Si el precio base está vacío, usar el precio del primer grupo como base
+        if (!finalPrice && activeGroups[0]) {
+          finalPrice = parseFloat(activeGroups[0].price) || 0
+        }
+      }
+
       await supabase.from('products').insert([{
-        title: formData.title, price: parseFloat(formData.price),
+        title: formData.title,
+        price: finalPrice,
         category: formData.category,
         category_id: getSelectedCategoryId(),
         image_url: formData.image_url,
-        description: formData.description,
-        sizes: formData.sizes.split(',').map(s => s.trim()).filter(Boolean),
+        description: formData.description.trim() || null,
+        sizes: finalSizes,
         colors,
         stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
-        gallery_urls: galleryUrls
+        gallery_urls: galleryUrls,
+        prices_by_size: pricesBySizesObj
       }])
+      
       setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+      setSizeGroups([])
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
       setColors([])
@@ -432,6 +481,20 @@ export default function AdminPage() {
       fetchInitialData()
       setActiveTab("inventory")
     } catch (err: any) { alert(err.message) } finally { setSaving(false) }
+  }
+
+  const handleDeleteProduct = async (id: string, title: string) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar el producto "${title}"?`)) {
+      return
+    }
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id)
+      if (error) throw error
+      alert(`Producto "${title}" eliminado con éxito.`)
+      fetchInitialData()
+    } catch (err: any) {
+      alert("Error al eliminar producto: " + err.message)
+    }
   }
 
   const kpis = {
@@ -663,11 +726,20 @@ export default function AdminPage() {
                       {product.stock_quantity ?? 0}
                     </span>
                   </div>
-                  <Switch checked={product.stock_status === 'in_stock'} className="scale-75"
-                    onCheckedChange={async (v) => {
-                      await supabase.from('products').update({ stock_status: v ? 'in_stock' : 'out_of_stock' }).eq('id', product.id)
-                      fetchInitialData()
-                    }} />
+                  <div className="flex items-center gap-1">
+                    <Switch checked={product.stock_status === 'in_stock'} className="scale-75"
+                      onCheckedChange={async (v) => {
+                        await supabase.from('products').update({ stock_status: v ? 'in_stock' : 'out_of_stock' }).eq('id', product.id)
+                        fetchInitialData()
+                      }} />
+                    <button
+                      onClick={() => handleDeleteProduct(product.id, product.title)}
+                      className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-55/10 rounded-xl transition-all active:scale-90 cursor-pointer"
+                      title="Eliminar producto"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -770,6 +842,126 @@ export default function AdminPage() {
                 <div className="space-y-1.5">
                   <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tallas (separadas por coma)</Label>
                   <div className="relative"><Ruler className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" /><Input placeholder="24, 25, 26" value={formData.sizes} onChange={(e) => setFormData({ ...formData, sizes: e.target.value })} className="h-14 rounded-2xl bg-slate-50 border-0 pl-12 font-medium" /></div>
+                </div>
+
+                {/* Precios Diferenciados por Grupos de Tallas */}
+                <div className="space-y-3 bg-slate-50/50 border border-slate-100 rounded-3xl p-5 mt-2">
+                  <div className="flex justify-between items-center px-1">
+                    <Label className="text-[10px] font-black text-slate-550 uppercase tracking-widest">Precios por Grupos (Opcional)</Label>
+                    <button
+                      type="button"
+                      onClick={() => setSizeGroups([...sizeGroups, { sizes: "", price: "", color: "" }])}
+                      className="text-[8px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                    >
+                      + AGREGAR GRUPO
+                    </button>
+                  </div>
+                  
+                  {sizeGroups.length === 0 ? (
+                    <p className="text-[10px] text-slate-400 font-semibold pl-1 leading-normal">
+                      No has agregado grupos. Se usará el precio base y la lista de tallas principal.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {sizeGroups.map((group, idx) => (
+                        <div key={idx} className="flex flex-col gap-3 bg-white p-4.5 rounded-2xl border border-slate-100/80 shadow-2xs">
+                          {/* Fila superior: Tallas, Precio y Eliminar */}
+                          <div className="flex gap-2.5 items-end">
+                            {/* Campo Tallas */}
+                            <div className="flex-1 space-y-1">
+                              <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Tallas (ej: 30,31,32)</label>
+                              <input
+                                type="text"
+                                placeholder="Ej: 30, 31, 32"
+                                value={group.sizes}
+                                onChange={(e) => {
+                                  const next = [...sizeGroups]
+                                  next[idx].sizes = e.target.value
+                                  setSizeGroups(next)
+                                }}
+                                className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold focus:outline-none focus:border-blue-200 transition-colors"
+                              />
+                            </div>
+                            
+                            {/* Campo Precio */}
+                            <div className="w-24 space-y-1">
+                              <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Precio $</label>
+                              <div className="relative">
+                                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-slate-350" />
+                                <input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={group.price}
+                                  onChange={(e) => {
+                                    const next = [...sizeGroups]
+                                    next[idx].price = e.target.value
+                                    setSizeGroups(next)
+                                  }}
+                                  className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Botón Eliminar */}
+                            <button
+                              type="button"
+                              onClick={() => setSizeGroups(sizeGroups.filter((_, i) => i !== idx))}
+                              className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100 hover:border-rose-100 transition-all active:scale-90 cursor-pointer flex-shrink-0"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Fila inferior: Selección de Color */}
+                          {colors.length > 0 && (
+                            <div className="space-y-1.5 pt-1.5 border-t border-slate-100/50">
+                              <label className="text-[8.5px] font-black text-slate-450 uppercase tracking-wider block">Vincular a Color (Opcional)</label>
+                              <div className="flex flex-wrap gap-2 items-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const next = [...sizeGroups]
+                                    next[idx].color = ""
+                                    setSizeGroups(next)
+                                  }}
+                                  className={`h-6 px-2.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center border ${
+                                    !group.color
+                                      ? 'bg-blue-50 text-blue-900 border-blue-200/50 font-black'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  Todos
+                                </button>
+                                {colors.map(c => {
+                                  const isSelected = group.color === c
+                                  return (
+                                    <button
+                                      key={c}
+                                      type="button"
+                                      onClick={() => {
+                                        const next = [...sizeGroups]
+                                        next[idx].color = c
+                                        setSizeGroups(next)
+                                      }}
+                                      className={`size-6 rounded-full border transition-all relative flex items-center justify-center ${
+                                        isSelected ? 'ring-2 ring-offset-1 ring-blue-500 border-blue-500 scale-110 shadow-sm' : 'border-slate-200 hover:scale-105'
+                                      }`}
+                                      style={{ backgroundColor: c }}
+                                      title={c}
+                                    >
+                                      {isSelected && (
+                                        <div className="size-1.5 rounded-full bg-white shadow-xs mix-blend-difference" />
+                                      )}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Colores */}

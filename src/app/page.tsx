@@ -578,19 +578,39 @@ export default function Home() {
                       <h3 className="text-gray-400 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
                         {product.title}
                       </h3>
-                      <div className="flex flex-col items-center">
-                        <span className="text-blue-900 font-bold text-lg leading-tight">${product.price}</span>
-                        <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
-                          {(product.price * exchangeRate).toFixed(0)} Bs
-                        </span>
-                      </div>
-                      <Link href={`/producto/${product.id}`} className="w-1/2 mb-1">
-                        <button
-                          className="w-full rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm"
-                          style={{ height: '24px', backgroundColor: '#BDE0FE' }}
-                        >
-                          LO QUIERO
-                        </button>
+                      {(() => {
+                        if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
+                          const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v))
+                          if (prices.length > 0) {
+                            const min = Math.min(...prices)
+                            const max = Math.max(...prices)
+                            if (min < max) {
+                              return (
+                                <div className="flex flex-col items-center">
+                                  <span className="text-blue-900 font-bold text-lg leading-tight">Desde ${min}</span>
+                                  <span className="text-slate-350 text-[9px] uppercase tracking-widest font-bold">
+                                    Desde {(min * exchangeRate).toFixed(0)} Bs
+                                  </span>
+                                </div>
+                              )
+                            }
+                          }
+                        }
+                        return (
+                          <div className="flex flex-col items-center">
+                            <span className="text-blue-900 font-bold text-lg leading-tight">${product.price}</span>
+                            <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
+                              {(product.price * exchangeRate).toFixed(0)} Bs
+                            </span>
+                          </div>
+                        )
+                      })()}
+                      <Link 
+                        href={`/producto/${product.id}`} 
+                        className="w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
+                        style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+                      >
+                        LO QUIERO
                       </Link>
                     </div>
 
@@ -648,13 +668,12 @@ export default function Home() {
                 <p className="text-xs text-slate-500 leading-relaxed font-medium">
                   ¿No sabes qué obsequiar? Regala estilo y sonrisas con nuestra **Gift Card de $50 USD**. El detalle perfecto para que elijan sus prendas y zapatos favoritos en nuestra tienda.
                 </p>
-                <Link href="/giftcard" className="block w-full">
-                  <button
-                    className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
-                    style={{ backgroundColor: '#BDE0FE' }}
-                  >
-                    <Gift className="size-3.5" /> VER TARJETAS DE REGALO
-                  </button>
+                <Link 
+                  href="/giftcard" 
+                  className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
+                  style={{ backgroundColor: '#BDE0FE' }}
+                >
+                  <Gift className="size-3.5" /> VER TARJETAS DE REGALO
                 </Link>
               </div>
 
