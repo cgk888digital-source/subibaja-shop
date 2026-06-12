@@ -371,7 +371,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* ── ACORDEÓN DE COMPRA Y DETALLES: Tallas + Colores + Descripción + Cuidados ── */}
-          <Accordion type="multiple" defaultValue={["size"]}>
+          <Accordion multiple defaultValue={["size"]}>
             {getParsedSizes().length > 0 && (
               <AccordionItem value="size">
                 <AccordionTrigger className="hover:no-underline py-3.5">
