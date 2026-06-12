@@ -141,6 +141,40 @@ export default function ProductDetailPage() {
     return Number(product.price)
   }
 
+  const getSizePrice = (size: string) => {
+    if (!product) return 0
+    if (size && selectedColor && product.prices_by_size) {
+      const keyWithColor = `${size}_${selectedColor.toLowerCase()}`
+      if (product.prices_by_size[keyWithColor] !== undefined) {
+        return Number(product.prices_by_size[keyWithColor])
+      }
+    }
+    if (size && product.prices_by_size && product.prices_by_size[size] !== undefined) {
+      return Number(product.prices_by_size[size])
+    }
+    return Number(product.price)
+  }
+
+  const getPriceRange = () => {
+    if (!product) return null
+    const pricesSet = new Set<number>()
+    pricesSet.add(Number(product.price))
+    if (product.prices_by_size) {
+      Object.keys(product.prices_by_size).forEach(key => {
+        const val = Number(product.prices_by_size[key])
+        if (!isNaN(val)) {
+          pricesSet.add(val)
+        }
+      })
+    }
+    const pricesList = Array.from(pricesSet).sort((a, b) => a - b)
+    if (pricesList.length <= 1) return null
+    return {
+      min: pricesList[0],
+      max: pricesList[pricesList.length - 1]
+    }
+  }
+
   const handleOrder = () => {
     if (!product) return
     const activePrice = getActivePrice()
@@ -317,109 +351,137 @@ export default function ProductDetailPage() {
 
           {/* ── PRECIO: text-4xl azul oscuro + Bs gris debajo ── */}
           <div className="flex flex-col mb-8">
-            <span className="text-4xl font-black text-blue-900 leading-none">
+            <span className="text-4xl font-black text-blue-900 leading-none font-['Poppins']">
               ${getActivePrice()}
             </span>
-            <span className="text-sm text-gray-400 font-medium mt-1">
+            <span className="text-sm text-gray-400 font-bold mt-1">
               {(getActivePrice() * exchangeRate).toFixed(0)} Bs
             </span>
             {(() => {
-              if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
-                const uniquePrices = Array.from(new Set(Object.values(product.prices_by_size).map(v => Number(v))))
-                if (uniquePrices.length > 1) {
-                  return (
-                    <span className="text-[9px] text-[#BDE0FE] font-black uppercase tracking-widest mt-2 p-1 px-3 bg-blue-900/5 rounded-full inline-block w-fit">
-                      * El precio varía según la talla
-                    </span>
-                  )
-                }
+              const range = getPriceRange()
+              if (range) {
+                return (
+                  <div className="mt-2.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-100/60 border border-slate-200/30 px-3 py-1.5 rounded-full w-fit">
+                    <span>Precios desde ${range.min} hasta ${range.max} según la talla</span>
+                  </div>
+                )
               }
               return null
             })()}
           </div>
 
-          {/* ── TALLAS: chips pequeños ── */}
-          {getParsedSizes().length > 0 && (
-            <div className="mb-7">
-              <div className="flex items-center gap-2 mb-3">
-                <Ruler className="size-3.5 text-gray-400" />
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Talla</span>
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                {getParsedSizes().map((size: string) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className="w-11 h-11 rounded-2xl text-xs font-black transition-all active:scale-95 shadow-2xs flex items-center justify-center cursor-pointer"
-                    style={{
-                      backgroundColor: selectedSize === size ? '#1e3a5f' : '#f8fafc',
-                      color: selectedSize === size ? '#ffffff' : '#64748b',
-                      border: `1.5px solid ${selectedSize === size ? '#1e3a5f' : '#e2e8f0'}`,
-                    }}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* ── ACORDEÓN DE COMPRA Y DETALLES: Tallas + Colores + Descripción + Cuidados ── */}
+          <Accordion type="multiple" defaultValue={["size"]}>
+            {getParsedSizes().length > 0 && (
+              <AccordionItem value="size">
+                <AccordionTrigger className="hover:no-underline py-3.5">
+                  <div className="flex justify-between items-center w-full pr-4">
+                    <div className="flex items-center gap-2">
+                      <Ruler className="size-3.5 text-slate-400" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        Tallas
+                      </span>
+                    </div>
+                    {selectedSize && (
+                      <span className="text-[9px] font-black text-blue-900 bg-[#BDE0FE]/40 border border-[#BDE0FE]/50 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                        Talla {selectedSize}
+                      </span>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="flex flex-wrap gap-2.5">
+                    {getParsedSizes().map((size: string) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all active:scale-95 shadow-2xs cursor-pointer border min-w-12 h-14"
+                        style={{
+                          backgroundColor: selectedSize === size ? '#1e3a5f' : '#f8fafc',
+                          color: selectedSize === size ? '#ffffff' : '#64748b',
+                          borderColor: selectedSize === size ? '#1e3a5f' : '#e2e8f0',
+                        }}
+                      >
+                        <span className="text-xs font-black">{size}</span>
+                        <span className={`text-[8px] font-black mt-0.5 ${selectedSize === size ? 'text-[#BDE0FE]' : 'text-slate-400'}`}>
+                          ${getSizePrice(size)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          {/* ── COLORES: swatches circulares ── */}
-          {getParsedColors().length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <Palette className="size-3.5 text-gray-400" />
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Color</span>
-              </div>
-              <div className="flex gap-3">
-                {getParsedColors().map((color: string) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    title={color}
-                    className={`size-8 rounded-full transition-all active:scale-90 cursor-pointer shadow-sm ${
-                      selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-900' : 'border border-slate-200'
-                    }`}
-                    style={{
-                      backgroundColor: color,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+            {getParsedColors().length > 0 && (
+              <AccordionItem value="color">
+                <AccordionTrigger className="hover:no-underline py-3.5">
+                  <div className="flex justify-between items-center w-full pr-4">
+                    <div className="flex items-center gap-2">
+                      <Palette className="size-3.5 text-slate-400" />
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        Colores
+                      </span>
+                    </div>
+                    {selectedColor && (
+                      <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full">
+                        <span
+                          className="size-3.5 rounded-full border border-slate-200/60 shadow-2xs block animate-fade-in"
+                          style={{ backgroundColor: selectedColor }}
+                        />
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                          {selectedColor.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="flex flex-wrap gap-3">
+                    {getParsedColors().map((color: string) => (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        title={color}
+                        className={`size-8 rounded-full transition-all active:scale-90 cursor-pointer shadow-sm ${
+                          selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-900' : 'border border-slate-200'
+                        }`}
+                        style={{
+                          backgroundColor: color,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
-          {/* divisor */}
-          <div className="h-px bg-slate-100 mb-4" />
-
-          {/* ── ACORDEÓN: Descripción + Cuidados ── */}
-          <Accordion>
             {product.description && product.description.trim() && (
               <AccordionItem value="description">
-                <AccordionTrigger className="hover:no-underline">
+                <AccordionTrigger className="hover:no-underline py-3.5">
                   <div className="flex items-center gap-2">
-                    <AlignLeft className="size-3.5 text-gray-300" />
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <AlignLeft className="size-3.5 text-slate-400" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                       Descripción
                     </span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="text-gray-400 text-sm leading-relaxed">
+                <AccordionContent className="text-gray-400 text-sm leading-relaxed pt-2 pb-4">
                   {product.description}
                 </AccordionContent>
               </AccordionItem>
             )}
 
             <AccordionItem value="care">
-              <AccordionTrigger className="hover:no-underline">
+              <AccordionTrigger className="hover:no-underline py-3.5">
                 <div className="flex items-center gap-2">
-                  <AlignLeft className="size-3.5 text-gray-300" />
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <AlignLeft className="size-3.5 text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     Cuidados
                   </span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="text-gray-400 text-sm leading-relaxed">
+              <AccordionContent className="text-gray-400 text-sm leading-relaxed pt-2 pb-4">
                 {product.care_instructions || "Lavar a mano con agua fría. No usar blanqueador. Planchar a temperatura baja."}
               </AccordionContent>
             </AccordionItem>
