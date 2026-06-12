@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import {
-  Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote, Trash2,
+  Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote, Trash2, Pencil,
   Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette, Smartphone, Ticket, User,
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
 } from "lucide-react"
@@ -69,6 +69,7 @@ export default function AdminPage() {
   const [uploadingRewardImg, setUploadingRewardImg] = useState(false)
   const [generatedVoucher, setGeneratedVoucher] = useState<{ id: string, points: number, amount_usd: number } | null>(null)
   const [generatingQr, setGeneratingQr] = useState(false)
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
@@ -402,6 +403,90 @@ export default function AdminPage() {
     setGalleryUrls(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleStartEditProduct = (p: any) => {
+    setEditingProductId(p.id)
+    
+    // Set form fields
+    setFormData({
+      title: p.title || "",
+      price: p.price ? p.price.toString() : "",
+      category: p.category || "Zapatos",
+      sizes: p.sizes ? p.sizes.join(", ") : "",
+      image_url: p.image_url || "",
+      stock_quantity: p.stock_quantity ? p.stock_quantity.toString() : "10",
+      description: p.description || ""
+    })
+    
+    // Reconstruct size groups from prices_by_size if it's formatted
+    const reconstructedGroups: { sizes: string; price: string; color: string }[] = []
+    
+    if (p.prices_by_size && Object.keys(p.prices_by_size).length > 0) {
+      const pricesMap: Record<string, string[]> = {}
+      Object.keys(p.prices_by_size).forEach(k => {
+        const val = p.prices_by_size[k]
+        if (k.includes('_')) {
+          const [sz, col] = k.split('_')
+          const key = `${val}_${col}`
+          if (!pricesMap[key]) pricesMap[key] = []
+          if (!pricesMap[key].includes(sz)) pricesMap[key].push(sz)
+        } else {
+          const key = `${val}_`
+          if (!pricesMap[key]) pricesMap[key] = []
+          if (!pricesMap[key].includes(k)) pricesMap[key].push(k)
+        }
+      })
+      
+      Object.keys(pricesMap).forEach(key => {
+        const [price, col] = key.split('_')
+        const sizes = pricesMap[key].sort((a,b) => parseInt(a) - parseInt(b)).join(", ")
+        reconstructedGroups.push({
+          sizes,
+          price,
+          color: col || ""
+        })
+      })
+    }
+    setSizeGroups(reconstructedGroups)
+    
+    // Set colors & gallery
+    setColors(p.colors || [])
+    setGalleryUrls(p.gallery_urls || [])
+    
+    // Resolve category hierarchy
+    if (p.category_id) {
+      const cat = categories.find(c => c.id === p.category_id)
+      if (cat) {
+        if (cat.parent_id) {
+          const parent = categories.find(c => c.id === cat.parent_id)
+          if (parent) {
+            if (parent.parent_id) {
+              const main = categories.find(c => c.id === parent.parent_id)
+              if (main) {
+                setFormData(prev => ({ ...prev, category: main.name }))
+                setSelectedSubCat(parent)
+                setSelectedLeafCat(cat)
+              }
+            } else {
+              setFormData(prev => ({ ...prev, category: parent.name }))
+              setSelectedSubCat(cat)
+              setSelectedLeafCat(null)
+            }
+          }
+        } else {
+          setFormData(prev => ({ ...prev, category: cat.name }))
+          setSelectedSubCat(null)
+          setSelectedLeafCat(null)
+        }
+      }
+    } else {
+      setSelectedSubCat(null)
+      setSelectedLeafCat(null)
+    }
+    
+    // Switch to upload tab
+    setActiveTab("upload")
+  }
+
   const getSelectedCategoryId = () => {
     if (selectedLeafCat) return selectedLeafCat.id
     if (selectedSubCat) return selectedSubCat.id
@@ -457,19 +542,39 @@ export default function AdminPage() {
         }
       }
 
-      await supabase.from('products').insert([{
-        title: formData.title,
-        price: finalPrice,
-        category: formData.category,
-        category_id: getSelectedCategoryId(),
-        image_url: formData.image_url,
-        description: formData.description.trim() || null,
-        sizes: finalSizes,
-        colors,
-        stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
-        gallery_urls: galleryUrls,
-        prices_by_size: pricesBySizesObj
-      }])
+      if (editingProductId) {
+        const { error } = await supabase.from('products').update({
+          title: formData.title,
+          price: finalPrice,
+          category: formData.category,
+          category_id: getSelectedCategoryId(),
+          image_url: formData.image_url,
+          description: formData.description.trim() || null,
+          sizes: finalSizes,
+          colors,
+          stock_quantity: parseInt(formData.stock_quantity),
+          gallery_urls: galleryUrls,
+          prices_by_size: pricesBySizesObj
+        }).eq('id', editingProductId)
+        if (error) throw error
+        alert("¡Producto actualizado con éxito!")
+      } else {
+        const { error } = await supabase.from('products').insert([{
+          title: formData.title,
+          price: finalPrice,
+          category: formData.category,
+          category_id: getSelectedCategoryId(),
+          image_url: formData.image_url,
+          description: formData.description.trim() || null,
+          sizes: finalSizes,
+          colors,
+          stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
+          gallery_urls: galleryUrls,
+          prices_by_size: pricesBySizesObj
+        }])
+        if (error) throw error
+        alert("¡Producto creado con éxito!")
+      }
       
       setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
       setSizeGroups([])
@@ -478,6 +583,7 @@ export default function AdminPage() {
       setColors([])
       setColorPick("#BDE0FE")
       setGalleryUrls([])
+      setEditingProductId(null)
       fetchInitialData()
       setActiveTab("inventory")
     } catch (err: any) { alert(err.message) } finally { setSaving(false) }
@@ -732,6 +838,13 @@ export default function AdminPage() {
                         await supabase.from('products').update({ stock_status: v ? 'in_stock' : 'out_of_stock' }).eq('id', product.id)
                         fetchInitialData()
                       }} />
+                    <button
+                      onClick={() => handleStartEditProduct(product)}
+                      className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50/50 rounded-xl transition-all active:scale-90 cursor-pointer"
+                      title="Editar producto"
+                    >
+                      <Pencil className="size-4" />
+                    </button>
                     <button
                       onClick={() => handleDeleteProduct(product.id, product.title)}
                       className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-55/10 rounded-xl transition-all active:scale-90 cursor-pointer"
@@ -1221,11 +1334,32 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <button onClick={handleSaveProduct} disabled={saving || uploading}
-                className="w-full rounded-full font-black tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95"
-                style={{ height: '56px', backgroundColor: '#BDE0FE', fontSize: '12px' }}>
-                {saving ? 'PUBLICANDO...' : 'PUBLICAR PRODUCTO'}
-              </button>
+              <div className="flex gap-3 w-full">
+                {editingProductId && (
+                  <button
+                    onClick={() => {
+                      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+                      setSizeGroups([])
+                      setSelectedSubCat(null)
+                      setSelectedLeafCat(null)
+                      setColors([])
+                      setColorPick("#BDE0FE")
+                      setGalleryUrls([])
+                      setEditingProductId(null)
+                      setActiveTab("inventory")
+                    }}
+                    className="flex-1 rounded-full font-black tracking-widest text-slate-500 bg-slate-100 hover:bg-slate-200 transition-transform active:scale-95 text-[10px] uppercase border border-slate-200"
+                    style={{ height: '56px' }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+                <button onClick={handleSaveProduct} disabled={saving || uploading}
+                  className={`${editingProductId ? 'flex-2' : 'w-full'} rounded-full font-black tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95`}
+                  style={{ height: '56px', backgroundColor: '#BDE0FE', fontSize: '12px' }}>
+                  {saving ? 'GUARDANDO...' : editingProductId ? 'GUARDAR CAMBIOS' : 'CARGAR PRODUCTO'}
+                </button>
+              </div>
             </div>
           </div>
         )}
