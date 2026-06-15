@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Fragment } from "react"
 import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent } from "lucide-react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
@@ -418,6 +418,57 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Banner de Fidelización - Club VIP */}
+          <div className="px-4 mt-6">
+            <div className="bg-gradient-to-br from-[#1e3a8a] via-[#1e1b4b] to-[#311042] text-white rounded-[32px] p-5 shadow-lg relative overflow-hidden select-none border border-indigo-950/50">
+              {/* Background glows */}
+              <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="flex gap-4 items-center">
+                {/* Lado izquierdo: Foto del producto con badge */}
+                <div className="w-[110px] h-[110px] relative rounded-2xl overflow-hidden border border-white/10 shadow-md bg-slate-900 flex-shrink-0">
+                  <img 
+                    src="https://nlzgqnkplqldpoghwtzj.supabase.co/storage/v1/object/public/product-images/products/1778193906387.jpeg" 
+                    alt="Modelo Sinderella" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 inset-x-0 bg-blue-900/90 text-white text-[7.5px] font-black tracking-widest text-center py-1 uppercase">
+                    50% OFF · 200 PTS
+                  </div>
+                </div>
+
+                {/* Lado derecho: Detalles de acumulación */}
+                <div className="flex-1 space-y-1.5 text-left">
+                  <div className="flex items-center gap-1">
+                    <Crown className="size-3.5 text-amber-400 fill-amber-400 animate-pulse" />
+                    <span className="text-[8px] font-black uppercase tracking-widest text-[#BDE0FE] font-['Poppins']">Club VIP Subibaja</span>
+                  </div>
+                  <h4 className="text-xs font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight">
+                    ¡Compra y Acumula Puntos!
+                  </h4>
+                  <p className="text-[9.5px] text-slate-300 font-semibold leading-normal">
+                    Gana 1 punto por cada $1 USD. Canjéalos por regalos directos o un **50% de descuento** en tus calzados favoritos.
+                  </p>
+                </div>
+              </div>
+
+              {/* Botón de acción */}
+              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                  ¿Ya tienes cuenta?
+                </span>
+                <Link 
+                  href="/puntos" 
+                  className="h-8 px-4 rounded-full font-black tracking-widest text-blue-900 text-[8.5px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 hover:bg-[#a6d5ff] cursor-pointer"
+                  style={{ backgroundColor: '#BDE0FE' }}
+                >
+                  <Sparkles className="size-3 text-amber-500 fill-amber-500" /> CONSULTAR PUNTOS
+                </Link>
+              </div>
+            </div>
+          </div>
+
           <div className="px-4 mt-6">
             {/* Categorías Principales */}
             <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Categorías</h3>
@@ -549,73 +600,98 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                {filteredProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-0.5"
-                  >
-                    {/* ── IMAGEN: full-bleed, aspect-square, sin padding, bordes superiores heredados ── */}
-                    <div className="relative aspect-square overflow-hidden">
-                      <Link href={`/producto/${product.id}`} className="block w-full h-full">
-                        <img
-                          src={product.image_url}
-                          alt={product.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      </Link>
-                      <button 
-                        onClick={(e) => toggleFavorite(product.id, e)}
-                        className={`absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow-sm transition-all active:scale-125 ${
-                          favorites.includes(product.id) ? 'text-rose-500' : 'text-gray-300 hover:text-rose-300'
-                        } ${justLiked === product.id ? 'animate-heartbeat' : ''}`}
-                      >
-                        <Heart className={`size-3.5 ${favorites.includes(product.id) ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
+                {filteredProducts.map((product, index) => {
+                  const middleIndex = filteredProducts.length > 2 ? Math.floor(filteredProducts.length / 2) : -1
+                  const showMiddleBanner = index === middleIndex
 
-                    {/* ── TEXTOS + BOTÓN: px-4 fondo blanco ── */}
-                    <div className="flex flex-col items-center gap-2 px-4 py-3">
-                      <h3 className="text-gray-400 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
-                        {product.title}
-                      </h3>
-                      {(() => {
-                        if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
-                          const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v))
-                          if (prices.length > 0) {
-                            const min = Math.min(...prices)
-                            const max = Math.max(...prices)
-                            if (min < max) {
-                              return (
-                                <div className="flex flex-col items-center">
-                                  <span className="text-blue-900 font-bold text-lg leading-tight">Desde ${min}</span>
-                                  <span className="text-slate-350 text-[9px] uppercase tracking-widest font-bold">
-                                    Desde {(min * exchangeRate).toFixed(0)} Bs
-                                  </span>
-                                </div>
-                              )
-                            }
-                          }
-                        }
-                        return (
-                          <div className="flex flex-col items-center">
-                            <span className="text-blue-900 font-bold text-lg leading-tight">${product.price}</span>
-                            <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
-                              {(product.price * exchangeRate).toFixed(0)} Bs
-                            </span>
+                  return (
+                    <Fragment key={product.id}>
+                      {showMiddleBanner && (
+                        <div className="col-span-2 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 relative aspect-[16/8] group">
+                          <img 
+                            src="/zapatos_subibaja.jpeg" 
+                            alt="Zapatos Subibaja" 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/10 to-transparent flex flex-col justify-end p-5 text-left">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-[#BDE0FE] font-['Poppins']">Colección Subibaja</span>
+                            <h4 className="text-sm font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight mt-1">
+                              Calidad y Diseño en Cada Paso
+                            </h4>
+                            <p className="text-[9.5px] text-slate-200 font-semibold leading-normal mt-0.5 max-w-[280px]">
+                              Modelos exclusivos diseñados para brindar la máxima comodidad y estilo en el crecimiento de tus niños.
+                            </p>
                           </div>
-                        )
-                      })()}
-                      <Link 
-                        href={`/producto/${product.id}`} 
-                        className="w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
-                        style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+                        </div>
+                      )}
+                      
+                      <div
+                        className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-0.5"
                       >
-                        LO QUIERO
-                      </Link>
-                    </div>
+                        {/* ── IMAGEN: full-bleed, aspect-square, sin padding, bordes superiores heredados ── */}
+                        <div className="relative aspect-square overflow-hidden">
+                          <Link href={`/producto/${product.id}`} className="block w-full h-full">
+                            <img
+                              src={product.image_url}
+                              alt={product.title}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                          </Link>
+                          <button 
+                            onClick={(e) => toggleFavorite(product.id, e)}
+                            className={`absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow-sm transition-all active:scale-125 ${
+                              favorites.includes(product.id) ? 'text-rose-500' : 'text-gray-300 hover:text-rose-300'
+                            } ${justLiked === product.id ? 'animate-heartbeat' : ''}`}
+                          >
+                            <Heart className={`size-3.5 ${favorites.includes(product.id) ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
 
-                  </div>
-                ))}
+                        {/* ── TEXTOS + BOTÓN: px-4 fondo blanco ── */}
+                        <div className="flex flex-col items-center gap-2 px-4 py-3">
+                          <h3 className="text-gray-400 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
+                            {product.title}
+                          </h3>
+                          {(() => {
+                            if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
+                              const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v))
+                              if (prices.length > 0) {
+                                const min = Math.min(...prices)
+                                const max = Math.max(...prices)
+                                if (min < max) {
+                                  return (
+                                    <div className="flex flex-col items-center">
+                                      <span className="text-blue-900 font-bold text-lg leading-tight">Desde ${min}</span>
+                                      <span className="text-slate-350 text-[9px] uppercase tracking-widest font-bold">
+                                        Desde {(min * exchangeRate).toFixed(0)} Bs
+                                      </span>
+                                    </div>
+                                  )
+                                }
+                              }
+                            }
+                            return (
+                              <div className="flex flex-col items-center">
+                                <span className="text-blue-900 font-bold text-lg leading-tight">${product.price}</span>
+                                <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
+                                  {(product.price * exchangeRate).toFixed(0)} Bs
+                                </span>
+                              </div>
+                            )
+                          })()}
+                          <Link 
+                            href={`/producto/${product.id}`} 
+                            className="w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
+                            style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+                          >
+                            LO QUIERO
+                          </Link>
+                        </div>
+
+                      </div>
+                    </Fragment>
+                  )
+                })}
               </div>
             )}
 
