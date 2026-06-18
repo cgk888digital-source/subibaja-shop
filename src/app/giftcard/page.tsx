@@ -90,7 +90,7 @@ export default function GiftCardPurchasePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-['Lato',sans-serif] pb-24">
-      <div className="max-w-[430px] mx-auto relative">
+      <div className="w-full max-w-[430px] md:max-w-4xl mx-auto relative md:px-4 md:py-6">
         
         {/* Header con Glassmorphism */}
         <header className="bg-white/75 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100/50">

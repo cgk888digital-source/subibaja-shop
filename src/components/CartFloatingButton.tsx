@@ -78,8 +78,8 @@ export default function CartFloatingButton() {
 
   return (
     <>
-      {/* Botón flotante centrado respecto al viewport móvil de 430px */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 pointer-events-none px-5 flex justify-end">
+      {/* Botón flotante centrado respecto al viewport móvil de 430px, o en la esquina en PC */}
+      <div className="fixed bottom-24 md:bottom-8 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 w-full md:w-auto max-w-[430px] md:max-w-none z-40 pointer-events-none px-5 md:px-0 md:right-8 flex justify-end">
         <button
           onClick={() => setIsOpen(true)}
           className="pointer-events-auto size-14 rounded-full shadow-2xl flex items-center justify-center relative transition-transform active:scale-95 cursor-pointer border border-white/20"

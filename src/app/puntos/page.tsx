@@ -240,7 +240,7 @@ export default function LoyaltyPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-['Lato',sans-serif] pb-24">
-      <div className="max-w-[430px] mx-auto relative">
+      <div className="w-full max-w-[430px] md:max-w-4xl mx-auto relative md:px-4 md:py-6">
         {/* Header con Glassmorphism */}
         <header className="bg-white/75 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100/50">
           <div className="w-full px-5 h-16 flex items-center justify-between">
@@ -251,7 +251,7 @@ export default function LoyaltyPage() {
               <ChevronLeft className="size-5 text-gray-800" />
             </button>
             <h1 className="text-sm font-black text-blue-900 tracking-wider uppercase flex items-center gap-1.5 font-['Poppins']">
-              <Sparkles className="size-4 text-amber-400 fill-amber-400 animate-pulse" /> Clientes VIP
+              <Sparkles className="size-4 text-amber-400 fill-amber-400 animate-pulse" /> Club Subibaja
             </h1>
             <div className="w-9 h-9" /> {/* Spacer */}
           </div>
@@ -271,7 +271,7 @@ export default function LoyaltyPage() {
               <div className="space-y-1">
                 <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] uppercase">Beneficios Exclusivos</span>
                 <h3 className="text-sm font-black font-['Poppins'] tracking-tight flex items-center gap-1">
-                  ✨ Ver Programa VIP Subibaja
+                  Ver Programa Club Subibaja
                 </h3>
                 <p className="text-[10px] text-slate-300 font-medium">Conoce cómo ganar 25% de descuento en tus compras.</p>
               </div>
@@ -620,7 +620,7 @@ export default function LoyaltyPage() {
 
         {/* Navegación Inferior con Glassmorphism */}
         <nav 
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 bg-[#BDE0FE]/80 backdrop-blur-xl"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 bg-[#BDE0FE]/80 backdrop-blur-xl md:hidden"
           style={{ 
             backgroundColor: 'rgba(189, 224, 254, 0.85)', 
             backdropFilter: 'blur(16px)', 
@@ -658,7 +658,7 @@ export default function LoyaltyPage() {
               <div className="w-10 h-8 rounded-2xl bg-white/30 flex items-center justify-center">
                 <Crown className="size-4 text-blue-900" />
               </div>
-              <span className="text-[9px] font-black text-blue-900 tracking-wide">Clientes VIP</span>
+              <span className="text-[9px] font-black text-blue-900 tracking-wide">Club Subibaja</span>
             </Link>
 
             {/* Admin */}
@@ -684,16 +684,19 @@ export default function LoyaltyPage() {
             {/* Modal Card Container */}
             <div className="relative w-full max-w-[380px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 text-center z-10 transition-all duration-300 animate-in fade-in zoom-in-95 slide-in-from-bottom-10">
               
-              {/* Top Sparkles and Crown Visual */}
-              <div className="mx-auto w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 relative shadow-sm border border-amber-100/50">
-                <Crown className="size-8 fill-current" />
-                <Sparkles className="size-5 text-amber-400 fill-amber-400 absolute -top-1 -right-1 animate-pulse" />
+              {/* Top Logo Visual */}
+              <div className="mx-auto w-16 h-16 rounded-full overflow-hidden shadow-sm border border-slate-100 bg-white">
+                <img 
+                  src="/Logo.jpg.jpeg" 
+                  alt="Subibaja Logo" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               
               <div className="space-y-1">
                 <span className="text-[9px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">PROGRAMA EXCLUSIVO</span>
                 <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2">
-                  ✨ PROGRAMA VIP SUBIBAJA ✨
+                  PROGRAMA CLUB SUBIBAJA
                 </h3>
               </div>
 
@@ -702,7 +705,6 @@ export default function LoyaltyPage() {
                 
                 {/* Intro */}
                 <div className="flex items-start gap-2.5">
-                  <span className="text-base leading-none">💖</span>
                   <p className="text-[11px] font-bold text-slate-800 leading-relaxed">
                     En Subibaja premiamos tu fidelidad.
                   </p>
@@ -713,13 +715,12 @@ export default function LoyaltyPage() {
                 {/* How it works */}
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-base leading-none">🛍️</span>
                     <h4 className="text-[11px] font-black text-blue-900 uppercase tracking-wider font-['Poppins']">¿Cómo funciona?</h4>
                   </div>
                   <ul className="space-y-2 pl-1">
                     <li className="flex items-start gap-2 text-[10.5px] text-slate-600 font-bold leading-relaxed">
                       <span className="text-blue-500 mt-1">•</span>
-                      <span>Con una compra mínima de <strong>$30</strong>, entras automáticamente a nuestro programa VIP.</span>
+                      <span>Con una compra mínima de <strong>$30</strong>, entras automáticamente a nuestro Club Subibaja.</span>
                     </li>
                     <li className="flex items-start gap-2 text-[10.5px] text-slate-600 font-bold leading-relaxed">
                       <span className="text-blue-500 mt-1">•</span>
@@ -733,7 +734,6 @@ export default function LoyaltyPage() {
                 {/* Reward */}
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-base leading-none">🎉</span>
                     <h4 className="text-[11px] font-black text-blue-900 uppercase tracking-wider font-['Poppins']">Tu recompensa</h4>
                   </div>
                   <ul className="space-y-2 pl-1">
@@ -749,10 +749,10 @@ export default function LoyaltyPage() {
                 {/* Bottom Slogans */}
                 <div className="text-center space-y-2 pt-1">
                   <p className="text-[10px] font-black text-indigo-950">
-                    ✨ ¡Mientras más compras, más beneficios disfrutas!
+                    ¡Mientras más compras, más beneficios disfrutas!
                   </p>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-normal">
-                    Compra • Acumula puntos <br/>• Disfruta recompensas 💕
+                    Compra • Acumula puntos <br/>• Disfruta recompensas
                   </p>
                 </div>
               </div>
@@ -793,7 +793,7 @@ export default function LoyaltyPage() {
                 ¡PUNTOS ACUMULADOS!
               </h3>
               <p className="text-xs text-slate-500 font-semibold px-2">
-                Hemos acreditado <strong className="text-emerald-600 font-extrabold">{voucherClaimedPoints} puntos</strong> a tu cuenta VIP por tu compra.
+                Hemos acreditado <strong className="text-emerald-600 font-extrabold">{voucherClaimedPoints} puntos</strong> a tu cuenta de Club Subibaja por tu compra.
               </p>
               {member && (
                 <p className="text-[10px] text-slate-400 font-bold mt-1">

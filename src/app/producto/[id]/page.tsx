@@ -268,10 +268,10 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-[430px] mx-auto relative">
+      <div className="w-full max-w-[430px] md:max-w-6xl mx-auto relative md:px-6 md:py-8">
 
         {/* ── HEADER FLOTANTE CON GLASSMORPHISM ── */}
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-30 px-4 pt-5 flex justify-between items-center pointer-events-none">
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] md:max-w-6xl z-30 px-4 pt-5 flex justify-between items-center pointer-events-none md:relative md:top-auto md:left-auto md:translate-x-0 md:px-0 md:mb-6 md:w-full">
           <button
             onClick={() => router.back()}
             className="pointer-events-auto p-2.5 bg-white/75 backdrop-blur-md border border-white/20 rounded-2xl shadow-sm transition-all active:scale-90"
@@ -288,230 +288,218 @@ export default function ProductDetailPage() {
           </button>
         </div>
 
-        {/* ── IMAGEN INMERSIVA: 50vh, bleed-edge sin márgenes ── */}
-        <section className="relative w-full overflow-hidden bg-slate-100" style={{ height: '50vh' }}>
-          <Swiper
-            pagination={{ clickable: true }}
-            navigation={true}
-            modules={[Pagination, Navigation]}
-            className="w-full h-full"
-            style={{
-              // Custom colors for swiper pagination and navigation
-              ['--swiper-navigation-color' as any]: '#1e3a5f',
-              ['--swiper-navigation-size' as any]: '20px',
-              ['--swiper-pagination-color' as any]: '#1e3a5f',
-              ['--swiper-pagination-bullet-inactive-color' as any]: '#cbd5e1',
-              ['--swiper-pagination-bullet-inactive-opacity' as any]: '0.6',
-            }}
-          >
-            {images.map((img: string, i: number) => (
-              <SwiperSlide key={i}>
-                <img
-                  src={img}
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </section>
-
-        {/* ── PANEL DE CONTENIDO: sube 24px sobre la imagen ── */}
-        <div className="relative -mt-6 z-10 bg-white rounded-t-3xl px-6 pt-8 pb-36 shadow-xl">
-
-          {/* Badge stock + categoría */}
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm"
-              style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
+        <div className="md:grid md:grid-cols-2 md:gap-16 md:items-start md:mt-4">
+          {/* ── IMAGEN INMERSIVA: responsivo, 50vh en móvil, 600px en PC ── */}
+          <section className="relative w-full h-[50vh] md:h-[600px] overflow-hidden bg-slate-100 md:rounded-3xl md:shadow-md">
+            <Swiper
+              pagination={{ clickable: true }}
+              navigation={true}
+              modules={[Pagination, Navigation]}
+              className="w-full h-full"
+              style={{
+                // Custom colors for swiper pagination and navigation
+                ['--swiper-navigation-color' as any]: '#1e3a5f',
+                ['--swiper-navigation-size' as any]: '20px',
+                ['--swiper-pagination-color' as any]: '#1e3a5f',
+                ['--swiper-pagination-bullet-inactive-color' as any]: '#cbd5e1',
+                ['--swiper-pagination-bullet-inactive-opacity' as any]: '0.6',
+              }}
             >
-              {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
-            </span>
-            {getBreadcrumbs().length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[280px] py-1">
-                {getBreadcrumbs().map((bc, idx, arr) => (
-                  <div key={idx} className="flex items-center gap-1.5 flex-shrink-0">
-                    {idx > 0 && <span className="text-slate-300 text-[8px] font-black">/</span>}
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${idx === arr.length - 1 ? "text-blue-900" : "text-slate-300"}`}>
-                      {bc}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+              {images.map((img: string, i: number) => (
+                <SwiperSlide key={i}>
+                  <img
+                    src={img}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </section>
 
-          {/* ── NOMBRE: serif, boutique ── */}
-          <h1
-            className="text-2xl font-bold text-gray-900 leading-snug mb-5"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
-            {product.title}
-          </h1>
+          {/* ── PANEL DE CONTENIDO: sube 24px sobre la imagen en móvil, normal en PC ── */}
+          <div className="relative -mt-6 md:-mt-0 z-10 bg-white rounded-t-3xl md:rounded-3xl px-6 pt-8 md:p-10 pb-36 md:pb-10 shadow-xl md:shadow-md border border-slate-100/50">
 
-          {/* ── PRECIO: text-4xl azul oscuro + Bs gris debajo ── */}
-          <div className="flex flex-col mb-8">
-            <span className="text-4xl font-black text-blue-900 leading-none font-['Poppins']">
-              ${getActivePrice()}
-            </span>
-            <span className="text-sm text-gray-400 font-bold mt-1">
-              {(getActivePrice() * exchangeRate).toFixed(0)} Bs
-            </span>
-            {(() => {
-              const range = getPriceRange()
-              if (range) {
-                return (
-                  <div className="mt-2.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-100/60 border border-slate-200/30 px-3 py-1.5 rounded-full w-fit">
-                    <span>Precios desde ${range.min} hasta ${range.max} según la talla</span>
-                  </div>
-                )
-              }
-              return null
-            })()}
-          </div>
-
-          {/* ── ACORDEÓN DE COMPRA Y DETALLES: Tallas + Colores + Descripción + Cuidados ── */}
-          <Accordion multiple defaultValue={["size"]}>
-            {getParsedSizes().length > 0 && (
-              <AccordionItem value="size">
-                <AccordionTrigger className="hover:no-underline py-3.5">
-                  <div className="flex justify-between items-center w-full pr-4">
-                    <div className="flex items-center gap-2">
-                      <Ruler className="size-3.5 text-slate-400" />
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        Tallas
+            {/* Badge stock + categoría */}
+            <div className="flex items-center gap-2 mb-4">
+              <span
+                className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm"
+                style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
+              >
+                {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
+              </span>
+              {getBreadcrumbs().length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[280px] py-1">
+                  {getBreadcrumbs().map((bc, idx, arr) => (
+                    <div key={idx} className="flex items-center gap-1.5 flex-shrink-0">
+                      {idx > 0 && <span className="text-slate-300 text-[8px] font-black">/</span>}
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${idx === arr.length - 1 ? "text-blue-900" : "text-slate-300"}`}>
+                        {bc}
                       </span>
                     </div>
-                    {selectedSize && (
-                      <span className="text-[9px] font-black text-blue-900 bg-[#BDE0FE]/40 border border-[#BDE0FE]/50 px-2.5 py-1 rounded-full uppercase tracking-widest">
-                        Talla {selectedSize}
-                      </span>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="flex flex-wrap gap-2.5">
-                    {getParsedSizes().map((size: string) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all active:scale-95 shadow-2xs cursor-pointer border min-w-12 h-14"
-                        style={{
-                          backgroundColor: selectedSize === size ? '#1e3a5f' : '#f8fafc',
-                          color: selectedSize === size ? '#ffffff' : '#64748b',
-                          borderColor: selectedSize === size ? '#1e3a5f' : '#e2e8f0',
-                        }}
-                      >
-                        <span className="text-xs font-black">{size}</span>
-                        <span className={`text-[8px] font-black mt-0.5 ${selectedSize === size ? 'text-[#BDE0FE]' : 'text-slate-400'}`}>
-                          ${getSizePrice(size)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {getParsedColors().length > 0 && (
-              <AccordionItem value="color">
-                <AccordionTrigger className="hover:no-underline py-3.5">
-                  <div className="flex justify-between items-center w-full pr-4">
-                    <div className="flex items-center gap-2">
-                      <Palette className="size-3.5 text-slate-400" />
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        Colores
-                      </span>
+            {/* ── NOMBRE: serif, boutique ── */}
+            <h1
+              className="text-2xl font-bold text-gray-900 leading-snug mb-5"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              {product.title}
+            </h1>
+
+            {/* ── PRECIO: text-4xl azul oscuro + Bs gris debajo ── */}
+            <div className="flex flex-col mb-8">
+              <span className="text-4xl font-black text-blue-900 leading-none font-['Poppins']">
+                ${getActivePrice()}
+              </span>
+              <span className="text-sm text-gray-400 font-bold mt-1">
+                {(getActivePrice() * exchangeRate).toFixed(0)} Bs
+              </span>
+              {(() => {
+                const range = getPriceRange()
+                if (range) {
+                  return (
+                    <div className="mt-2.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-slate-100/60 border border-slate-200/30 px-3 py-1.5 rounded-full w-fit">
+                      <span>Precios desde ${range.min} hasta ${range.max} según la talla</span>
                     </div>
-                    {selectedColor && (
-                      <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full">
-                        <span
-                          className="size-3.5 rounded-full border border-slate-200/60 shadow-2xs block animate-fade-in"
-                          style={{ backgroundColor: selectedColor }}
-                        />
-                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
-                          {selectedColor.toUpperCase()}
+                  )
+                }
+                return null
+              })()}
+            </div>
+
+            {/* ── ACORDEÓN DE COMPRA Y DETALLES: Tallas + Colores + Descripción + Cuidados ── */}
+            <Accordion multiple defaultValue={["size"]}>
+              {getParsedSizes().length > 0 && (
+                <AccordionItem value="size">
+                  <AccordionTrigger className="hover:no-underline py-3.5">
+                    <div className="flex justify-between items-center w-full pr-4">
+                      <div className="flex items-center gap-2">
+                        <Ruler className="size-3.5 text-slate-400" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Tallas
                         </span>
                       </div>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="flex flex-wrap gap-3">
-                    {getParsedColors().map((color: string) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        title={color}
-                        className={`size-8 rounded-full transition-all active:scale-90 cursor-pointer shadow-sm ${
-                          selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-900' : 'border border-slate-200'
-                        }`}
-                        style={{
-                          backgroundColor: color,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
+                      {selectedSize && (
+                        <span className="text-[9px] font-black text-blue-900 bg-[#BDE0FE]/40 border border-[#BDE0FE]/50 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                          Talla {selectedSize}
+                        </span>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-4">
+                    <div className="flex flex-wrap gap-2.5">
+                      {getParsedSizes().map((size: string) => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all active:scale-95 shadow-2xs cursor-pointer border min-w-12 h-14"
+                          style={{
+                            backgroundColor: selectedSize === size ? '#1e3a5f' : '#f8fafc',
+                            color: selectedSize === size ? '#ffffff' : '#64748b',
+                            borderColor: selectedSize === size ? '#1e3a5f' : '#e2e8f0',
+                          }}
+                        >
+                          <span className="text-xs font-black">{size}</span>
+                          <span className={`text-[8px] font-black mt-0.5 ${selectedSize === size ? 'text-[#BDE0FE]' : 'text-slate-400'}`}>
+                            ${getSizePrice(size)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-            {product.description && product.description.trim() && (
-              <AccordionItem value="description">
-                <AccordionTrigger className="hover:no-underline py-3.5">
-                  <div className="flex items-center gap-2">
-                    <AlignLeft className="size-3.5 text-slate-400" />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                      Descripción
-                    </span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-400 text-sm leading-relaxed pt-2 pb-4">
-                  {product.description}
-                </AccordionContent>
-              </AccordionItem>
-            )}
+              {getParsedColors().length > 0 && (
+                <AccordionItem value="color">
+                  <AccordionTrigger className="hover:no-underline py-3.5">
+                    <div className="flex justify-between items-center w-full pr-4">
+                      <div className="flex items-center gap-2">
+                        <Palette className="size-3.5 text-slate-400" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          Colores
+                        </span>
+                      </div>
+                      {selectedColor && (
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full">
+                          <span
+                            className="size-3.5 rounded-full border border-slate-200/60 shadow-2xs block animate-fade-in"
+                            style={{ backgroundColor: selectedColor }}
+                          />
+                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                            {selectedColor.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-4">
+                    <div className="flex flex-wrap gap-3">
+                      {getParsedColors().map((color: string) => (
+                        <button
+                          key={color}
+                          onClick={() => setSelectedColor(color)}
+                          title={color}
+                          className={`size-8 rounded-full transition-all active:scale-90 cursor-pointer shadow-sm ${
+                            selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-900' : 'border border-slate-200'
+                          }`}
+                          style={{
+                            backgroundColor: color,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-            <AccordionItem value="care">
-              <AccordionTrigger className="hover:no-underline py-3.5">
-                <div className="flex items-center gap-2">
-                  <AlignLeft className="size-3.5 text-slate-400" />
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Cuidados
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="text-gray-400 text-sm leading-relaxed pt-2 pb-4">
-                {product.care_instructions || "Lavar a mano con agua fría. No usar blanqueador. Planchar a temperatura baja."}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              {product.description && product.description.trim() && (
+                <AccordionItem value="description">
+                  <AccordionTrigger className="hover:no-underline py-3.5">
+                    <div className="flex items-center gap-2">
+                      <AlignLeft className="size-3.5 text-slate-400" />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        Descripción
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-gray-400 text-sm leading-relaxed pt-2 pb-4">
+                    {product.description}
+                  </AccordionContent>
+                </AccordionItem>
+              )}
 
-        </div>
 
-        {/* ── BOTÓN CÁPSULA FLOTANTE PREMIUM ── */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-30 px-6 flex gap-3 justify-center">
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stock_status !== 'in_stock'}
-            className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-slate-700 bg-white border border-slate-200 transition-all active:scale-95 disabled:opacity-40 shadow-xl cursor-pointer"
-            style={{ height: '38px' }}
-          >
-            {isAdded ? '¡AÑADIDO!' : 'AÑADIR AL CARRITO'}
-          </button>
-          <button
-            onClick={handleOrder}
-            disabled={product.stock_status !== 'in_stock'}
-            className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-blue-900 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl border border-white/20 cursor-pointer"
-            style={{ 
-              height: '38px', 
-              backgroundColor: 'rgba(189, 224, 254, 0.9)', 
-              backdropFilter: 'blur(8px)', 
-              WebkitBackdropFilter: 'blur(8px)' 
-            }}
-          >
-            {product.stock_status === 'in_stock' ? 'COMPRAR AHORA' : 'AGOTADO'}
-          </button>
+            </Accordion>
+
+            {/* ── BOTÓN CÁPSULA FLOTANTE PREMIUM: fijo en móvil, relativo adentro del card en PC ── */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[430px] md:max-w-none z-30 px-6 flex gap-3 justify-center md:relative md:bottom-auto md:left-auto md:translate-x-0 md:px-0 md:mt-8 md:shadow-none md:z-10 animate-fade-in">
+              <button
+                onClick={handleAddToCart}
+                disabled={product.stock_status !== 'in_stock'}
+                className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-slate-700 bg-white border border-slate-200 transition-all active:scale-95 disabled:opacity-40 shadow-xl md:shadow-sm cursor-pointer h-[38px] md:h-12"
+              >
+                {isAdded ? '¡AÑADIDO!' : 'AÑADIR AL CARRITO'}
+              </button>
+              <button
+                onClick={handleOrder}
+                disabled={product.stock_status !== 'in_stock'}
+                className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-blue-900 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl md:shadow-sm border border-white/20 cursor-pointer h-[38px] md:h-12"
+                style={{ 
+                  backgroundColor: 'rgba(189, 224, 254, 0.9)', 
+                  backdropFilter: 'blur(8px)', 
+                  WebkitBackdropFilter: 'blur(8px)' 
+                }}
+              >
+                {product.stock_status === 'in_stock' ? 'COMPRAR AHORA' : 'AGOTADO'}
+              </button>
+            </div>
+
+          </div>
         </div>
 
         {/* Carrito Flotante */}

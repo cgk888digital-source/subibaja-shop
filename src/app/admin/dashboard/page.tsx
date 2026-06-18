@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import {
   ChevronLeft, DollarSign, TrendingDown, TrendingUp, Trash2, Loader2, Lock,
   ShoppingBag, Receipt, ChevronDown, ArrowUpRight, ArrowDownRight, X, Tag,
-  Footprints, Shirt, Star, Heart, Baby, Gift, Crown, Sparkles, Gem, Flower2
+  Footprints, Shirt, Star, Heart, Baby, Gift, Crown, Sparkles, Gem, Flower2, BookOpen, Gamepad2
 } from "lucide-react"
 import {
   PieChart, Pie, Cell, BarChart, Bar,
@@ -17,7 +17,7 @@ import Link from "next/link"
 const ADMIN_PASSWORD = "SUBIBAJA2024"
 const CAT_COLORS = ["#BDE0FE", "#60a5fa", "#1d4ed8", "#93c5fd", "#bfdbfe"]
 const CAT_ICONS: Record<string, React.ElementType> = {
-  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
+  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2
 }
 
 type TFilter = "day" | "week" | "month" | "year"

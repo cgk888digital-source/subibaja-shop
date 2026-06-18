@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, Fragment } from "react"
-import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent } from "lucide-react"
+import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent, BookOpen, Gamepad2 } from "lucide-react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination, Autoplay } from "swiper/modules"
@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase"
 import CartFloatingButton from "@/components/CartFloatingButton"
 
 const CAT_ICONS: Record<string, React.ElementType> = {
-  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2
+  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2
 }
 
 const FAQS = [
@@ -175,8 +175,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* ── CONTENEDOR MAESTRO: todo vive aquí, 430px centrado ── */}
-      <div className="max-w-[430px] mx-auto flex flex-col min-h-screen pb-24 font-['Lato',sans-serif]">
+      {/* ── CONTENEDOR MAESTRO: todo vive aquí, responsivo ── */}
+      <div className="w-full max-w-[430px] md:max-w-7xl mx-auto flex flex-col min-h-screen pb-24 font-['Lato',sans-serif] px-4 md:px-8">
 
         {/* Header con Glassmorphism */}
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/50">
@@ -210,7 +210,7 @@ export default function Home() {
 
           {/* Menú Desplegable Hamburguesa (Dropdown) */}
           {showHamburgerMenu && (
-            <div className="absolute top-16 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-slate-200/60 shadow-2xl rounded-b-[28px] overflow-hidden flex flex-col font-['Lato',sans-serif] max-h-[75vh]">
+            <div className="absolute top-16 left-0 right-0 md:left-auto md:right-0 md:w-80 z-50 bg-white/95 backdrop-blur-lg border-b md:border border-slate-200/60 md:border-slate-100 shadow-2xl rounded-b-[28px] md:rounded-3xl md:mt-2 overflow-hidden flex flex-col font-['Lato',sans-serif] max-h-[75vh]">
               {/* Contenedor con Scroll si excede altura */}
               <div className="overflow-y-auto p-5 pb-7 flex flex-col gap-5 max-h-[calc(75vh-1rem)] no-scrollbar">
                 
@@ -231,9 +231,16 @@ export default function Home() {
                     className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
                   >
                     <Crown className="size-3.5 text-amber-500 fill-amber-100" />
-                    <span>Clientes VIP</span>
+                    <span>Club Subibaja</span>
                   </Link>
-
+                  <Link 
+                    href="/giftcard" 
+                    onClick={() => setShowHamburgerMenu(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    <Gift className="size-3.5 text-blue-900" />
+                    <span>Giftcards</span>
+                  </Link>
                 </div>
 
                 <div className="h-[1px] bg-slate-100 w-full" />
@@ -379,7 +386,7 @@ export default function Home() {
         <main className="flex-1">
 
           {/* Hero Carousel */}
-          <section className="w-full aspect-[16/10] bg-gray-50 overflow-hidden shadow-sm">
+          <section className="w-full aspect-[16/10] md:aspect-[21/9] bg-gray-50 overflow-hidden shadow-sm">
             <Swiper pagination={{ clickable: true }} autoplay={{ delay: 5000 }} modules={[Pagination, Autoplay]} className="w-full h-full">
               <SwiperSlide>
                 <div className="relative w-full h-full">
@@ -391,9 +398,7 @@ export default function Home() {
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent flex flex-col justify-end p-8 pb-12 text-center items-center">
-                    <h2 className="text-3xl font-black text-white leading-tight font-['Poppins'] tracking-tighter">Nuevos Ingresos</h2>
-                  </div>
+
                 </div>
               </SwiperSlide>
             </Swiper>
@@ -419,7 +424,7 @@ export default function Home() {
           </div>
 
           {/* Banner de Fidelización - Club VIP */}
-          <div className="px-4 mt-6">
+          <div className="px-4 mt-6 md:max-w-3xl md:mx-auto w-full">
             <div className="bg-gradient-to-br from-[#1e3a8a] via-[#1e1b4b] to-[#311042] text-white rounded-[32px] p-5 shadow-lg relative overflow-hidden select-none border border-indigo-950/50">
               {/* Background glows */}
               <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -442,7 +447,7 @@ export default function Home() {
                 <div className="flex-1 space-y-1.5 text-left">
                   <div className="flex items-center gap-1">
                     <Crown className="size-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-[#BDE0FE] font-['Poppins']">Club VIP Subibaja</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-[#BDE0FE] font-['Poppins']">Club Subibaja</span>
                   </div>
                   <h4 className="text-xs font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight">
                     ¡Compra y Acumula Puntos!
@@ -471,7 +476,6 @@ export default function Home() {
 
           <div className="px-4 mt-6">
             {/* Categorías Principales */}
-            <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Categorías</h3>
             <div className="flex overflow-x-auto gap-2.5 pb-3 no-scrollbar">
               <button
                 onClick={() => {
@@ -581,7 +585,7 @@ export default function Home() {
 
             {/* Grid de Productos */}
             {loading ? (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-4">
                 {[1, 2, 3, 4].map((n) => (
                   <div key={n} className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col p-4 space-y-3 animate-pulse">
                     <div className="aspect-square bg-slate-100 rounded-2xl w-full" />
@@ -599,7 +603,7 @@ export default function Home() {
                 <p className="text-sm font-semibold">No se encontraron productos</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-4">
                 {filteredProducts.map((product, index) => {
                   const middleIndex = filteredProducts.length > 2 ? Math.floor(filteredProducts.length / 2) : -1
                   const showMiddleBanner = index === middleIndex
@@ -607,7 +611,7 @@ export default function Home() {
                   return (
                     <Fragment key={product.id}>
                       {showMiddleBanner && (
-                        <div className="col-span-2 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 relative aspect-[16/8] group">
+                        <div className="col-span-2 md:col-span-4 lg:col-span-5 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 relative aspect-[16/8] md:aspect-[21/9] group">
                           <img 
                             src="/zapatos_subibaja.jpeg" 
                             alt="Zapatos Subibaja" 
@@ -698,12 +702,12 @@ export default function Home() {
           </div>
 
           {/* Sección de Tarjeta de Regalo */}
-          <section className="mt-8 px-4 animate-fade-in">
+          <section className="mt-8 px-4 animate-fade-in md:max-w-3xl md:mx-auto w-full">
             <h3 className="font-black text-gray-900 text-2xl font-['Poppins'] mb-4 tracking-tight">Tarjeta de Regalo</h3>
             <div className="bg-white rounded-[32px] p-5 shadow-sm border border-slate-100/80 flex flex-col gap-4">
               
               {/* Diseñar el Gift Card Físico/Virtual Visual */}
-              <div className="relative aspect-[1.58/1] w-full rounded-[24px] overflow-hidden shadow-md border border-blue-50 flex bg-gradient-to-r from-blue-50/50 to-white select-none">
+              <div className="relative aspect-[1.58/1] w-full md:max-w-md mx-auto rounded-[24px] overflow-hidden shadow-md border border-blue-50 flex bg-gradient-to-r from-blue-50/50 to-white select-none">
                 {/* Lado Izquierdo: Imagen de Niños */}
                 <div className="w-1/2 h-full relative">
                   <img 
@@ -746,7 +750,7 @@ export default function Home() {
                 </p>
                 <Link 
                   href="/giftcard" 
-                  className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
+                  className="w-full md:max-w-xs mx-auto h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
                   style={{ backgroundColor: '#BDE0FE' }}
                 >
                   <Gift className="size-3.5" /> VER TARJETAS DE REGALO
@@ -884,7 +888,7 @@ export default function Home() {
 
             {/* Navegación Inferior con Glassmorphism */}
             <nav 
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20"
+              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 md:hidden"
               style={{ 
                 backgroundColor: 'rgba(189, 224, 254, 0.85)', 
                 backdropFilter: 'blur(16px)', 
@@ -940,7 +944,7 @@ export default function Home() {
                   <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
                     <Crown className="size-4 text-blue-900/60" />
                   </div>
-                  <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Clientes VIP</span>
+                  <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Club Subibaja</span>
                 </Link>
 
               </div>
@@ -1173,7 +1177,7 @@ export default function Home() {
               {/* Note / Terms */}
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-center">
                 <p className="text-[9px] text-slate-400 leading-normal font-bold">
-                  ⚠️ NOTA: Al reclamar, se verificará tu saldo de puntos con tu número de teléfono registrado en el Club VIP.
+                  ⚠️ NOTA: Al reclamar, se verificará tu saldo de puntos con tu número de teléfono registrado en el Club Subibaja.
                 </p>
               </div>
 
