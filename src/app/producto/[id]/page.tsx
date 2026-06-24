@@ -290,7 +290,7 @@ export default function ProductDetailPage() {
 
         <div className="md:grid md:grid-cols-2 md:gap-16 md:items-start md:mt-4">
           {/* ── IMAGEN INMERSIVA: responsivo, 50vh en móvil, 600px en PC ── */}
-          <section className="relative w-full h-[50vh] md:h-[600px] overflow-hidden bg-slate-100 md:rounded-3xl md:shadow-md">
+          <section className="relative w-full h-[50vh] md:h-[600px] overflow-hidden bg-white border border-slate-100/60 md:rounded-3xl md:shadow-md">
             <Swiper
               pagination={{ clickable: true }}
               navigation={true}
@@ -310,7 +310,7 @@ export default function ProductDetailPage() {
                   <img
                     src={img}
                     alt={product.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-4"
                   />
                 </SwiperSlide>
               ))}
