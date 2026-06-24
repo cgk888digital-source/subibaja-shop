@@ -490,7 +490,7 @@ export default function ProductDetailPage() {
                 disabled={product.stock_status !== 'in_stock'}
                 className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-blue-900 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl md:shadow-sm border border-white/20 cursor-pointer h-[38px] md:h-12"
                 style={{ 
-                  backgroundColor: 'rgba(189, 224, 254, 0.9)', 
+                  backgroundColor: 'rgba(141, 213, 227, 0.9)', 
                   backdropFilter: 'blur(8px)', 
                   WebkitBackdropFilter: 'blur(8px)' 
                 }}

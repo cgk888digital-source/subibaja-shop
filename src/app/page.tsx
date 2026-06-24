@@ -890,7 +890,7 @@ export default function Home() {
             <nav 
               className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 md:hidden"
               style={{ 
-                backgroundColor: 'rgba(189, 224, 254, 0.85)', 
+                backgroundColor: 'rgba(141, 213, 227, 0.85)', 
                 backdropFilter: 'blur(16px)', 
                 WebkitBackdropFilter: 'blur(16px)' 
               }}
