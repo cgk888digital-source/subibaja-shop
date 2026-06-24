@@ -281,7 +281,7 @@ export default function Home() {
                               }}
                               className="flex items-center gap-3 text-left group flex-1 min-w-0"
                             >
-                              <div className="w-7.5 h-7.5 rounded-xl bg-[#BDE0FE]/30 text-blue-900 flex items-center justify-center flex-shrink-0">
+                              <div className="w-7.5 h-7.5 rounded-xl bg-[#8dd5e3]/30 text-blue-900 flex items-center justify-center flex-shrink-0">
                                 <MainIcon className="size-3.5" />
                               </div>
                               <span className="font-black text-slate-800 text-[10.5px] tracking-tight group-hover:text-blue-600 transition-colors uppercase truncate">
@@ -329,7 +329,7 @@ export default function Home() {
                                               setActiveLeafCategory(leaf.name);
                                               setShowHamburgerMenu(false);
                                             }}
-                                            className="text-[7.5px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100 hover:bg-[#BDE0FE]/20 hover:text-blue-800 hover:border-blue-200/50 transition-all uppercase tracking-wide cursor-pointer"
+                                            className="text-[7.5px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100 hover:bg-[#8dd5e3]/20 hover:text-blue-800 hover:border-blue-200/50 transition-all uppercase tracking-wide cursor-pointer"
                                           >
                                             {leaf.name}
                                           </button>
@@ -447,7 +447,7 @@ export default function Home() {
                 <div className="flex-1 space-y-1.5 text-left">
                   <div className="flex items-center gap-1">
                     <Crown className="size-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-[#BDE0FE] font-['Poppins']">Club Subibaja</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-[#8dd5e3] font-['Poppins']">Club Subibaja</span>
                   </div>
                   <h4 className="text-xs font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight">
                     ¡Compra y Acumula Puntos!
@@ -466,7 +466,7 @@ export default function Home() {
                 <Link 
                   href="/puntos" 
                   className="h-8 px-4 rounded-full font-black tracking-widest text-blue-900 text-[8.5px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 hover:bg-[#a6d5ff] cursor-pointer"
-                  style={{ backgroundColor: '#BDE0FE' }}
+                  style={{ backgroundColor: '#8dd5e3' }}
                 >
                   <Sparkles className="size-3 text-amber-500 fill-amber-500" /> CONSULTAR PUNTOS
                 </Link>
@@ -486,7 +486,7 @@ export default function Home() {
                 className={`h-7 px-4 rounded-full whitespace-nowrap text-[11px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
                   activeCategory === "Todos" ? 'text-blue-900 shadow-sm scale-105' : 'bg-white text-gray-400 shadow-sm hover:text-gray-600'
                 }`}
-                style={activeCategory === "Todos" ? { backgroundColor: '#BDE0FE' } : {}}
+                style={activeCategory === "Todos" ? { backgroundColor: '#8dd5e3' } : {}}
               >
                 <LayoutGrid className="size-3" />
                 <span>Todos</span>
@@ -504,7 +504,7 @@ export default function Home() {
                     className={`h-7 px-4 rounded-full whitespace-nowrap text-[11px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
                       activeCategory === cat.name ? 'text-blue-900 shadow-sm scale-105' : 'bg-white text-gray-400 shadow-sm hover:text-gray-600'
                     }`}
-                    style={activeCategory === cat.name ? { backgroundColor: '#BDE0FE' } : {}}
+                    style={activeCategory === cat.name ? { backgroundColor: '#8dd5e3' } : {}}
                   >
                     <IconComp className="size-3" />
                     <span>{cat.name}</span>
@@ -527,7 +527,7 @@ export default function Home() {
                       setActiveLeafCategory("Todos");
                     }}
                     className={`h-6 px-3 rounded-full whitespace-nowrap text-[10px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                      activeSubCategory === "Todos" ? 'bg-[#BDE0FE]/40 text-blue-900 border border-[#BDE0FE]/50' : 'bg-white text-slate-400 hover:text-slate-600'
+                      activeSubCategory === "Todos" ? 'bg-[#8dd5e3]/40 text-blue-900 border border-[#8dd5e3]/50' : 'bg-white text-slate-400 hover:text-slate-600'
                     }`}
                   >
                     <span>Todo {activeCategory}</span>
@@ -540,7 +540,7 @@ export default function Home() {
                         setActiveLeafCategory("Todos");
                       }}
                       className={`h-6 px-3 rounded-full whitespace-nowrap text-[10px] font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                        activeSubCategory === sub.name ? 'bg-[#BDE0FE]/40 text-blue-900 border border-[#BDE0FE]/50' : 'bg-white text-slate-400 hover:text-slate-600'
+                        activeSubCategory === sub.name ? 'bg-[#8dd5e3]/40 text-blue-900 border border-[#8dd5e3]/50' : 'bg-white text-slate-400 hover:text-slate-600'
                       }`}
                     >
                       <span>{sub.name}</span>
@@ -599,7 +599,7 @@ export default function Home() {
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
-                <ShoppingBag className="size-10 mb-2 opacity-50 text-[#BDE0FE]" />
+                <ShoppingBag className="size-10 mb-2 opacity-50 text-[#8dd5e3]" />
                 <p className="text-sm font-semibold">No se encontraron productos</p>
               </div>
             ) : (
@@ -618,7 +618,7 @@ export default function Home() {
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/10 to-transparent flex flex-col justify-end p-5 text-left">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#BDE0FE] font-['Poppins']">Colección Subibaja</span>
+                            <span className="text-[8px] font-black uppercase tracking-widest text-[#8dd5e3] font-['Poppins']">Colección Subibaja</span>
                             <h4 className="text-sm font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight mt-1">
                               Calidad y Diseño en Cada Paso
                             </h4>
@@ -686,7 +686,7 @@ export default function Home() {
                           <Link 
                             href={`/producto/${product.id}`} 
                             className="w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
-                            style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+                            style={{ height: '24px', backgroundColor: '#8dd5e3' }}
                           >
                             LO QUIERO
                           </Link>
@@ -751,7 +751,7 @@ export default function Home() {
                 <Link 
                   href="/giftcard" 
                   className="w-full md:max-w-xs mx-auto h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
-                  style={{ backgroundColor: '#BDE0FE' }}
+                  style={{ backgroundColor: '#8dd5e3' }}
                 >
                   <Gift className="size-3.5" /> VER TARJETAS DE REGALO
                 </Link>
@@ -825,7 +825,7 @@ export default function Home() {
                   href="https://maps.app.goo.gl/n4L5GYVrFNUSQ9mJ9" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="mt-2 w-full h-10 rounded-2xl bg-blue-50 border border-[#BDE0FE]/50 text-blue-950 font-bold text-[11px] tracking-wider flex items-center justify-center gap-2 hover:bg-[#BDE0FE]/20 active:scale-95 transition-all shadow-sm"
+                  className="mt-2 w-full h-10 rounded-2xl bg-blue-50 border border-[#8dd5e3]/50 text-blue-950 font-bold text-[11px] tracking-wider flex items-center justify-center gap-2 hover:bg-[#8dd5e3]/20 active:scale-95 transition-all shadow-sm"
                 >
                   <Search className="size-3.5" />
                   <span>ABRIR EN GOOGLE MAPS</span>
@@ -993,7 +993,7 @@ export default function Home() {
                         }}
                         className="w-full flex items-center gap-3 text-left group"
                       >
-                        <div className="w-8 h-8 rounded-xl bg-[#BDE0FE]/30 text-blue-900 flex items-center justify-center shadow-xs">
+                        <div className="w-8 h-8 rounded-xl bg-[#8dd5e3]/30 text-blue-900 flex items-center justify-center shadow-xs">
                           <MainIcon className="size-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1034,7 +1034,7 @@ export default function Home() {
                                           setActiveLeafCategory(leaf.name);
                                           setShowCategoryDrawer(false);
                                         }}
-                                        className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md hover:bg-[#BDE0FE]/20 hover:text-blue-800 transition-all uppercase tracking-wide"
+                                        className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md hover:bg-[#8dd5e3]/20 hover:text-blue-800 transition-all uppercase tracking-wide"
                                       >
                                         {leaf.name}
                                       </button>
@@ -1163,7 +1163,7 @@ export default function Home() {
                           <button
                             onClick={() => window.open(`https://wa.me/584142274385?text=${encodeURIComponent(offer.msg)}`, '_blank')}
                             className="flex-1 h-7 rounded-full text-[8px] font-black tracking-wider text-blue-900 uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-sm cursor-pointer"
-                            style={{ backgroundColor: '#BDE0FE' }}
+                            style={{ backgroundColor: '#8dd5e3' }}
                           >
                             RECLAMAR OFERTA
                           </button>

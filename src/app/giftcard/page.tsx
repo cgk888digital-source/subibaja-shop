@@ -138,7 +138,7 @@ export default function GiftCardPurchasePage() {
                     <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-10">
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="text-[8px] font-black uppercase tracking-[0.25em] text-[#BDE0FE] font-['Poppins']">Gift Card Virtual</span>
+                          <span className="text-[8px] font-black uppercase tracking-[0.25em] text-[#8dd5e3] font-['Poppins']">Gift Card Virtual</span>
                           <h3 className="text-lg font-black font-['Poppins'] tracking-tight mt-0.5">Subibaja</h3>
                         </div>
                         <div className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-lg">
@@ -149,7 +149,7 @@ export default function GiftCardPurchasePage() {
                       <div className="flex justify-between items-end">
                         <div>
                           <p className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Código temporal</p>
-                          <p className="text-[10px] font-black tracking-widest text-[#BDE0FE] font-mono mt-0.5">{card.codePrefix}-••••</p>
+                          <p className="text-[10px] font-black tracking-widest text-[#8dd5e3] font-mono mt-0.5">{card.codePrefix}-••••</p>
                         </div>
                         <div className="text-right">
                           <p className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Valor</p>
@@ -182,7 +182,7 @@ export default function GiftCardPurchasePage() {
                     <button
                       onClick={() => setSelectedCard(card)}
                       className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
-                      style={{ backgroundColor: '#BDE0FE' }}
+                      style={{ backgroundColor: '#8dd5e3' }}
                     >
                       Solicitar Tarjeta de ${card.amount}
                     </button>
@@ -226,7 +226,7 @@ export default function GiftCardPurchasePage() {
                   </div>
                   
                   <div className="space-y-1">
-                    <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Confirmar Solicitud</span>
+                    <span className="text-[8px] font-black tracking-widest text-[#8dd5e3] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Confirmar Solicitud</span>
                     <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2 uppercase">
                       Gift Card ${selectedCard.amount} USD
                     </h3>
@@ -296,7 +296,7 @@ export default function GiftCardPurchasePage() {
                         type="submit"
                         disabled={submitting}
                         className="flex-1 h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[9px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform flex items-center justify-center gap-1.5 cursor-pointer"
-                        style={{ backgroundColor: '#BDE0FE' }}
+                        style={{ backgroundColor: '#8dd5e3' }}
                       >
                         {submitting ? (
                           <>

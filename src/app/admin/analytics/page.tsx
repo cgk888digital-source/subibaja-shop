@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase"
 const ADMIN_PASSWORD = "SUBIBAJA2024"
 const CATEGORIES = ["Zapatos de Niña", "Ropa", "Primera Comunión"]
 const CAT_COLORS: Record<string, string> = {
-  "Zapatos de Niña": "#BDE0FE",
+  "Zapatos de Niña": "#8dd5e3",
   "Ropa": "#93c5fd",
   "Primera Comunión": "#60a5fa",
 }
@@ -139,14 +139,14 @@ export default function AnalyticsPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="w-full max-w-sm bg-white rounded-[40px] shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#BDE0FE" }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#8dd5e3" }}>
               <Lock className="text-blue-900 size-7" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 font-['Poppins']">Centro de Control</h2>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); if (password === ADMIN_PASSWORD) setIsAuthenticated(true); else alert("Contraseña incorrecta") }} className="space-y-4">
             <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-14 rounded-2xl text-center text-lg bg-slate-50 border-0" />
-            <button type="submit" className="w-full rounded-full font-bold tracking-widest text-blue-900" style={{ height: "44px", backgroundColor: "#BDE0FE" }}>ENTRAR</button>
+            <button type="submit" className="w-full rounded-full font-bold tracking-widest text-blue-900" style={{ height: "44px", backgroundColor: "#8dd5e3" }}>ENTRAR</button>
           </form>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function AnalyticsPage() {
                 className="px-3 rounded-full text-[9px] font-black tracking-widest transition-all"
                 style={{
                   height: "24px",
-                  backgroundColor: filter === f ? "#BDE0FE" : "#f1f5f9",
+                  backgroundColor: filter === f ? "#8dd5e3" : "#f1f5f9",
                   color: filter === f ? "#1e3a5f" : "#94a3b8",
                 }}>
                 {f === "today" ? "HOY" : f === "week" ? "SEMANA" : f === "month" ? "MES" : f === "year" ? "AÑO" : "RANGO"}
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
                     contentStyle={{ borderRadius: 16, border: "none", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", fontSize: 11 }}
                     formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "Ventas"]}
                   />
-                  <Bar dataKey="ventas" radius={[8, 8, 0, 0]} fill="#BDE0FE" />
+                  <Bar dataKey="ventas" radius={[8, 8, 0, 0]} fill="#8dd5e3" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -294,7 +294,7 @@ export default function AnalyticsPage() {
               </div>
               <button onClick={handleSaveExpense} disabled={savingExpense || !expenseForm.amount || !expenseForm.description}
                 className="w-full rounded-full font-bold tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95"
-                style={{ height: "44px", backgroundColor: "#BDE0FE" }}>
+                style={{ height: "44px", backgroundColor: "#8dd5e3" }}>
                 {savingExpense ? "GUARDANDO..." : "GUARDAR GASTO"}
               </button>
             </div>

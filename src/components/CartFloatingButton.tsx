@@ -84,7 +84,7 @@ export default function CartFloatingButton() {
           onClick={() => setIsOpen(true)}
           className="pointer-events-auto size-14 rounded-full shadow-2xl flex items-center justify-center relative transition-transform active:scale-95 cursor-pointer border border-white/20"
           style={{ 
-            backgroundColor: '#BDE0FE', 
+            backgroundColor: '#8dd5e3', 
             color: '#1e3a5f' 
           }}
           aria-label="Abrir Carrito"
@@ -215,7 +215,7 @@ export default function CartFloatingButton() {
                 <button
                   onClick={handleCheckout}
                   className="w-full h-12 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: '#BDE0FE' }}
+                  style={{ backgroundColor: '#8dd5e3' }}
                 >
                   <ShoppingCart className="size-4" /> CONFIRMAR PEDIDO VÍA WHATSAPP
                 </button>

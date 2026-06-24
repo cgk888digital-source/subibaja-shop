@@ -15,7 +15,7 @@ import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
 const ADMIN_PASSWORD = "SUBIBAJA2024"
-const CAT_COLORS = ["#BDE0FE", "#60a5fa", "#1d4ed8", "#93c5fd", "#bfdbfe"]
+const CAT_COLORS = ["#8dd5e3", "#60a5fa", "#1d4ed8", "#93c5fd", "#bfdbfe"]
 const CAT_ICONS: Record<string, React.ElementType> = {
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2
 }
@@ -253,7 +253,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="w-full max-w-sm bg-white rounded-[40px] shadow-xl p-8 space-y-6">
           <div className="text-center">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#BDE0FE" }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#8dd5e3" }}>
               <Lock className="text-blue-900 size-6" />
             </div>
             <h2 className="text-xl font-black text-slate-900 font-['Poppins']">Panel Financiero</h2>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
           </div>
           <form onSubmit={e => { e.preventDefault(); if (password === ADMIN_PASSWORD) setIsAuthenticated(true); else alert("Contraseña incorrecta") }} className="space-y-3">
             <Input type="password" placeholder="Contraseña" value={password} onChange={e => setPassword(e.target.value)} className="h-12 rounded-2xl text-center bg-slate-50 border-0 font-bold" />
-            <button type="submit" className="w-full rounded-full font-bold tracking-widest text-blue-900" style={{ height: "44px", backgroundColor: "#BDE0FE" }}>
+            <button type="submit" className="w-full rounded-full font-bold tracking-widest text-blue-900" style={{ height: "44px", backgroundColor: "#8dd5e3" }}>
               ACCEDER
             </button>
           </form>
@@ -285,7 +285,7 @@ export default function DashboardPage() {
               <h1 className="text-lg font-black text-slate-900 font-['Poppins'] leading-none">Panel Financiero</h1>
             </div>
           </div>
-          <div className="px-3 py-1.5 rounded-full text-[9px] font-black text-blue-800 uppercase tracking-widest" style={{ backgroundColor: "#BDE0FE40" }}>
+          <div className="px-3 py-1.5 rounded-full text-[9px] font-black text-blue-800 uppercase tracking-widest" style={{ backgroundColor: "#8dd5e340" }}>
             Tasa: {exchangeRate} Bs
           </div>
         </div>
@@ -334,7 +334,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => { setShowCatF(v => !v); setShowProdF(false) }}
                   className="w-full h-10 rounded-2xl px-4 flex items-center justify-between text-xs font-bold transition-all"
-                  style={{ backgroundColor: selCat ? "#BDE0FE40" : "#f8fafc", color: selCat ? "#1e3a5f" : "#94a3b8" }}
+                  style={{ backgroundColor: selCat ? "#8dd5e340" : "#f8fafc", color: selCat ? "#1e3a5f" : "#94a3b8" }}
                 >
                   <span className="truncate">{selCat || "Categoría"}</span>
                   <ChevronDown className={`size-3 text-slate-400 flex-shrink-0 ml-1 transition-transform ${showCatF ? "rotate-180" : ""}`} />
@@ -351,7 +351,7 @@ export default function DashboardPage() {
                         <button key={cat.id} onClick={() => { setSelCat(cat.name); setSelProd(""); setShowCatF(false) }}
                           className={`w-full px-4 py-3 text-left text-xs font-bold flex items-center gap-2.5 hover:bg-slate-50 ${selCat === cat.name ? "bg-blue-50 text-blue-700" : "text-slate-600"}`}>
                           <div className="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: selCat === cat.name ? "#BDE0FE" : "#f1f5f9" }}>
+                            style={{ backgroundColor: selCat === cat.name ? "#8dd5e3" : "#f1f5f9" }}>
                             <IconComp className="size-3" />
                           </div>
                           {cat.name}
@@ -368,7 +368,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => { setShowProdF(v => !v); setShowCatF(false) }}
                   className="w-full h-10 rounded-2xl px-4 flex items-center justify-between text-xs font-bold transition-all"
-                  style={{ backgroundColor: selProd ? "#BDE0FE40" : "#f8fafc", color: selProd ? "#1e3a5f" : "#94a3b8" }}
+                  style={{ backgroundColor: selProd ? "#8dd5e340" : "#f8fafc", color: selProd ? "#1e3a5f" : "#94a3b8" }}
                 >
                   <span className="truncate">{selProd || "Producto"}</span>
                   <ChevronDown className={`size-3 text-slate-400 flex-shrink-0 ml-1 transition-transform ${showProdF ? "rotate-180" : ""}`} />
@@ -399,14 +399,14 @@ export default function DashboardPage() {
                 {selCat && (
                   <button onClick={() => { setSelCat(""); setSelProd("") }}
                     className="flex items-center gap-1.5 h-6 px-3 rounded-full text-[9px] font-black text-blue-900 border border-blue-200"
-                    style={{ backgroundColor: "#BDE0FE60" }}>
+                    style={{ backgroundColor: "#8dd5e360" }}>
                     {selCat} <X className="size-2.5" />
                   </button>
                 )}
                 {selProd && (
                   <button onClick={() => setSelProd("")}
                     className="flex items-center gap-1.5 h-6 px-3 rounded-full text-[9px] font-black text-blue-900 border border-blue-200"
-                    style={{ backgroundColor: "#BDE0FE60" }}>
+                    style={{ backgroundColor: "#8dd5e360" }}>
                     {selProd.length > 22 ? selProd.slice(0, 22) + "…" : selProd} <X className="size-2.5" />
                   </button>
                 )}
@@ -537,7 +537,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
                             style={{ backgroundColor: d.color + "40" }}>
-                            <IconComp className="size-3.5" style={{ color: d.color === "#BDE0FE" ? "#1e3a5f" : d.color }} />
+                            <IconComp className="size-3.5" style={{ color: d.color === "#8dd5e3" ? "#1e3a5f" : d.color }} />
                           </div>
                           <span className="text-xs font-bold text-slate-600 truncate">{d.name}</span>
                         </div>
@@ -579,7 +579,7 @@ export default function DashboardPage() {
                 <Bar dataKey="ventas" radius={[6, 6, 0, 0]} cursor="pointer"
                   onClick={(data: any) => setDrillBar(d => (d !== null && d.ds === data.ds && d.type === "ventas") ? null : { ds: data.ds, type: "ventas" })}>
                   {barData.map((entry, i) => (
-                    <Cell key={i} fill={drillBar?.ds === entry.ds && drillBar?.type === "ventas" ? "#93c5fd" : "#BDE0FE"} />
+                    <Cell key={i} fill={drillBar?.ds === entry.ds && drillBar?.type === "ventas" ? "#93c5fd" : "#8dd5e3"} />
                   ))}
                 </Bar>
                 <Bar dataKey="gastos" radius={[6, 6, 0, 0]} cursor="pointer"
@@ -591,7 +591,7 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
             <div className="flex gap-4 mt-2 justify-center">
-              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#BDE0FE]" /><span className="text-[9px] font-bold text-slate-400 uppercase">Ventas</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#8dd5e3]" /><span className="text-[9px] font-bold text-slate-400 uppercase">Ventas</span></div>
               <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#fda4af]" /><span className="text-[9px] font-bold text-slate-400 uppercase">Gastos</span></div>
             </div>
 

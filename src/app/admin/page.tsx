@@ -42,7 +42,7 @@ export default function AdminPage() {
   const [showSubDropdown, setShowSubDropdown] = useState(false)
   const [showLeafDropdown, setShowLeafDropdown] = useState(false)
   const [colors, setColors] = useState<string[]>([])
-  const [colorPick, setColorPick] = useState("#BDE0FE")
+  const [colorPick, setColorPick] = useState("#8dd5e3")
   const [saleForm, setSaleForm] = useState({
     productId: "", productTitle: "", productCategory: "",
     amount: "", method: "$ Efectivo"
@@ -581,7 +581,7 @@ export default function AdminPage() {
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
       setColors([])
-      setColorPick("#BDE0FE")
+      setColorPick("#8dd5e3")
       setGalleryUrls([])
       setEditingProductId(null)
       fetchInitialData()
@@ -620,14 +620,14 @@ export default function AdminPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="w-full max-w-sm bg-white rounded-[40px] shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#BDE0FE' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#8dd5e3' }}>
               <Lock className="text-blue-900 size-7" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 font-['Poppins']">Business OS</h2>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); if (password === ADMIN_PASSWORD) setIsAuthenticated(true); else alert("Contraseña incorrecta") }} className="space-y-4">
             <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="h-14 rounded-2xl text-center text-lg bg-slate-50 border-0" />
-            <button type="submit" className="w-full rounded-full font-bold tracking-widest text-blue-900" style={{ height: '44px', backgroundColor: '#BDE0FE' }}>
+            <button type="submit" className="w-full rounded-full font-bold tracking-widest text-blue-900" style={{ height: '44px', backgroundColor: '#8dd5e3' }}>
               ENTRAR
             </button>
           </form>
@@ -646,7 +646,7 @@ export default function AdminPage() {
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Administración</p>
             <h1 className="text-xl font-black text-slate-900 font-['Poppins']">Subibaja OS</h1>
           </div>
-          <div className="px-3 py-1.5 rounded-2xl border border-blue-100 flex items-center gap-1.5" style={{ backgroundColor: '#BDE0FE20' }}>
+          <div className="px-3 py-1.5 rounded-2xl border border-blue-100 flex items-center gap-1.5" style={{ backgroundColor: '#8dd5e320' }}>
             <span className="text-[9px] font-black text-blue-500 uppercase">Bs</span>
             <input type="number" value={exchangeRate} onChange={(e) => updateExchangeRate(e.target.value)} className="w-12 bg-transparent font-black text-blue-700 outline-none text-sm" />
           </div>
@@ -660,7 +660,7 @@ export default function AdminPage() {
           ))}
           <Link href="/admin/dashboard" className="flex-1">
             <button className="w-full py-2.5 text-[10px] font-black rounded-xl uppercase tracking-widest text-blue-900"
-              style={{ backgroundColor: '#BDE0FE' }}>
+              style={{ backgroundColor: '#8dd5e3' }}>
               Panel
             </button>
           </Link>
@@ -768,7 +768,7 @@ export default function AdminPage() {
                   onClick={handleRegisterSale} 
                   disabled={!saleForm.amount || generatingQr}
                   className="flex-1 rounded-full font-bold tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase cursor-pointer"
-                  style={{ height: '44px', backgroundColor: '#BDE0FE80' }}
+                  style={{ height: '44px', backgroundColor: '#8dd5e380' }}
                 >
                   Solo Registrar
                 </button>
@@ -776,7 +776,7 @@ export default function AdminPage() {
                   onClick={handleRegisterSaleAndGenerateQr} 
                   disabled={!saleForm.amount || generatingQr}
                   className="flex-1 rounded-full font-black tracking-widest text-[#1e3a5f] disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase flex items-center justify-center gap-1 cursor-pointer"
-                  style={{ height: '44px', backgroundColor: '#BDE0FE' }}
+                  style={{ height: '44px', backgroundColor: '#8dd5e3' }}
                 >
                   {generatingQr ? (
                     <>
@@ -1090,7 +1090,7 @@ export default function AdminPage() {
                     {[
                       { hex: '#FFFFFF', name: 'Blanco' },
                       { hex: '#000000', name: 'Negro' },
-                      { hex: '#BDE0FE', name: 'Celeste' },
+                      { hex: '#8dd5e3', name: 'Celeste' },
                       { hex: '#FAD2E1', name: 'Rosa' },
                       { hex: '#F5F5DC', name: 'Beige' },
                       { hex: '#FEF08A', name: 'Dorado' },
@@ -1134,7 +1134,7 @@ export default function AdminPage() {
                       type="button"
                       onClick={() => { if (!colors.includes(colorPick)) setColors([...colors, colorPick]) }}
                       className="h-14 flex-1 rounded-2xl font-black text-[10px] tracking-[0.12em] transition-all active:scale-95 shadow-xs cursor-pointer"
-                      style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
+                      style={{ backgroundColor: '#8dd5e3', color: '#1e3a5f' }}
                     >
                       + AGREGAR COLOR
                     </button>
@@ -1245,7 +1245,7 @@ export default function AdminPage() {
                                 onClick={() => setNewCatIcon(name)}
                                 className="h-9 rounded-xl flex items-center justify-center transition-all"
                                 style={newCatIcon === name
-                                  ? { backgroundColor: '#BDE0FE', color: '#1e3a5f' }
+                                  ? { backgroundColor: '#8dd5e3', color: '#1e3a5f' }
                                   : { backgroundColor: '#f8fafc', color: '#cbd5e1' }}
                               >
                                 <IconComp className="size-4" />
@@ -1256,7 +1256,7 @@ export default function AdminPage() {
                         <button type="button" onClick={handleSaveCategory}
                           disabled={!newCatName.trim() || savingCat}
                           className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] disabled:opacity-40 transition-transform active:scale-95"
-                          style={{ backgroundColor: '#BDE0FE' }}>
+                          style={{ backgroundColor: '#8dd5e3' }}>
                           {savingCat ? 'GUARDANDO...' : 'GUARDAR CATEGORÍA'}
                         </button>
                       </div>
@@ -1343,7 +1343,7 @@ export default function AdminPage() {
                       setSelectedSubCat(null)
                       setSelectedLeafCat(null)
                       setColors([])
-                      setColorPick("#BDE0FE")
+                      setColorPick("#8dd5e3")
                       setGalleryUrls([])
                       setEditingProductId(null)
                       setActiveTab("inventory")
@@ -1356,7 +1356,7 @@ export default function AdminPage() {
                 )}
                 <button onClick={handleSaveProduct} disabled={saving || uploading}
                   className={`${editingProductId ? 'flex-2' : 'w-full'} rounded-full font-black tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95`}
-                  style={{ height: '56px', backgroundColor: '#BDE0FE', fontSize: '12px' }}>
+                  style={{ height: '56px', backgroundColor: '#8dd5e3', fontSize: '12px' }}>
                   {saving ? 'GUARDANDO...' : editingProductId ? 'GUARDAR CAMBIOS' : 'CARGAR PRODUCTO'}
                 </button>
               </div>
@@ -1424,7 +1424,7 @@ export default function AdminPage() {
                   onClick={handleCreateGiftCard}
                   disabled={savingGift || !giftCardForm.balance}
                   className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
-                  style={{ backgroundColor: '#BDE0FE' }}
+                  style={{ backgroundColor: '#8dd5e3' }}
                 >
                   {savingGift ? 'GENERANDO...' : 'CREAR TARJETA DE REGALO'}
                 </button>
@@ -1506,7 +1506,7 @@ export default function AdminPage() {
                             // Scroll to top of page
                             window.scrollTo({ top: 120, behavior: 'smooth' });
                           }}
-                          className="bg-[#BDE0FE]/40 border border-[#BDE0FE]/60 text-blue-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
+                          className="bg-[#8dd5e3]/40 border border-[#8dd5e3]/60 text-blue-900 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
                         >
                           Procesar
                         </button>
@@ -1571,7 +1571,7 @@ export default function AdminPage() {
                     onClick={handleSaveReward}
                     disabled={savingReward || uploadingRewardImg || !rewardForm.title || !rewardForm.pointsRequired || !rewardForm.image_url}
                     className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
-                    style={{ backgroundColor: '#BDE0FE' }}
+                    style={{ backgroundColor: '#8dd5e3' }}
                   >
                     {savingReward ? 'PUBLICANDO...' : 'PUBLICAR PREMIO'}
                   </button>
@@ -1599,7 +1599,7 @@ export default function AdminPage() {
                             navigator.clipboard.writeText(personalLink)
                             alert("¡Enlace copiado al portapapeles!")
                           }}
-                          className="text-[8px] font-black tracking-wider text-blue-900 bg-blue-50/50 hover:bg-[#BDE0FE]/35 px-2 py-1 rounded border border-blue-100/20 transition-all active:scale-95 cursor-pointer uppercase"
+                          className="text-[8px] font-black tracking-wider text-blue-900 bg-blue-50/50 hover:bg-[#8dd5e3]/35 px-2 py-1 rounded border border-blue-100/20 transition-all active:scale-95 cursor-pointer uppercase"
                         >
                           Copiar Enlace
                         </button>
@@ -1619,7 +1619,7 @@ export default function AdminPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="bg-[#BDE0FE40] border border-[#BDE0FE80] px-3 py-1 rounded-xl text-center flex-shrink-0">
+                    <div className="bg-[#8dd5e340] border border-[#8dd5e380] px-3 py-1 rounded-xl text-center flex-shrink-0">
                       <span className="text-xs font-black text-blue-900 font-['Poppins']">{m.points}</span>
                       <span className="text-[7px] font-black text-blue-800 uppercase block tracking-wider font-bold">PTS</span>
                     </div>
@@ -1647,7 +1647,7 @@ export default function AdminPage() {
             </div>
 
             <div className="space-y-1">
-              <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Código QR de Puntos</span>
+              <span className="text-[8px] font-black tracking-widest text-[#8dd5e3] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Código QR de Puntos</span>
               <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2 uppercase">
                 ¡Escanea para acumular!
               </h3>
@@ -1674,7 +1674,7 @@ export default function AdminPage() {
             <button
               onClick={() => setGeneratedVoucher(null)}
               className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center cursor-pointer"
-              style={{ backgroundColor: '#BDE0FE' }}
+              style={{ backgroundColor: '#8dd5e3' }}
             >
               Cerrar y Continuar
             </button>

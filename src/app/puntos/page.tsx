@@ -265,11 +265,11 @@ export default function LoyaltyPage() {
             className="w-full bg-gradient-to-r from-blue-900 to-indigo-950 text-white rounded-[24px] p-4 text-left shadow-lg relative overflow-hidden active:scale-95 transition-all group"
           >
             <div className="absolute right-[-15px] bottom-[-15px] opacity-10 pointer-events-none group-hover:scale-110 transition-transform">
-              <Crown className="size-32 rotate-12 text-[#BDE0FE]" />
+              <Crown className="size-32 rotate-12 text-[#8dd5e3]" />
             </div>
             <div className="flex justify-between items-center z-10 relative">
               <div className="space-y-1">
-                <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] uppercase">Beneficios Exclusivos</span>
+                <span className="text-[8px] font-black tracking-widest text-[#8dd5e3] uppercase">Beneficios Exclusivos</span>
                 <h3 className="text-sm font-black font-['Poppins'] tracking-tight flex items-center gap-1">
                   Ver Programa Club Subibaja
                 </h3>
@@ -339,7 +339,7 @@ export default function LoyaltyPage() {
                   type="submit"
                   disabled={searchingMember}
                   className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                  style={{ backgroundColor: '#BDE0FE' }}
+                  style={{ backgroundColor: '#8dd5e3' }}
                 >
                   {searchingMember ? (
                     <>
@@ -442,7 +442,7 @@ export default function LoyaltyPage() {
               </div>
             ) : rewards.length === 0 ? (
               <div className="bg-white rounded-3xl p-8 text-center text-slate-400">
-                <Ticket className="size-8 mx-auto mb-2 opacity-50 text-[#BDE0FE]" />
+                <Ticket className="size-8 mx-auto mb-2 opacity-50 text-[#8dd5e3]" />
                 <p className="text-xs font-semibold">No hay premios activos en este momento</p>
               </div>
             ) : (
@@ -524,7 +524,7 @@ export default function LoyaltyPage() {
               <div className="absolute inset-0 p-6 flex flex-col justify-between text-white z-10">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#BDE0FE] font-['Poppins']">Gift Card Virtual</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#8dd5e3] font-['Poppins']">Gift Card Virtual</span>
                     <h3 className="text-xl font-black font-['Playfair Display'] tracking-wide mt-1">Subibaja</h3>
                   </div>
                   <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-lg">
@@ -535,7 +535,7 @@ export default function LoyaltyPage() {
                 <div className="flex justify-between items-end">
                   <div>
                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Código de Activación</p>
-                    <p className="text-xs font-black tracking-widest text-[#BDE0FE] font-mono mt-0.5">
+                    <p className="text-xs font-black tracking-widest text-[#8dd5e3] font-mono mt-0.5">
                       {giftCard ? giftCard.code : 'SB-GIFT-••••'}
                     </p>
                   </div>
@@ -581,7 +581,7 @@ export default function LoyaltyPage() {
                   type="submit"
                   disabled={checkingGift}
                   className="w-full h-10 rounded-full font-black tracking-widest text-[#1e3a5f] text-[9px] uppercase shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  style={{ backgroundColor: '#BDE0FE' }}
+                  style={{ backgroundColor: '#8dd5e3' }}
                 >
                   {checkingGift ? (
                     <>
@@ -620,7 +620,7 @@ export default function LoyaltyPage() {
 
         {/* Navegación Inferior con Glassmorphism */}
         <nav 
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 bg-[#BDE0FE]/80 backdrop-blur-xl md:hidden"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 bg-[#8dd5e3]/80 backdrop-blur-xl md:hidden"
           style={{ 
             backgroundColor: 'rgba(189, 224, 254, 0.85)', 
             backdropFilter: 'blur(16px)', 
@@ -694,7 +694,7 @@ export default function LoyaltyPage() {
               </div>
               
               <div className="space-y-1">
-                <span className="text-[9px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">PROGRAMA EXCLUSIVO</span>
+                <span className="text-[9px] font-black tracking-widest text-[#8dd5e3] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">PROGRAMA EXCLUSIVO</span>
                 <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2">
                   PROGRAMA CLUB SUBIBAJA
                 </h3>
@@ -761,7 +761,7 @@ export default function LoyaltyPage() {
               <button
                 onClick={() => setShowVipModal(false)}
                 className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center"
-                style={{ backgroundColor: '#BDE0FE' }}
+                style={{ backgroundColor: '#8dd5e3' }}
               >
                 ¡ENTENDIDO!
               </button>
@@ -788,7 +788,7 @@ export default function LoyaltyPage() {
             </div>
 
             <div className="space-y-1">
-              <span className="text-[8px] font-black tracking-widest text-[#BDE0FE] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Reclamo Exitoso</span>
+              <span className="text-[8px] font-black tracking-widest text-[#8dd5e3] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Reclamo Exitoso</span>
               <h3 className="text-md font-black text-blue-900 font-['Poppins'] tracking-tight mt-2 uppercase">
                 ¡PUNTOS ACUMULADOS!
               </h3>
@@ -805,7 +805,7 @@ export default function LoyaltyPage() {
             <button
               onClick={() => setVoucherClaimedPoints(null)}
               className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center cursor-pointer"
-              style={{ backgroundColor: '#BDE0FE' }}
+              style={{ backgroundColor: '#8dd5e3' }}
             >
               ¡Excelente!
             </button>

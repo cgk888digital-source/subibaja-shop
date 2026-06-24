@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
     }
     // Si tiene menos de 2 colores, agregamos colores ficticios para la demo
     if (list.length < 2) {
-      let defaultMock = ['#ffffff', '#BDE0FE', '#FAD2E1'] // Blanco, Azul, Rosa
+      let defaultMock = ['#ffffff', '#8dd5e3', '#FAD2E1'] // Blanco, Azul, Rosa
       const title = (product.title || '').toLowerCase()
       if (title.includes('silver') || title.includes('glitter')) {
         defaultMock = ['#E2E8F0', '#FFFFFF', '#BAE6FD'] // Plata, Blanco, Azul cielo
@@ -95,7 +95,7 @@ export default function ProductDetailPage() {
       } else if (title.includes('gala') || title.includes('vestido')) {
         defaultMock = ['#FAD2E1', '#FFF5C3', '#E8E8FF'] // Rosa pastel, Amarillo pastel, Lavanda
       } else if (title.includes('sinderella')) {
-        defaultMock = ['#BDE0FE', '#FFFFFF', '#FFCAD4'] // Azul Cenicienta, Blanco, Rosa suave
+        defaultMock = ['#8dd5e3', '#FFFFFF', '#FFCAD4'] // Azul Cenicienta, Blanco, Rosa suave
       }
 
       const extra = defaultMock.filter(c => !list.includes(c))
@@ -222,7 +222,7 @@ export default function ProductDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div
           className="w-8 h-8 rounded-full border-2 border-t-blue-900 animate-spin"
-          style={{ borderColor: '#BDE0FE', borderTopColor: '#1e3a5f' }}
+          style={{ borderColor: '#8dd5e3', borderTopColor: '#1e3a5f' }}
         />
       </div>
     )
@@ -237,7 +237,7 @@ export default function ProductDetailPage() {
         <Link href="/">
           <button
             className="rounded-full text-[9px] font-bold tracking-widest text-blue-900 px-8 transition-transform active:scale-95"
-            style={{ height: '24px', backgroundColor: '#BDE0FE' }}
+            style={{ height: '24px', backgroundColor: '#8dd5e3' }}
           >
             VOLVER
           </button>
@@ -324,7 +324,7 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-2 mb-4">
               <span
                 className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm"
-                style={{ backgroundColor: '#BDE0FE', color: '#1e3a5f' }}
+                style={{ backgroundColor: '#8dd5e3', color: '#1e3a5f' }}
               >
                 {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
               </span>
@@ -384,7 +384,7 @@ export default function ProductDetailPage() {
                         </span>
                       </div>
                       {selectedSize && (
-                        <span className="text-[9px] font-black text-blue-900 bg-[#BDE0FE]/40 border border-[#BDE0FE]/50 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                        <span className="text-[9px] font-black text-blue-900 bg-[#8dd5e3]/40 border border-[#8dd5e3]/50 px-2.5 py-1 rounded-full uppercase tracking-widest">
                           Talla {selectedSize}
                         </span>
                       )}
@@ -404,7 +404,7 @@ export default function ProductDetailPage() {
                           }}
                         >
                           <span className="text-xs font-black">{size}</span>
-                          <span className={`text-[8px] font-black mt-0.5 ${selectedSize === size ? 'text-[#BDE0FE]' : 'text-slate-400'}`}>
+                          <span className={`text-[8px] font-black mt-0.5 ${selectedSize === size ? 'text-[#8dd5e3]' : 'text-slate-400'}`}>
                             ${getSizePrice(size)}
                           </span>
                         </button>
