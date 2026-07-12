@@ -1161,9 +1161,10 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría Principal</Label>
-                  <div className="relative" ref={catDropdownRef}>
+                <div className="space-y-4" ref={catDropdownRef}>
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría Principal</Label>
+                    <div className="relative">
                     {/* Trigger */}
                     <button
                       type="button"
@@ -1265,7 +1266,7 @@ export default function AdminPage() {
                 </div>
 
                 {/* Subcategory Level 2 */}
-                {subCategories.length > 0 && (
+                {currentMainCat && (
                   <div className="space-y-1.5">
                     <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Subcategoría</Label>
                     <div className="relative">
@@ -1280,7 +1281,7 @@ export default function AdminPage() {
 
                       {showSubDropdown && (
                         <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100 max-h-60 overflow-y-auto">
-                          {subCategories.map(sub => (
+                          {subCategories.length > 0 ? subCategories.map(sub => (
                             <button key={sub.id} type="button"
                               onClick={() => {
                                 setSelectedSubCat(sub);
@@ -1292,7 +1293,22 @@ export default function AdminPage() {
                               <span className="text-sm font-bold text-slate-700">{sub.name}</span>
                               {selectedSubCat?.id === sub.id && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
                             </button>
-                          ))}
+                          )) : (
+                            <div className="px-5 py-3 text-xs text-slate-400 italic">No hay subcategorías</div>
+                          )}
+                          <div className="border-t border-slate-100">
+                            <button type="button"
+                              onClick={() => { 
+                                setNewCatParentId(currentMainCat.id);
+                                setShowNewCatForm(true); 
+                                setShowSubDropdown(false); 
+                              }}
+                              className="w-full px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors text-blue-500"
+                            >
+                              <Plus className="size-4 flex-shrink-0" />
+                              <span className="text-sm font-bold">Nueva Subcategoría</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1300,7 +1316,7 @@ export default function AdminPage() {
                 )}
 
                 {/* Leaf Category / Type Level 3 */}
-                {selectedSubCat && leafCategories.length > 0 && (
+                {selectedSubCat && (
                   <div className="space-y-1.5">
                     <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Producto</Label>
                     <div className="relative">
@@ -1315,7 +1331,7 @@ export default function AdminPage() {
 
                       {showLeafDropdown && (
                         <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100 max-h-60 overflow-y-auto">
-                          {leafCategories.map(leaf => (
+                          {leafCategories.length > 0 ? leafCategories.map(leaf => (
                             <button key={leaf.id} type="button"
                               onClick={() => {
                                 setSelectedLeafCat(leaf);
@@ -1326,12 +1342,28 @@ export default function AdminPage() {
                               <span className="text-sm font-bold text-slate-700">{leaf.name}</span>
                               {selectedLeafCat?.id === leaf.id && <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
                             </button>
-                          ))}
+                          )) : (
+                            <div className="px-5 py-3 text-xs text-slate-400 italic">No hay tipos</div>
+                          )}
+                          <div className="border-t border-slate-100">
+                            <button type="button"
+                              onClick={() => { 
+                                setNewCatParentId(selectedSubCat.id);
+                                setShowNewCatForm(true); 
+                                setShowLeafDropdown(false); 
+                              }}
+                              className="w-full px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors text-blue-500"
+                            >
+                              <Plus className="size-4 flex-shrink-0" />
+                              <span className="text-sm font-bold">Nuevo Tipo</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
+              </div>
               </div>
 
               <div className="flex gap-3 w-full">
