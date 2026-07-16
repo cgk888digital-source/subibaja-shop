@@ -663,28 +663,26 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                             {product.title}
                           </h3>
                           {(() => {
+                            let displayPriceUsd = Number(product.price) || 0;
+                            let prefix = "";
+                            
                             if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
-                              const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v))
+                              const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v));
                               if (prices.length > 0) {
-                                const min = Math.min(...prices)
-                                const max = Math.max(...prices)
+                                const min = Math.min(...prices);
+                                const max = Math.max(...prices);
+                                displayPriceUsd = min;
                                 if (min < max) {
-                                  return (
-                                    <div className="flex flex-col items-center">
-                                      <span className="text-blue-900 font-bold text-lg leading-tight">Desde ${min}</span>
-                                      <span className="text-slate-350 text-[9px] uppercase tracking-widest font-bold">
-                                        Desde {(min * exchangeRate).toFixed(0)} Bs
-                                      </span>
-                                    </div>
-                                  )
+                                  prefix = "Desde ";
                                 }
                               }
                             }
+                            
                             return (
                               <div className="flex flex-col items-center">
-                                <span className="text-blue-900 font-bold text-lg leading-tight">${product.price}</span>
+                                <span className="text-blue-900 font-bold text-lg leading-tight">{prefix}${displayPriceUsd}</span>
                                 <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
-                                  {(product.price * exchangeRate).toFixed(0)} Bs
+                                  {prefix}{(displayPriceUsd * exchangeRate).toFixed(0)} Bs
                                 </span>
                               </div>
                             )
