@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft, Sparkles, User, Smartphone, Mail, Loader2, Star, Crown, Ticket, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { fetchBCVRate } from "@/lib/bcv"
 
 const GIFTCARDS_MOCK = [
   {
@@ -43,8 +44,8 @@ export default function GiftCardPurchasePage() {
   const [exchangeRate, setExchangeRate] = useState(36.50)
   useEffect(() => {
     async function fetchRate() {
-      const { data } = await supabase.from('settings').select('*').eq('id', 'exchange_rate').single()
-      if (data) setExchangeRate(data.value)
+      const rate = await fetchBCVRate()
+      setExchangeRate(rate)
     }
     fetchRate()
   }, [])

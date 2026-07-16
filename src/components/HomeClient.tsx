@@ -141,7 +141,12 @@ export default function HomeClient({ initialProducts, initialCategories, initial
     if (activeCategory === "Todos") return true
 
     // Check main category match
-    if (p.category !== activeCategory) return false
+    const currentMainCatObj = categories.find(c => c.name === activeCategory && !c.parent_id)
+    if (currentMainCatObj) {
+        if (!p.category_ids?.includes(currentMainCatObj.id) && p.category !== activeCategory) return false
+    } else {
+        if (p.category !== activeCategory) return false
+    }
 
     // If main category matches, check subcategory
     if (activeSubCategory === "Todos") return true
@@ -156,13 +161,13 @@ export default function HomeClient({ initialProducts, initialCategories, initial
     if (activeLeafCategory === "Todos") {
       // Must match subcategory itself OR any of its leaf children
       const leafIds = categories.filter(c => c.parent_id === subCatObj.id).map(c => c.id)
-      return p.category_id === subCatObj.id || leafIds.includes(p.category_id)
+      return p.category_ids?.includes(subCatObj.id) || leafIds.some((id: string) => p.category_ids?.includes(id)) || p.category_id === subCatObj.id || leafIds.includes(p.category_id)
     }
 
     const leafCatObj = categories.find(c => c.name === activeLeafCategory && c.parent_id === subCatObj.id)
     if (!leafCatObj) return true // safeguard
 
-    return p.category_id === leafCatObj.id
+    return p.category_ids?.includes(leafCatObj.id) || p.category_id === leafCatObj.id
   })
 
   return (
@@ -815,78 +820,98 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   allowFullScreen={false} 
                   loading="lazy" 
                   referrerPolicy="no-referrer-when-downgrade"
-                  className="rounded-2xl"
                 ></iframe>
               </div>
-              <div className="flex flex-col gap-1.5 px-1">
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="size-4 text-blue-500 flex-shrink-0" />
-                  <h4 className="font-bold text-slate-800 text-sm font-['Poppins']">Centro Comercial San Luis</h4>
+              
+              <div className="p-6 pt-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white shadow-md shadow-blue-500/20 flex-shrink-0">
+                    <MapPin className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-800 text-[15px] uppercase tracking-tight">Visítanos</h3>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Tienda Física</p>
+                  </div>
                 </div>
-                <p className="text-slate-400 text-[11px] leading-normal pl-6">Av. Principal de San Luis, Urbanización San Luis, Caracas, Venezuela.</p>
+                <p className="text-slate-500 text-[12px] leading-relaxed font-medium mb-4 pl-1">
+                  Av. Principal de San Luis, Urbanización San Luis, Caracas, Venezuela.
+                </p>
                 <a 
-                  href="https://maps.app.goo.gl/n4L5GYVrFNUSQ9mJ9" 
+                  href="https://maps.app.goo.gl/cRsb5PJUcEt2uyws8" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="mt-2 w-full h-10 rounded-2xl bg-blue-50 border border-[#8dd5e3]/50 text-blue-950 font-bold text-[11px] tracking-wider flex items-center justify-center gap-2 hover:bg-[#8dd5e3]/20 active:scale-95 transition-all shadow-sm"
+                  className="w-full h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 font-black text-[11px] tracking-widest uppercase flex items-center justify-center gap-2 hover:bg-blue-100 active:scale-95 transition-all shadow-sm"
                 >
-                  <Search className="size-3.5" />
-                  <span>ABRIR EN GOOGLE MAPS</span>
+                  <Search className="size-4 text-blue-500" />
+                  ABRIR EN GOOGLE MAPS
                 </a>
+
+                {/* Separator */}
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent my-6"></div>
+
+                {/* Redes Sociales Premium */}
+                <div className="text-center space-y-4">
+                  <span className="text-[10px] uppercase tracking-widest font-black text-slate-400">Síguenos en nuestras redes</span>
+                  <div className="flex items-center justify-center gap-4">
+                    {/* Instagram */}
+                    <a 
+                      href="https://instagram.com/subibaja_shop" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative size-14 rounded-2xl bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[1px] hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-300"
+                    >
+                      <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center group-hover:bg-transparent transition-colors duration-300">
+                        <svg className="size-6 fill-[url(#ig-grad)] group-hover:fill-white transition-colors duration-300" viewBox="0 0 24 24">
+                          <defs>
+                            <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#f9ce34" />
+                              <stop offset="50%" stopColor="#ee2a7b" />
+                              <stop offset="100%" stopColor="#6228d7" />
+                            </linearGradient>
+                          </defs>
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                        </svg>
+                      </div>
+                    </a>
+
+                    {/* WhatsApp */}
+                    <a 
+                      href="https://wa.me/584142274385" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative size-14 rounded-2xl bg-[#25D366] p-[1px] hover:-translate-y-1 hover:shadow-lg hover:shadow-[#25D366]/30 transition-all duration-300"
+                    >
+                      <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center group-hover:bg-[#25D366] transition-colors duration-300">
+                        <svg className="size-7 fill-[#25D366] group-hover:fill-white transition-colors duration-300" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.284 3.509 8.486-.002 6.66-5.338 11.999-11.946 11.999-2.005-.001-3.973-.504-5.714-1.463L0 24zm6.59-4.846c1.66.986 3.292 1.503 4.908 1.504 5.342 0 9.688-4.348 9.69-9.69.001-2.588-1.004-5.02-2.83-6.847-1.826-1.827-4.256-2.83-6.846-2.831-5.345 0-9.691 4.348-9.693 9.692-.001 1.737.478 3.426 1.385 4.903l-1.026 3.743 3.841-1.007zm11.367-5.64c-.327-.164-1.938-.956-2.264-1.075-.328-.118-.567-.177-.805.177-.239.354-.925 1.166-1.134 1.402-.208.236-.417.266-.745.102-.327-.164-1.383-.509-2.636-1.627-.975-.87-1.633-1.946-1.824-2.274-.192-.329-.02-.507.143-.671.147-.147.328-.383.493-.574.165-.192.22-.32.329-.533.109-.214.055-.4-.028-.564-.082-.164-.805-1.94-.105-2.65-.296-.693-.578-.6-.805-.611-.208-.01-.447-.012-.686-.012-.239 0-.627.09-1.015.513-.388.423-1.482 1.45-1.482 3.535 0 2.085 1.52 4.093 1.731 4.38.21.286 2.99 4.566 7.244 6.398 1.011.436 1.802.696 2.42.893 1.016.323 1.941.277 2.673.168.814-.121 1.938-.792 2.21-1.52.272-.729.272-1.353.191-1.482-.081-.13-.297-.208-.624-.372z"/>
+                        </svg>
+                      </div>
+                    </a>
+
+                    {/* Facebook */}
+                    <a 
+                      href="https://facebook.com/subibajashop" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative size-14 rounded-2xl bg-[#1877F2] p-[1px] hover:-translate-y-1 hover:shadow-lg hover:shadow-[#1877F2]/30 transition-all duration-300"
+                    >
+                      <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center group-hover:bg-[#1877F2] transition-colors duration-300">
+                        <svg className="size-7 fill-[#1877F2] group-hover:fill-white transition-colors duration-300" viewBox="0 0 24 24">
+                          <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+                        </svg>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+              <div className="bg-slate-50 border-t border-slate-100 p-4 text-center">
+                <p className="text-[9px] font-black text-slate-400 tracking-wider uppercase">
+                  © {new Date().getFullYear()} SUBIBAJA SHOP. TODOS LOS DERECHOS RESERVADOS.
+                </p>
               </div>
             </div>
           </section>
-
-          {/* Footer / Redes Sociales */}
-          <footer className="mt-8 mb-12 px-4 text-center flex flex-col items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-[1px] w-12 bg-slate-200"></div>
-              <span className="text-[9px] uppercase tracking-widest font-black text-slate-400">Síguenos en Redes</span>
-              <div className="h-[1px] w-12 bg-slate-200"></div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {/* Instagram */}
-              <a 
-                href="https://instagram.com/subibaja_shop" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="size-20 rounded-[28px] bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-rose-500 active:scale-90 transition-all"
-              >
-                <svg className="size-8 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                </svg>
-              </a>
-
-              {/* Facebook */}
-              <a 
-                href="https://facebook.com/subibajashop" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="size-20 rounded-[28px] bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-[#1877F2] active:scale-90 transition-all"
-              >
-                <svg className="size-8 fill-current" viewBox="0 0 24 24">
-                  <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-                </svg>
-              </a>
-
-              {/* Whatsapp */}
-              <a 
-                href="https://wa.me/584142274385" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="size-20 rounded-[28px] bg-white shadow-sm border border-slate-100 flex items-center justify-center text-blue-900 hover:text-emerald-500 active:scale-90 transition-all"
-              >
-                <svg className="size-8 fill-current" viewBox="0 0 24 24">
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.284 3.509 8.486-.002 6.66-5.338 11.999-11.946 11.999-2.005-.001-3.973-.504-5.714-1.463L0 24zm6.59-4.846c1.66.986 3.292 1.503 4.908 1.504 5.342 0 9.688-4.348 9.69-9.69.001-2.588-1.004-5.02-2.83-6.847-1.826-1.827-4.256-2.83-6.846-2.831-5.345 0-9.691 4.348-9.693 9.692-.001 1.737.478 3.426 1.385 4.903l-1.026 3.743 3.841-1.007zm11.367-5.64c-.327-.164-1.938-.956-2.264-1.075-.328-.118-.567-.177-.805.177-.239.354-.925 1.166-1.134 1.402-.208.236-.417.266-.745.102-.327-.164-1.383-.509-2.636-1.627-.975-.87-1.633-1.946-1.824-2.274-.192-.329-.02-.507.143-.671.147-.147.328-.383.493-.574.165-.192.22-.32.329-.533.109-.214.055-.4-.028-.564-.082-.164-.805-1.94-.105-2.65-.296-.693-.578-.6-.805-.611-.208-.01-.447-.012-.686-.012-.239 0-.627.09-1.015.513-.388.423-1.482 1.45-1.482 3.535 0 2.085 1.52 4.093 1.731 4.38.21.286 2.99 4.566 7.244 6.398 1.011.436 1.802.696 2.42.893 1.016.323 1.941.277 2.673.168.814-.121 1.938-.792 2.21-1.52.272-.729.272-1.353.191-1.482-.081-.13-.297-.208-.624-.372z"/>
-                </svg>
-              </a>
-            </div>
-
-            <p className="text-[9px] font-black text-slate-300 tracking-wider mt-2 uppercase">
-              © 2026 SUBIBAJA SHOP. TODOS LOS DERECHOS RESERVADOS.
-            </p>
-          </footer>
         </main>
 
             {/* Navegación Inferior con Glassmorphism */}

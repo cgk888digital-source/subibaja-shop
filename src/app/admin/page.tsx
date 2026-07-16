@@ -11,6 +11,10 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import CategoryManager from "@/components/admin/CategoryManager"
+import SortableProductList from "@/components/admin/SortableProductList"
+import { fetchBCVRate } from "@/lib/bcv"
+
 
 const ADMIN_PASSWORD = "SUBIBAJA2024"
 const CAT_ICONS: Record<string, React.ElementType> = {
@@ -21,6 +25,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState("")
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [inventorySearch, setInventorySearch] = useState("")
 
   const [products, setProducts] = useState<any[]>([])
   const [sales, setSales] = useState<any[]>([])
@@ -36,7 +41,7 @@ export default function AdminPage() {
     title: "", price: "", category: "Zapatos", sizes: "",
     image_url: "", stock_quantity: "10", description: ""
   })
-  const [sizeGroups, setSizeGroups] = useState<{ sizes: string; price: string; color: string }[]>([])
+  const [sizeGroups, setSizeGroups] = useState<{ sizes: string; price: string; color: string; stock: string }[]>([])
   const [selectedSubCat, setSelectedSubCat] = useState<any>(null)
   const [selectedLeafCat, setSelectedLeafCat] = useState<any>(null)
   const [showSubDropdown, setShowSubDropdown] = useState(false)
@@ -70,6 +75,7 @@ export default function AdminPage() {
   const [generatedVoucher, setGeneratedVoucher] = useState<{ id: string, points: number, amount_usd: number } | null>(null)
   const [generatingQr, setGeneratingQr] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
@@ -108,9 +114,9 @@ export default function AdminPage() {
   async function fetchInitialData() {
     try {
       setLoading(true)
-      const { data: settings } = await supabase.from('settings').select('*').eq('id', 'exchange_rate').single()
-      if (settings) setExchangeRate(settings.value)
-      const { data: prods } = await supabase.from('products').select('*').order('created_at', { ascending: false })
+      const rate = await fetchBCVRate()
+      setExchangeRate(rate)
+      const { data: prods } = await supabase.from('products').select('*').order('sort_order', { ascending: true })
       if (prods) setProducts(prods)
       const { data: salesData } = await supabase.from('sales').select('*').order('created_at', { ascending: false })
       if (salesData) setSales(salesData)
@@ -222,6 +228,7 @@ export default function AdminPage() {
         setFormData(f => ({ ...f, category: newCatName.trim() }))
         setSelectedSubCat(null)
         setSelectedLeafCat(null)
+                      setSelectedCategoryIds([])
       }
       setNewCatName("")
       setNewCatIcon("Tag")
@@ -418,7 +425,7 @@ export default function AdminPage() {
     })
     
     // Reconstruct size groups from prices_by_size if it's formatted
-    const reconstructedGroups: { sizes: string; price: string; color: string }[] = []
+    const reconstructedGroups: { sizes: string; price: string; color: string; stock: string }[] = []
     
     if (p.prices_by_size && Object.keys(p.prices_by_size).length > 0) {
       const pricesMap: Record<string, string[]> = {}
@@ -442,13 +449,15 @@ export default function AdminPage() {
         reconstructedGroups.push({
           sizes,
           price,
-          color: col || ""
+          color: col || "",
+          stock: ""
         })
       })
     }
     setSizeGroups(reconstructedGroups)
     
     // Set colors & gallery
+    setSelectedCategoryIds(p.category_ids || (p.category_id ? [p.category_id] : []))
     setColors(p.colors || [])
     setGalleryUrls(p.gallery_urls || [])
     
@@ -470,17 +479,20 @@ export default function AdminPage() {
               setFormData(prev => ({ ...prev, category: parent.name }))
               setSelectedSubCat(cat)
               setSelectedLeafCat(null)
+                      setSelectedCategoryIds([])
             }
           }
         } else {
           setFormData(prev => ({ ...prev, category: cat.name }))
           setSelectedSubCat(null)
           setSelectedLeafCat(null)
+                      setSelectedCategoryIds([])
         }
       }
     } else {
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
+                      setSelectedCategoryIds([])
     }
     
     // Switch to upload tab
@@ -508,6 +520,7 @@ export default function AdminPage() {
       let finalPrice = parseFloat(formData.price) || 0
       let finalSizes: string[] = formData.sizes.split(',').map(s => s.trim()).filter(Boolean)
       const pricesBySizesObj: Record<string, number> = {}
+      const stockBySizesObj: Record<string, number> = {}
 
       // Procesar grupos de tallas si existen
       if (activeGroups.length > 0) {
@@ -520,12 +533,16 @@ export default function AdminPage() {
               groupSizes.push(s)
             }
             
+            const groupStock = parseInt(g.stock) || 0
             if (g.color) {
               pricesBySizesObj[`${s}_${g.color.toLowerCase()}`] = groupPrice
+              if (g.stock) stockBySizesObj[`${s}_${g.color.toLowerCase()}`] = groupStock
             } else {
               pricesBySizesObj[s] = groupPrice
+              if (g.stock) stockBySizesObj[s] = groupStock
               colors.forEach(c => {
                 pricesBySizesObj[`${s}_${c.toLowerCase()}`] = groupPrice
+                if (g.stock) stockBySizesObj[`${s}_${c.toLowerCase()}`] = groupStock
               })
             }
           })
@@ -554,7 +571,9 @@ export default function AdminPage() {
           colors,
           stock_quantity: parseInt(formData.stock_quantity),
           gallery_urls: galleryUrls,
-          prices_by_size: pricesBySizesObj
+          prices_by_size: pricesBySizesObj,
+          category_ids: selectedCategoryIds,
+          stock_by_size: stockBySizesObj
         }).eq('id', editingProductId)
         if (error) throw error
         alert("¡Producto actualizado con éxito!")
@@ -570,7 +589,9 @@ export default function AdminPage() {
           colors,
           stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
           gallery_urls: galleryUrls,
-          prices_by_size: pricesBySizesObj
+          prices_by_size: pricesBySizesObj,
+          category_ids: selectedCategoryIds,
+          stock_by_size: stockBySizesObj
         }])
         if (error) throw error
         alert("¡Producto creado con éxito!")
@@ -580,6 +601,7 @@ export default function AdminPage() {
       setSizeGroups([])
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
+                      setSelectedCategoryIds([])
       setColors([])
       setColorPick("#8dd5e3")
       setGalleryUrls([])
@@ -646,19 +668,19 @@ export default function AdminPage() {
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Administración</p>
             <h1 className="text-xl font-black text-slate-900 font-['Poppins']">Subibaja OS</h1>
           </div>
-          <div className="px-3 py-1.5 rounded-2xl border border-blue-100 flex items-center gap-1.5" style={{ backgroundColor: '#8dd5e320' }}>
-            <span className="text-[9px] font-black text-blue-500 uppercase">Bs</span>
-            <input type="number" value={exchangeRate} onChange={(e) => updateExchangeRate(e.target.value)} className="w-12 bg-transparent font-black text-blue-700 outline-none text-sm" />
+          <div className="px-3 py-1.5 rounded-2xl border border-emerald-100 flex items-center gap-1.5" style={{ backgroundColor: '#d1fae580' }}>
+            <RefreshCcw className="w-3 h-3 text-emerald-600 animate-spin-slow" />
+            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">BCV Auto: {exchangeRate} Bs</span>
           </div>
         </div>
-        <div className="bg-slate-100/80 p-1 rounded-2xl flex gap-1">
-          {['dashboard', 'inventory', 'upload', 'club'].map((tab) => (
+        <div className="bg-slate-100/80 p-1 rounded-2xl flex flex-wrap gap-1">
+          {['dashboard', 'inventory', 'upload', 'categories', 'organize', 'club'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === tab ? 'bg-white shadow-md text-blue-600' : 'text-slate-400'}`}>
-              {tab === 'dashboard' ? 'Ventas' : tab === 'inventory' ? 'Stock' : tab === 'upload' ? 'Cargar' : 'Club'}
+              className={`flex-1 min-w-[70px] py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === tab ? 'bg-white shadow-md text-blue-600' : 'text-slate-400'}`}>
+              {tab === 'dashboard' ? 'Ventas' : tab === 'inventory' ? 'Stock' : tab === 'upload' ? 'Cargar' : tab === 'categories' ? 'Cats' : tab === 'organize' ? 'Orden' : 'Club'}
             </button>
           ))}
-          <Link href="/admin/dashboard" className="flex-1">
+          <Link href="/admin/dashboard" className="flex-1 min-w-[70px]">
             <button className="w-full py-2.5 text-[10px] font-black rounded-xl uppercase tracking-widest text-blue-900"
               style={{ backgroundColor: '#8dd5e3' }}>
               Panel
@@ -811,10 +833,21 @@ export default function AdminPage() {
 
         {/* ── TAB STOCK ── */}
         {activeTab === 'inventory' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <div className="relative mb-2">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar producto por nombre..."
+                value={inventorySearch}
+                onChange={(e) => setInventorySearch(e.target.value)}
+                className="w-full h-12 pl-11 pr-4 rounded-[20px] border border-slate-200 bg-white shadow-sm font-semibold text-sm focus:border-blue-400 focus:outline-none transition-colors"
+              />
+            </div>
+            <div className="space-y-3">
             {loading ? (
               <div className="flex justify-center py-16"><Loader2 className="size-7 animate-spin text-slate-300" /></div>
-            ) : products.map(product => (
+            ) : products.filter(p => p.title.toLowerCase().includes(inventorySearch.toLowerCase())).map(product => (
               <div key={product.id} className="bg-white rounded-[28px] shadow-sm p-4 flex items-center gap-4">
                 <img src={product.image_url} className="size-14 rounded-2xl object-cover flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -856,6 +889,7 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         )}
 
@@ -963,7 +997,7 @@ export default function AdminPage() {
                     <Label className="text-[10px] font-black text-slate-550 uppercase tracking-widest">Precios por Grupos (Opcional)</Label>
                     <button
                       type="button"
-                      onClick={() => setSizeGroups([...sizeGroups, { sizes: "", price: "", color: "" }])}
+                      onClick={() => setSizeGroups([...sizeGroups, { sizes: "", price: "", color: "", stock: "10" }])}
                       className="text-[8px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider cursor-pointer flex items-center gap-1"
                     >
                       + AGREGAR GRUPO
@@ -1008,6 +1042,25 @@ export default function AdminPage() {
                                   onChange={(e) => {
                                     const next = [...sizeGroups]
                                     next[idx].price = e.target.value
+                                    setSizeGroups(next)
+                                  }}
+                                  className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Campo Stock */}
+                            <div className="w-20 space-y-1">
+                              <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Stock</label>
+                              <div className="relative">
+                                <Package className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-slate-350" />
+                                <input
+                                  type="number"
+                                  placeholder="10"
+                                  value={group.stock || ''}
+                                  onChange={(e) => {
+                                    const next = [...sizeGroups]
+                                    next[idx].stock = e.target.value
                                     setSizeGroups(next)
                                   }}
                                   className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
@@ -1161,9 +1214,60 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="space-y-4" ref={catDropdownRef}>
-                  <div className="space-y-1.5">
-                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoría Principal</Label>
+                {/* NUEVO MULTI-CATEGORIA UI */}
+                <div className="space-y-3 bg-slate-50/50 border border-slate-100 rounded-3xl p-5">
+                  <div className="flex justify-between items-center px-1">
+                    <Label className="text-[10px] font-black text-slate-550 uppercase tracking-widest">Asignar Categorías</Label>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    {categories.filter(c => !c.parent_id).map(mainCat => {
+                      const mainChecked = selectedCategoryIds.includes(mainCat.id)
+                      return (
+                        <div key={mainCat.id} className="space-y-1">
+                          <label className="flex items-center gap-2 cursor-pointer font-bold text-sm text-slate-800 hover:bg-slate-50 p-1.5 rounded-lg">
+                            <input type="checkbox" checked={mainChecked} onChange={(e) => {
+                              if (e.target.checked) setSelectedCategoryIds([...selectedCategoryIds, mainCat.id])
+                              else setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== mainCat.id))
+                            }} className="size-4 rounded text-blue-500" />
+                            {mainCat.name}
+                          </label>
+                          <div className="pl-6 space-y-1">
+                            {categories.filter(sub => sub.parent_id === mainCat.id).map(subCat => {
+                              const subChecked = selectedCategoryIds.includes(subCat.id)
+                              return (
+                                <div key={subCat.id} className="space-y-1">
+                                  <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-600 hover:bg-slate-50 p-1 rounded-lg">
+                                    <input type="checkbox" checked={subChecked} onChange={(e) => {
+                                      if (e.target.checked) setSelectedCategoryIds([...selectedCategoryIds, subCat.id])
+                                      else setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== subCat.id))
+                                    }} className="size-3.5 rounded text-blue-500" />
+                                    {subCat.name}
+                                  </label>
+                                  <div className="pl-5 flex flex-wrap gap-2 pt-1">
+                                    {categories.filter(leaf => leaf.parent_id === subCat.id).map(leafCat => {
+                                      const leafChecked = selectedCategoryIds.includes(leafCat.id)
+                                      return (
+                                        <label key={leafCat.id} className={`flex items-center gap-1.5 cursor-pointer text-[10px] font-medium border px-2 py-0.5 rounded-full transition-colors ${leafChecked ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
+                                          <input type="checkbox" checked={leafChecked} onChange={(e) => {
+                                            if (e.target.checked) setSelectedCategoryIds([...selectedCategoryIds, leafCat.id])
+                                            else setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== leafCat.id))
+                                          }} className="hidden" />
+                                          {leafCat.name}
+                                        </label>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                {/* OLD UI (Hiding it) */}
+                <div className="hidden">
                     <div className="relative">
                     {/* Trigger */}
                     <button
@@ -1191,7 +1295,8 @@ export default function AdminPage() {
                               onClick={() => {
                                 setFormData({ ...formData, category: cat.name });
                                 setSelectedSubCat(null);
-                                setSelectedLeafCat(null);
+                                setSelectedLeafCat(null)
+                      setSelectedCategoryIds([]);
                                 setShowCatDropdown(false);
                               }}
                               className={`w-full px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left ${formData.category === cat.name ? 'bg-blue-50' : ''}`}
@@ -1265,9 +1370,9 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Subcategory Level 2 */}
+                {/* Subcategory Level 2 (OLD UI - HIDDEN) */}
                 {currentMainCat && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 hidden">
                     <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Subcategoría</Label>
                     <div className="relative">
                       <button
@@ -1285,7 +1390,8 @@ export default function AdminPage() {
                             <button key={sub.id} type="button"
                               onClick={() => {
                                 setSelectedSubCat(sub);
-                                setSelectedLeafCat(null);
+                                setSelectedLeafCat(null)
+                      setSelectedCategoryIds([]);
                                 setShowSubDropdown(false);
                               }}
                               className={`w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left ${selectedSubCat?.id === sub.id ? 'bg-blue-50' : ''}`}
@@ -1315,9 +1421,9 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {/* Leaf Category / Type Level 3 */}
+                {/* Leaf Category / Type Level 3 (OLD UI - HIDDEN) */}
                 {selectedSubCat && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 hidden">
                     <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Producto</Label>
                     <div className="relative">
                       <button
@@ -1364,8 +1470,7 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
-              </div>
-
+              
               <div className="flex gap-3 w-full">
                 {editingProductId && (
                   <button
@@ -1374,6 +1479,7 @@ export default function AdminPage() {
                       setSizeGroups([])
                       setSelectedSubCat(null)
                       setSelectedLeafCat(null)
+                      setSelectedCategoryIds([])
                       setColors([])
                       setColorPick("#8dd5e3")
                       setGalleryUrls([])
@@ -1397,6 +1503,14 @@ export default function AdminPage() {
         )}
 
         {/* ── TAB CLUB ── */}
+        {activeTab === 'categories' && (
+          <CategoryManager categories={categories} setCategories={setCategories} supabase={supabase} />
+        )}
+
+        {activeTab === 'organize' && (
+          <SortableProductList products={products} setProducts={setProducts} supabase={supabase} />
+        )}
+
         {activeTab === 'club' && (
           <div className="space-y-6 animate-fade-in">
 

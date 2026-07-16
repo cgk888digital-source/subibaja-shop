@@ -1,0 +1,176 @@
+import { useState } from "react"
+import { Plus, Trash2, Edit2, Check, X, Tag, Search } from "lucide-react"
+
+export default function CategoryManager({ categories, setCategories, supabase }: { categories: any[], setCategories: any, supabase: any }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState("")
+  const [newCatName, setNewCatName] = useState("")
+  const [newCatParent, setNewCatParent] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const handleUpdate = async (id: string) => {
+    if (!editName.trim()) return
+    const { error } = await supabase.from('categories').update({ name: editName }).eq('id', id)
+    if (!error) {
+      setCategories(categories.map(c => c.id === id ? { ...c, name: editName } : c))
+      setEditingId(null)
+    } else alert("Error al actualizar")
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar esta categoría? (Los productos no se borrarán)")) return
+    // Also delete children conceptually if cascade is not set, or let supabase handle cascade
+    const { error } = await supabase.from('categories').delete().eq('id', id)
+    if (!error) {
+      setCategories(categories.filter(c => c.id !== id && c.parent_id !== id)) // very basic cleanup
+    } else alert("Error al eliminar")
+  }
+
+  const handleCreate = async () => {
+    if (!newCatName.trim()) return
+    const { data, error } = await supabase.from('categories').insert([{
+      name: newCatName,
+      parent_id: newCatParent,
+      icon: 'Tag'
+    }]).select()
+    if (!error && data) {
+      setCategories([...categories, data[0]])
+      setNewCatName("")
+      setNewCatParent(null)
+    } else alert("Error al crear")
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in pb-20">
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
+        <h2 className="font-black text-slate-800 text-lg">Gestor de Categorías</h2>
+        
+        {/* Create Form */}
+        <div className="flex gap-2 flex-col bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <p className="text-[10px] font-black uppercase text-slate-400">Crear Nueva Categoría</p>
+          <input 
+            type="text" 
+            placeholder="Nombre de categoría..." 
+            value={newCatName}
+            onChange={(e) => setNewCatName(e.target.value)}
+            className="h-10 px-4 rounded-xl border border-slate-200 text-sm font-semibold"
+          />
+          <select 
+            value={newCatParent || ""} 
+            onChange={(e) => setNewCatParent(e.target.value || null)}
+            className="h-10 px-4 rounded-xl border border-slate-200 text-sm font-semibold"
+          >
+            <option value="">Principal (Sin Padre)</option>
+            {categories.filter(c => !c.parent_id).map(main => (
+              <optgroup key={main.id} label={main.name}>
+                <option value={main.id}>{main.name} (Subcategoría)</option>
+                {categories.filter(sub => sub.parent_id === main.id).map(sub => (
+                  <option key={sub.id} value={sub.id}>-- {sub.name} (Hoja)</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <button onClick={handleCreate} className="h-10 bg-blue-600 text-white font-black rounded-xl text-xs uppercase">
+            Agregar
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative mt-2">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar categoría o subcategoría..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white shadow-sm font-semibold text-sm focus:border-blue-400 focus:outline-none transition-colors"
+          />
+        </div>
+
+        {/* Tree View */}
+        <div className="space-y-2 mt-4">
+          {(() => {
+            const query = searchQuery.toLowerCase().trim()
+            const matchesSearch = (cat: any): boolean => {
+              if (!query) return true
+              if (cat.name.toLowerCase().includes(query)) return true
+              const children = categories.filter(c => c.parent_id === cat.id)
+              return children.some(matchesSearch)
+            }
+            const visibleMainCats = categories.filter(c => !c.parent_id).filter(matchesSearch)
+
+            return visibleMainCats.map(main => {
+              const showAllSubs = query === "" || main.name.toLowerCase().includes(query)
+              const actualSubs = showAllSubs 
+                ? categories.filter(sub => sub.parent_id === main.id) 
+                : categories.filter(sub => sub.parent_id === main.id).filter(matchesSearch)
+
+              return (
+                <div key={main.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
+                  <CatRow cat={main} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} isMain />
+                  
+                  <div className="pl-6 space-y-2 border-l-2 border-slate-200 ml-2">
+                    {actualSubs.map(sub => {
+                      const showAllLeafs = query === "" || sub.name.toLowerCase().includes(query) || showAllSubs
+                      const actualLeafs = showAllLeafs
+                        ? categories.filter(leaf => leaf.parent_id === sub.id)
+                        : categories.filter(leaf => leaf.parent_id === sub.id).filter(matchesSearch)
+
+                      return (
+                        <div key={sub.id} className="space-y-2">
+                          <CatRow cat={sub} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} />
+                          
+                          <div className="pl-6 space-y-1 border-l-2 border-slate-200 ml-2">
+                            {actualLeafs.map(leaf => (
+                              <CatRow key={leaf.id} cat={leaf} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} isLeaf />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })
+          })()}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CatRow({ cat, editingId, setEditingId, editName, setEditName, handleUpdate, handleDelete, isMain, isLeaf }: any) {
+  const isEditing = editingId === cat.id
+  return (
+    <div className="flex items-center group w-fit pr-4 py-1">
+      <div className="flex items-center gap-2">
+        {isEditing ? (
+          <input 
+            type="text" 
+            value={editName} 
+            onChange={(e) => setEditName(e.target.value)}
+            className="h-8 px-2 rounded-lg border-2 border-blue-400 text-sm font-bold w-48"
+            autoFocus
+          />
+        ) : (
+          <span className={`text-sm ${isMain ? 'font-black text-slate-800' : isLeaf ? 'font-medium text-slate-500' : 'font-bold text-slate-600'}`}>
+            {cat.name}
+          </span>
+        )}
+      </div>
+      <div className="flex gap-1 ml-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+        {isEditing ? (
+          <>
+            <button onClick={() => handleUpdate(cat.id)} className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg"><Check className="size-4" /></button>
+            <button onClick={() => setEditingId(null)} className="p-1.5 bg-slate-200 text-slate-600 rounded-lg"><X className="size-4" /></button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => { setEditingId(cat.id); setEditName(cat.name) }} className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Edit2 className="size-4" /></button>
+            <button onClick={() => handleDelete(cat.id)} className="p-1.5 bg-rose-100 text-rose-600 rounded-lg"><Trash2 className="size-4" /></button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

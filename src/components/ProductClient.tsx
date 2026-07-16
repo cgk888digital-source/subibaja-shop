@@ -76,7 +76,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
         list = raw.split(/[\s,]+/).map((s: string) => s.trim()).filter(Boolean)
       }
     }
-    if (list.length === 0) {
+    if (list.length === 0 && product?.category?.toLowerCase().includes('zapatos')) {
       list = ['24', '26', '28']
     }
     return list
@@ -167,6 +167,23 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     }
     return Number(product.price)
   }
+
+    const getStockForSelected = () => {
+    if (!product) return 0
+    if (product.stock_by_size) {
+      if (selectedSize && selectedColor) {
+        const keyWithColor = `${selectedSize}_${selectedColor.toLowerCase()}`
+        if (product.stock_by_size[keyWithColor] !== undefined) {
+          return Number(product.stock_by_size[keyWithColor])
+        }
+      }
+      if (selectedSize && product.stock_by_size[selectedSize] !== undefined) {
+        return Number(product.stock_by_size[selectedSize])
+      }
+    }
+    return product.stock_quantity ?? 0
+  }
+  const isOutOfStock = product?.stock_status === 'out_of_stock' || getStockForSelected() <= 0
 
   const getPriceRange = () => {
     if (!product) return null
@@ -374,6 +391,15 @@ export default function ProductClient({ initialProduct, initialCategories, initi
               <span className="text-sm text-gray-400 font-bold mt-1">
                 {(getActivePrice() * exchangeRate).toFixed(0)} Bs
               </span>
+              {!isOutOfStock && getStockForSelected() > 0 && (
+                <div className="mt-2 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5 shadow-sm">
+                  <span className="relative flex size-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
+                  </span>
+                  Quedan {getStockForSelected()} unidades
+                </div>
+              )}
               {(() => {
                 const range = getPriceRange()
                 if (range) {

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import { ShoppingCart, X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { fetchBCVRate } from "@/lib/bcv"
 
 export default function CartFloatingButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -12,11 +13,11 @@ export default function CartFloatingButton() {
     // Cargar carrito inicial
     loadCart()
 
-    // Obtener tasa de cambio actual de Supabase
+    // Obtener tasa de cambio actual desde DolarAPI
     const fetchRate = async () => {
       try {
-        const { data } = await supabase.from('settings').select('*').eq('id', 'exchange_rate').single()
-        if (data) setExchangeRate(data.value)
+        const rate = await fetchBCVRate()
+        setExchangeRate(rate)
       } catch (e) {
         console.error("Error al obtener tasa de cambio:", e)
       }
