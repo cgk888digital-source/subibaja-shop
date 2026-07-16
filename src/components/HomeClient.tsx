@@ -644,7 +644,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                               fill
                               priority={index < 4}
                               sizes="(max-width: 768px) 50vw, 25vw"
-                              className="object-cover transition-transform duration-700 group-hover:scale-105"
+                              className="object-contain p-4 transition-transform duration-700 group-hover:scale-105"
                             />
                           </Link>
                           <button 
