@@ -637,6 +637,24 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                       >
                         {/* ── IMAGEN: full-bleed, aspect-square, sin padding, bordes superiores heredados ── */}
                         <div className="relative aspect-square overflow-hidden">
+                          {(() => {
+                            const displayBadge = index === 0 ? 'nuevo' : index === 1 ? 'top' : (product as any).badge;
+                            if (displayBadge === 'nuevo') {
+                              return (
+                                <div className="absolute top-3 -left-8 w-28 bg-[#00ced1] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                                  NUEVO
+                                </div>
+                              );
+                            }
+                            if (displayBadge === 'top') {
+                              return (
+                                <div className="absolute top-3 -left-8 w-28 bg-[#f44336] text-white text-[9px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                                  TOP
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                           <Link href={`/producto/${product.id}`} className="block w-full h-full relative">
                             <Image
                               src={product.image_url}

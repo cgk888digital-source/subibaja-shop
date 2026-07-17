@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     colors TEXT[] DEFAULT '{}',
     stock_status TEXT DEFAULT 'in_stock',
     is_available BOOLEAN NOT NULL DEFAULT true,
-    prices_by_size JSONB DEFAULT '{}'
+    prices_by_size JSONB DEFAULT '{}',
+    badge TEXT
 );
 
 -- Enable RLS

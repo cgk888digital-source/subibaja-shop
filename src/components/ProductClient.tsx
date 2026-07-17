@@ -321,6 +321,16 @@ export default function ProductClient({ initialProduct, initialCategories, initi
         <div className="md:grid md:grid-cols-2 md:gap-16 md:items-start md:mt-4">
           {/* ── IMAGEN INMERSIVA: responsivo, 50vh en móvil, 600px en PC ── */}
           <section className="relative w-full h-[50vh] md:h-[600px] overflow-hidden bg-white border border-slate-100/60 md:rounded-3xl md:shadow-md">
+            {product.badge === 'nuevo' && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#00ced1] text-white text-[10px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none">
+                NUEVO
+              </div>
+            )}
+            {product.badge === 'top' && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#f44336] text-white text-[11px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none">
+                TOP
+              </div>
+            )}
             <Swiper
               pagination={{ clickable: true }}
               navigation={true}

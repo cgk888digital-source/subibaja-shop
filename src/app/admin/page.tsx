@@ -39,7 +39,7 @@ export default function AdminPage() {
 
   const [formData, setFormData] = useState({
     title: "", price: "", category: "Zapatos", sizes: "",
-    image_url: "", stock_quantity: "10", description: ""
+    image_url: "", stock_quantity: "10", description: "", badge: ""
   })
   const [sizeGroups, setSizeGroups] = useState<{ sizes: string; price: string; color: string; stock: string }[]>([])
   const [selectedSubCat, setSelectedSubCat] = useState<any>(null)
@@ -573,7 +573,8 @@ export default function AdminPage() {
           gallery_urls: galleryUrls,
           prices_by_size: pricesBySizesObj,
           category_ids: selectedCategoryIds,
-          stock_by_size: stockBySizesObj
+          stock_by_size: stockBySizesObj,
+          badge: formData.badge || null
         }).eq('id', editingProductId)
         if (error) throw error
         alert("¡Producto actualizado con éxito!")
@@ -591,13 +592,14 @@ export default function AdminPage() {
           gallery_urls: galleryUrls,
           prices_by_size: pricesBySizesObj,
           category_ids: selectedCategoryIds,
-          stock_by_size: stockBySizesObj
+          stock_by_size: stockBySizesObj,
+          badge: formData.badge || null
         }])
         if (error) throw error
         alert("¡Producto creado con éxito!")
       }
       
-      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
       setSizeGroups([])
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
@@ -972,6 +974,23 @@ export default function AdminPage() {
                     <Info className="absolute left-4 top-4 size-4 text-slate-300" />
                     <textarea placeholder="Detalles del producto..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full min-h-[100px] rounded-2xl bg-slate-50 border-0 pl-12 pt-3.5 font-medium text-sm outline-none resize-none" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Etiqueta Especial</Label>
+                  <div className="relative">
+                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
+                    <select
+                      value={formData.badge}
+                      onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                      className="w-full h-14 rounded-2xl bg-slate-50 border-0 pl-12 font-bold text-sm text-slate-700 outline-none appearance-none"
+                    >
+                      <option value="">Ninguna</option>
+                      <option value="nuevo">NUEVO (Azul)</option>
+                      <option value="top">TOP (Rojo)</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
 
@@ -1475,7 +1494,7 @@ export default function AdminPage() {
                 {editingProductId && (
                   <button
                     onClick={() => {
-                      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "" })
+                      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
                       setSizeGroups([])
                       setSelectedSubCat(null)
                       setSelectedLeafCat(null)
