@@ -421,7 +421,8 @@ export default function AdminPage() {
       sizes: p.sizes ? p.sizes.join(", ") : "",
       image_url: p.image_url || "",
       stock_quantity: p.stock_quantity ? p.stock_quantity.toString() : "10",
-      description: p.description || ""
+      description: p.description || "",
+      badge: p.badge || ""
     })
     
     // Reconstruct size groups from prices_by_size if it's formatted
