@@ -1237,7 +1237,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
                   }
                 ].map((offer, idx) => {
-                  const BCVPrice = (offer.promoPrice * exchangeRate).toFixed(0);
+                  const bsPrice = (offer.promoPrice * exchangeRate).toFixed(0);
                   const origBsPrice = (offer.originalPrice * exchangeRate).toFixed(0);
                   return (
                     <div key={idx} className="bg-white rounded-3xl p-4 flex gap-4 border border-slate-100/80 shadow-xs hover:border-blue-100 transition-colors">
