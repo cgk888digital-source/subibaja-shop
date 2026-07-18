@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Trash2, Edit2, Check, X, Tag, Search } from "lucide-react"
+import { Plus, Trash2, Edit2, Check, X, Tag, Search, Star } from "lucide-react"
 
 export default function CategoryManager({ categories, setCategories, supabase }: { categories: any[], setCategories: any, supabase: any }) {
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -16,6 +16,21 @@ export default function CategoryManager({ categories, setCategories, supabase }:
       setEditingId(null)
     } else alert("Error al actualizar")
   }
+
+  const handleToggleFeatured = async (id: string, currentVal: boolean) => {
+    const { error } = await supabase.from('categories').update({ is_featured_on_home: !currentVal }).eq('id', id)
+    if (!error) {
+      setCategories(categories.map(c => c.id === id ? { ...c, is_featured_on_home: !currentVal } : c))
+    } else alert("Error al actualizar")
+  }
+
+  const handleUpdateSortOrder = async (id: string, newOrder: number) => {
+    const { error } = await supabase.from('categories').update({ sort_order: newOrder }).eq('id', id)
+    if (!error) {
+      setCategories(categories.map(c => c.id === id ? { ...c, sort_order: newOrder } : c))
+    } else alert("Error al actualizar orden")
+  }
+
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Seguro que deseas eliminar esta categoría? (Los productos no se borrarán)")) return
@@ -107,7 +122,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
 
               return (
                 <div key={main.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
-                  <CatRow cat={main} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} isMain />
+                  <CatRow cat={main} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} handleToggleFeatured={handleToggleFeatured} handleUpdateSortOrder={handleUpdateSortOrder} isMain />
                   
                   <div className="pl-6 space-y-2 border-l-2 border-slate-200 ml-2">
                     {actualSubs.map(sub => {
@@ -118,11 +133,11 @@ export default function CategoryManager({ categories, setCategories, supabase }:
 
                       return (
                         <div key={sub.id} className="space-y-2">
-                          <CatRow cat={sub} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} />
+                          <CatRow cat={sub} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} handleToggleFeatured={handleToggleFeatured} handleUpdateSortOrder={handleUpdateSortOrder} />
                           
                           <div className="pl-6 space-y-1 border-l-2 border-slate-200 ml-2">
                             {actualLeafs.map(leaf => (
-                              <CatRow key={leaf.id} cat={leaf} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} isLeaf />
+                              <CatRow key={leaf.id} cat={leaf} editingId={editingId} setEditingId={setEditingId} editName={editName} setEditName={setEditName} handleUpdate={handleUpdate} handleDelete={handleDelete} handleToggleFeatured={handleToggleFeatured} handleUpdateSortOrder={handleUpdateSortOrder} isLeaf />
                             ))}
                           </div>
                         </div>
@@ -139,10 +154,10 @@ export default function CategoryManager({ categories, setCategories, supabase }:
   )
 }
 
-function CatRow({ cat, editingId, setEditingId, editName, setEditName, handleUpdate, handleDelete, isMain, isLeaf }: any) {
+function CatRow({ cat, editingId, setEditingId, editName, setEditName, handleUpdate, handleDelete, handleToggleFeatured, handleUpdateSortOrder, isMain, isLeaf }: any) {
   const isEditing = editingId === cat.id
   return (
-    <div className="flex items-center group w-fit pr-4 py-1">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between group w-full pr-4 py-1 gap-2">
       <div className="flex items-center gap-2">
         {isEditing ? (
           <input 
@@ -158,18 +173,44 @@ function CatRow({ cat, editingId, setEditingId, editName, setEditName, handleUpd
           </span>
         )}
       </div>
-      <div className="flex gap-1 ml-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-        {isEditing ? (
-          <>
-            <button onClick={() => handleUpdate(cat.id)} className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg"><Check className="size-4" /></button>
-            <button onClick={() => setEditingId(null)} className="p-1.5 bg-slate-200 text-slate-600 rounded-lg"><X className="size-4" /></button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => { setEditingId(cat.id); setEditName(cat.name) }} className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Edit2 className="size-4" /></button>
-            <button onClick={() => handleDelete(cat.id)} className="p-1.5 bg-rose-100 text-rose-600 rounded-lg"><Trash2 className="size-4" /></button>
-          </>
-        )}
+
+      <div className="flex items-center gap-4">
+        {/* Sort Order Input */}
+        <div className="flex items-center gap-1.5" title="Orden de visualización (menor a mayor)">
+          <span className="text-[10px] font-bold text-slate-400 uppercase">Orden:</span>
+          <input 
+            type="number"
+            value={cat.sort_order || 0}
+            onChange={(e) => handleUpdateSortOrder(cat.id, parseInt(e.target.value) || 0)}
+            className="w-12 h-7 px-1 text-center rounded bg-white border border-slate-200 text-xs font-semibold"
+          />
+        </div>
+        
+        {/* Featured Toggle */}
+        <div className="flex items-center gap-1.5" title="Destacar esta categoría en el Home">
+          <span className="text-[10px] font-bold text-slate-400 uppercase">Destacar:</span>
+          <button 
+            onClick={() => handleToggleFeatured(cat.id, !!cat.is_featured_on_home)}
+            className={`size-6 rounded flex items-center justify-center transition-colors ${cat.is_featured_on_home ? 'bg-amber-100 text-amber-500' : 'bg-slate-100 text-slate-400 hover:bg-amber-50 hover:text-amber-300'}`}
+          >
+            <Star className={`size-3.5 ${cat.is_featured_on_home ? 'fill-current' : ''}`} />
+          </button>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-1 ml-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+          {isEditing ? (
+            <>
+              <button onClick={() => handleUpdate(cat.id)} className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg"><Check className="size-4" /></button>
+              <button onClick={() => setEditingId(null)} className="p-1.5 bg-slate-200 text-slate-600 rounded-lg"><X className="size-4" /></button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => { setEditingId(cat.id); setEditName(cat.name) }} className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Edit2 className="size-4" /></button>
+              <button onClick={() => handleDelete(cat.id)} className="p-1.5 bg-rose-100 text-rose-600 rounded-lg"><Trash2 className="size-4" /></button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -174,7 +174,7 @@ export default function GiftCardPurchasePage() {
                       </div>
                       <div className="text-right">
                         <span className="text-lg font-black text-blue-900">${card.amount} USD</span>
-                        <span className="text-[9px] text-slate-400 font-bold block">{amountBs} Bs</span>
+                        <span className="text-[9px] text-slate-400 font-bold block">{amountBs} BCV</span>
                       </div>
                     </div>
                     <p className="text-[11px] text-slate-400 font-medium leading-relaxed">

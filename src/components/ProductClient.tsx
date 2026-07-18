@@ -211,7 +211,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     const priceBs = (activePrice * exchangeRate).toFixed(0)
     const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
     const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
-    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${activePrice} (${priceBs} Bs)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
+    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${activePrice} (${priceBs} BCV)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
     window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
@@ -393,13 +393,13 @@ export default function ProductClient({ initialProduct, initialCategories, initi
               {product.title}
             </h1>
 
-            {/* ── PRECIO: text-4xl azul oscuro + Bs gris debajo ── */}
+            {/* ── PRECIO: text-4xl azul oscuro + BCV gris debajo ── */}
             <div className="flex flex-col mb-8">
               <span className="text-4xl font-black text-blue-900 leading-none font-['Poppins']">
                 ${getActivePrice()}
               </span>
               <span className="text-sm text-gray-400 font-bold mt-1">
-                {(getActivePrice() * exchangeRate).toFixed(0)} Bs
+                {(getActivePrice() * exchangeRate).toFixed(0)} BCV
               </span>
               {!isOutOfStock && getStockForSelected() > 0 && (
                 <div className="mt-2 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5 shadow-sm">

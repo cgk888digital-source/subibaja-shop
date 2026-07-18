@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, Fragment } from "react"
-import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent, BookOpen, Gamepad2 } from "lucide-react"
+import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent, BookOpen, Gamepad2, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination, Autoplay } from "swiper/modules"
@@ -169,6 +169,143 @@ export default function HomeClient({ initialProducts, initialCategories, initial
 
     return p.category_ids?.includes(leafCatObj.id) || p.category_id === leafCatObj.id
   })
+
+  // Destacados
+  const featuredCategories = categories.filter(c => c.is_featured_on_home)
+
+  const renderProductCard = (product: any, index: number, showMiddleBanner = false) => {
+    return (
+      <Fragment key={product.id}>
+        {showMiddleBanner && (
+          <div className="col-span-2 md:col-span-4 lg:col-span-5 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 relative aspect-[16/8] md:aspect-[21/9] group">
+            <Image 
+              src="/zapatos_subibaja.jpeg" 
+              alt="Zapatos Subibaja" 
+              fill
+              sizes="(max-width: 768px) 100vw, 100vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/10 to-transparent flex flex-col justify-end p-5 text-left">
+              <span className="text-[8px] font-black uppercase tracking-widest text-[#8dd5e3] font-['Poppins']">Colección Subibaja</span>
+              <h4 className="text-sm font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight mt-1">
+                Calidad y Diseño en Cada Paso
+              </h4>
+              <p className="text-[9.5px] text-slate-200 font-semibold leading-normal mt-0.5 max-w-[280px]">
+                Modelos exclusivos diseñados para brindar la máxima comodidad y estilo en el crecimiento de tus niños.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        <div
+          className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-0.5"
+        >
+          {/* ── IMAGEN: full-bleed, aspect-square, sin padding, bordes superiores heredados ── */}
+          <div className="relative aspect-square overflow-hidden">
+            {(() => {
+              const displayBadge = index === 0 ? 'nuevo' : index === 1 ? 'top' : (product as any).badge;
+              if (displayBadge === 'nuevo') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#00ced1] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                    NUEVO
+                  </div>
+                );
+              }
+              if (displayBadge === 'top') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#f44336] text-white text-[9px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                    TOP
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            <Link href={`/producto/${product.id}`} className="block w-full h-full relative">
+              <Image
+                src={product.image_url}
+                alt={product.title}
+                fill
+                priority={index < 4}
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-contain p-4 transition-transform duration-700 group-hover:scale-105"
+              />
+            </Link>
+            <button 
+              onClick={(e) => toggleFavorite(product.id, e)}
+              className={`absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow-sm transition-all active:scale-125 ${
+                favorites.includes(product.id) ? 'text-rose-500' : 'text-gray-300 hover:text-rose-300'
+              } ${justLiked === product.id ? 'animate-heartbeat' : ''}`}
+            >
+              <Heart className={`size-3.5 ${favorites.includes(product.id) ? 'fill-current' : ''}`} />
+            </button>
+          </div>
+
+          {/* ── TEXTOS + BOTÓN: px-4 fondo blanco ── */}
+          <div className="flex flex-col items-center gap-2 px-4 py-3">
+            <h3 className="text-gray-400 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
+              {product.title}
+            </h3>
+            {(() => {
+              let displayPriceUsd = Number(product.price) || 0;
+              let prefix = "";
+              
+              if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
+                const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v));
+                if (prices.length > 0) {
+                  const min = Math.min(...prices);
+                  const max = Math.max(...prices);
+                  displayPriceUsd = min;
+                  if (min < max) {
+                    prefix = "Desde ";
+                  }
+                }
+              }
+              
+              return (
+                <div className="flex flex-col items-center">
+                  <span className="text-blue-900 font-bold text-lg leading-tight">{prefix}${displayPriceUsd}</span>
+                  <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
+                    {prefix}{(displayPriceUsd * exchangeRate).toFixed(0)} BCV
+                  </span>
+                </div>
+              )
+            })()}
+            <Link 
+              href={`/producto/${product.id}`} 
+              className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
+              style={{ height: '24px', backgroundColor: '#8dd5e3' }}
+            >
+              LO QUIERO
+            </Link>
+          </div>
+        </div>
+      </Fragment>
+    )
+  }
+
+  const handleViewMoreCategory = (cat: any) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (!cat.parent_id) {
+      // Es categoría principal
+      setActiveCategory(cat.name)
+      setActiveSubCategory("Todos")
+      setActiveLeafCategory("Todos")
+    } else {
+      const parent = categories.find(c => c.id === cat.parent_id)
+      if (!parent?.parent_id) {
+        // Es subcategoría
+        setActiveCategory(parent?.name || "Todos")
+        setActiveSubCategory(cat.name)
+        setActiveLeafCategory("Todos")
+      } else {
+        // Es categoría hoja (leaf)
+        const main = categories.find(c => c.id === parent.parent_id)
+        setActiveCategory(main?.name || "Todos")
+        setActiveSubCategory(parent.name)
+        setActiveLeafCategory(cat.name)
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -584,7 +721,53 @@ export default function HomeClient({ initialProducts, initialCategories, initial
               )
             })()}
 
-            {/* Grid de Productos */}
+            {/* Categorías Destacadas (solo se muestran en el Home principal sin búsqueda) */}
+            {activeCategory === "Todos" && activeSubCategory === "Todos" && activeLeafCategory === "Todos" && !searchQuery && featuredCategories.map(cat => {
+              // Obtener productos de esta categoría (hasta 8)
+              // We check if product belongs to this category or its subcategories.
+              // To simplify, we'll just check if category is in category_ids or category_id or string category
+              const isMain = !cat.parent_id
+              const catSubs = categories.filter(c => c.parent_id === cat.id)
+              const catLeafs = categories.filter(c => catSubs.some(sub => sub.id === c.parent_id))
+              const allRelevantIds = [cat.id, ...catSubs.map(c => c.id), ...catLeafs.map(c => c.id)]
+              
+              const catProducts = products.filter(p => 
+                p.category === cat.name || 
+                allRelevantIds.includes(p.category_id) || 
+                (p.category_ids && p.category_ids.some((id: string) => allRelevantIds.includes(id)))
+              ).slice(0, 8) // Limitamos a 8 productos
+              
+              if (catProducts.length === 0) return null
+
+              return (
+                <div key={cat.id} className="mb-8">
+                  <div className="flex items-center justify-between mb-4 mt-2 px-1">
+                    <h2 className="text-xl font-black font-['Poppins'] text-slate-800 flex items-center gap-2">
+                      {cat.name}
+                    </h2>
+                    <button 
+                      onClick={() => handleViewMoreCategory(cat)}
+                      className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors active:scale-95 flex items-center gap-1"
+                    >
+                      Ver más <ArrowRight className="size-3" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-4">
+                    {catProducts.map((product, index) => renderProductCard(product, index, false))}
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Grid de Productos Normales */}
+            {activeCategory === "Todos" && !searchQuery && featuredCategories.length > 0 && (
+              <div className="flex items-center justify-between mb-4 mt-6">
+                <h2 className="text-xl font-black font-['Poppins'] text-slate-800">
+                  Todos los productos
+                </h2>
+              </div>
+            )}
+            
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-4">
                 {[1, 2, 3, 4].map((n) => (
@@ -608,115 +791,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 {filteredProducts.map((product, index) => {
                   const middleIndex = filteredProducts.length > 2 ? Math.floor(filteredProducts.length / 2) : -1
                   const showMiddleBanner = index === middleIndex
-
-                  return (
-                    <Fragment key={product.id}>
-                      {showMiddleBanner && (
-                        <div className="col-span-2 md:col-span-4 lg:col-span-5 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 relative aspect-[16/8] md:aspect-[21/9] group">
-                          <Image 
-                            src="/zapatos_subibaja.jpeg" 
-                            alt="Zapatos Subibaja" 
-                            fill
-                            sizes="(max-width: 768px) 100vw, 100vw"
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/10 to-transparent flex flex-col justify-end p-5 text-left">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#8dd5e3] font-['Poppins']">Colección Subibaja</span>
-                            <h4 className="text-sm font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight mt-1">
-                              Calidad y Diseño en Cada Paso
-                            </h4>
-                            <p className="text-[9.5px] text-slate-200 font-semibold leading-normal mt-0.5 max-w-[280px]">
-                              Modelos exclusivos diseñados para brindar la máxima comodidad y estilo en el crecimiento de tus niños.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div
-                        className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-0.5"
-                      >
-                        {/* ── IMAGEN: full-bleed, aspect-square, sin padding, bordes superiores heredados ── */}
-                        <div className="relative aspect-square overflow-hidden">
-                          {(() => {
-                            const displayBadge = index === 0 ? 'nuevo' : index === 1 ? 'top' : (product as any).badge;
-                            if (displayBadge === 'nuevo') {
-                              return (
-                                <div className="absolute top-3 -left-8 w-28 bg-[#00ced1] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
-                                  NUEVO
-                                </div>
-                              );
-                            }
-                            if (displayBadge === 'top') {
-                              return (
-                                <div className="absolute top-3 -left-8 w-28 bg-[#f44336] text-white text-[9px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
-                                  TOP
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-                          <Link href={`/producto/${product.id}`} className="block w-full h-full relative">
-                            <Image
-                              src={product.image_url}
-                              alt={product.title}
-                              fill
-                              priority={index < 4}
-                              sizes="(max-width: 768px) 50vw, 25vw"
-                              className="object-contain p-4 transition-transform duration-700 group-hover:scale-105"
-                            />
-                          </Link>
-                          <button 
-                            onClick={(e) => toggleFavorite(product.id, e)}
-                            className={`absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow-sm transition-all active:scale-125 ${
-                              favorites.includes(product.id) ? 'text-rose-500' : 'text-gray-300 hover:text-rose-300'
-                            } ${justLiked === product.id ? 'animate-heartbeat' : ''}`}
-                          >
-                            <Heart className={`size-3.5 ${favorites.includes(product.id) ? 'fill-current' : ''}`} />
-                          </button>
-                        </div>
-
-                        {/* ── TEXTOS + BOTÓN: px-4 fondo blanco ── */}
-                        <div className="flex flex-col items-center gap-2 px-4 py-3">
-                          <h3 className="text-gray-400 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
-                            {product.title}
-                          </h3>
-                          {(() => {
-                            let displayPriceUsd = Number(product.price) || 0;
-                            let prefix = "";
-                            
-                            if (product.prices_by_size && Object.keys(product.prices_by_size).length > 0) {
-                              const prices = Object.values(product.prices_by_size).map(v => Number(v)).filter(v => !isNaN(v));
-                              if (prices.length > 0) {
-                                const min = Math.min(...prices);
-                                const max = Math.max(...prices);
-                                displayPriceUsd = min;
-                                if (min < max) {
-                                  prefix = "Desde ";
-                                }
-                              }
-                            }
-                            
-                            return (
-                              <div className="flex flex-col items-center">
-                                <span className="text-blue-900 font-bold text-lg leading-tight">{prefix}${displayPriceUsd}</span>
-                                <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
-                                  {prefix}{(displayPriceUsd * exchangeRate).toFixed(0)} Bs
-                                </span>
-                              </div>
-                            )
-                          })()}
-                          <Link 
-                            href={`/producto/${product.id}`} 
-                            className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
-                            style={{ height: '24px', backgroundColor: '#8dd5e3' }}
-                          >
-                            LO QUIERO
-                          </Link>
-                        </div>
-
-                      </div>
-                    </Fragment>
-                  )
+                  return renderProductCard(product, index, showMiddleBanner)
                 })}
               </div>
             )}
@@ -1162,7 +1237,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
                   }
                 ].map((offer, idx) => {
-                  const bsPrice = (offer.promoPrice * exchangeRate).toFixed(0);
+                  const BCVPrice = (offer.promoPrice * exchangeRate).toFixed(0);
                   const origBsPrice = (offer.originalPrice * exchangeRate).toFixed(0);
                   return (
                     <div key={idx} className="bg-white rounded-3xl p-4 flex gap-4 border border-slate-100/80 shadow-xs hover:border-blue-100 transition-colors">
@@ -1196,7 +1271,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                             )}
                           </div>
                           <span className="text-[8px] text-slate-400 font-bold">
-                            {offer.promoPrice > 0 ? `${bsPrice} Bs` : `0 Bs`} (antes: {origBsPrice} Bs)
+                            {offer.promoPrice > 0 ? `${bsPrice} BCV` : `0 BCV`} (antes: {origBsPrice} BCV)
                           </span>
                         </div>
                         

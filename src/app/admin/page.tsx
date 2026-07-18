@@ -1528,7 +1528,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'organize' && (
-          <SortableProductList products={products} setProducts={setProducts} supabase={supabase} />
+          <SortableProductList products={products} setProducts={setProducts} supabase={supabase} categories={categories} />
         )}
 
         {activeTab === 'club' && (

@@ -69,7 +69,7 @@ export default function CartFloatingButton() {
       itemsText += `${index + 1}. *${item.quantity}x ${item.title}*${sizeText}${colorText} - $${item.price} c/u\n`
     })
 
-    const msg = `¡Hola Subibaja! Me gustaría realizar un pedido con los siguientes artículos:\n\n${itemsText}\n*Total:* $${totalUsd.toFixed(2)} (${totalBs} Bs)\n\n¿Tienen disponibilidad para coordinar el pago y entrega?`
+    const msg = `¡Hola Subibaja! Me gustaría realizar un pedido con los siguientes artículos:\n\n${itemsText}\n*Total:* $${totalUsd.toFixed(2)} (${totalBs} BCV)\n\n¿Tienen disponibilidad para coordinar el pago y entrega?`
     window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
@@ -208,7 +208,7 @@ export default function CartFloatingButton() {
                   <div className="text-right">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Equivalente</span>
                     <span className="text-sm font-bold text-slate-400 font-['Poppins']">
-                      {totalBs} Bs
+                      {totalBs} BCV
                     </span>
                   </div>
                 </div>

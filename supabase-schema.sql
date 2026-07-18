@@ -1,4 +1,26 @@
+
+-- Create categories table for Subibaja app (reconstructed based on code and migrations)
+CREATE TABLE IF NOT EXISTS public.categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    name TEXT NOT NULL,
+    parent_id UUID REFERENCES public.categories(id),
+    icon TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_featured_on_home BOOLEAN DEFAULT false
+);
+
+-- Enable RLS for categories
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public profiles are viewable by everyone."
+ON public.categories FOR SELECT USING ( true );
+
+CREATE POLICY "Admins can manage categories."
+ON public.categories FOR ALL USING ( auth.role() = 'authenticated' );
+
 -- Create products table for Subibaja app
+
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,

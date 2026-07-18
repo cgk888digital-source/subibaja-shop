@@ -1,12 +1,32 @@
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical } from "lucide-react"
 
-export default function SortableProductList({ products, setProducts, supabase }: { products: any[], setProducts: any, supabase: any }) {
-  // sort products by sort_order initially
-  const sortedProducts = [...products].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+export default function SortableProductList({ products, setProducts, supabase, categories }: { products: any[], setProducts: any, supabase: any, categories?: any[] }) {
+  const [filterCat, setFilterCat] = useState("Todos")
+
+  // Filter products by category if selected
+  const filteredProducts = filterCat === "Todos" 
+    ? products 
+    : products.filter(p => {
+        const cat = categories?.find(c => c.name === filterCat)
+        if (!cat) return p.category === filterCat
+        
+        // Match main category or its subcategories
+        const isMain = !cat.parent_id
+        const catSubs = categories?.filter(c => c.parent_id === cat.id) || []
+        const catLeafs = categories?.filter(c => catSubs.some(sub => sub.id === c.parent_id)) || []
+        const allRelevantIds = [cat.id, ...catSubs.map(c => c.id), ...catLeafs.map(c => c.id)]
+        
+        return p.category === filterCat || 
+               allRelevantIds.includes(p.category_id) || 
+               (p.category_ids && p.category_ids.some((id: string) => allRelevantIds.includes(id)))
+      })
+
+  // sort filtered products by sort_order initially
+  const sortedProducts = [...filteredProducts].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -21,14 +41,20 @@ export default function SortableProductList({ products, setProducts, supabase }:
       
       const newItems = arrayMove(sortedProducts, oldIndex, newIndex)
       
-      // Update local state (optimistic update)
-      // assign new sort_order to all affected items
+      // Preserve absolute sort_order values of the currently filtered items
+      const availableSortOrders = sortedProducts.map(p => p.sort_order || 0).sort((a, b) => a - b)
+      
       const updatedItems = newItems.map((item, index) => ({
         ...item,
-        sort_order: index
+        sort_order: availableSortOrders[index]
       }))
       
-      setProducts(updatedItems)
+      // Update global products list
+      const globalUpdatedProducts = products.map(p => {
+        const updatedMatch = updatedItems.find(ui => ui.id === p.id)
+        return updatedMatch ? updatedMatch : p
+      })
+      setProducts(globalUpdatedProducts)
 
       // Save to Supabase (bulk update or sequential)
       // Since supabase JS doesn't have an easy bulk update with different values without a function, 
@@ -54,10 +80,40 @@ export default function SortableProductList({ products, setProducts, supabase }:
   return (
     <div className="space-y-4 animate-fade-in pb-20">
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-        <h2 className="font-black text-slate-800 text-lg mb-2">Reordenar Productos (Drag & Drop)</h2>
-        <p className="text-xs text-slate-500 mb-6 font-medium">
-          Arrastra los productos usando el ícono <GripVertical className="inline size-4" /> para cambiar el orden en que aparecen en la tienda.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
+          <div>
+            <h2 className="font-black text-slate-800 text-lg mb-1">Reordenar Productos (Drag & Drop)</h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Arrastra los productos usando <GripVertical className="inline size-3.5" /> para cambiar su orden de aparición.
+            </p>
+          </div>
+          
+          {categories && (
+            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+              <span className="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap pl-2">Filtrar por:</span>
+              <select 
+                value={filterCat}
+                onChange={(e) => setFilterCat(e.target.value)}
+                className="h-8 px-2 rounded-lg border border-slate-200 text-xs font-bold text-blue-900 bg-white"
+              >
+                <option value="Todos">Todos los productos</option>
+                {categories.filter(c => !c.parent_id).map(main => (
+                  <optgroup key={main.id} label={main.name}>
+                    <option value={main.name}>{main.name} (Todo)</option>
+                    {categories.filter(sub => sub.parent_id === main.id).map(sub => (
+                      <Fragment key={sub.id}>
+                        <option value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</option>
+                        {categories.filter(leaf => leaf.parent_id === sub.id).map(leaf => (
+                          <option key={leaf.id} value={leaf.name}>&nbsp;&nbsp;&nbsp;&nbsp;↳ {leaf.name}</option>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sortedProducts.map(p => p.id)} strategy={verticalListSortingStrategy}>
