@@ -242,7 +242,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
 
           {/* ── TEXTOS + BOTÓN: px-4 fondo blanco ── */}
           <div className="flex flex-col items-center gap-2 px-4 py-3">
-            <h3 className="text-gray-400 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
+            <h3 className="text-slate-500 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
               {product.title}
             </h3>
             {(() => {
@@ -264,8 +264,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
               return (
                 <div className="flex flex-col items-center">
                   <span className="text-blue-900 font-bold text-lg leading-tight">{prefix}${displayPriceUsd}</span>
-                  <span className="text-slate-300 text-[9px] uppercase tracking-widest font-bold">
-                    {prefix}{(displayPriceUsd * exchangeRate).toFixed(0)} BCV
+                  <span className="text-slate-500 text-[10px] uppercase tracking-widest font-bold mt-0.5">
+                    {prefix}Bs {(displayPriceUsd * exchangeRate).toFixed(0)} BCV
                   </span>
                 </div>
               )
@@ -558,56 +558,78 @@ export default function HomeClient({ initialProducts, initialCategories, initial
             </div>
           </div>
 
-          {/* Banner de Fidelización - Club VIP */}
-          <div className="px-4 mt-6 md:max-w-3xl md:mx-auto w-full">
-            <div className="bg-gradient-to-br from-[#1e3a8a] via-[#1e1b4b] to-[#311042] text-white rounded-[32px] p-5 shadow-lg relative overflow-hidden select-none border border-indigo-950/50">
-              {/* Background glows */}
-              <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+          {/* Banner de Fidelización - Club VIP (Style 1 Exact Match) */}
+          <div className="px-4 mt-6 md:max-w-md md:mx-auto w-full">
+            <div className="relative w-full aspect-[1.58/1] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-[#3b82f6] via-[#1d4ed8] to-[#1e3a8a]">
               
-              <div className="flex gap-4 items-center">
-                {/* Lado izquierdo: Foto del producto con badge */}
-                <div className="w-[110px] h-[110px] relative rounded-2xl overflow-hidden border border-white/10 shadow-md bg-slate-900 flex-shrink-0">
-                  <Image 
-                    src="https://nlzgqnkplqldpoghwtzj.supabase.co/storage/v1/object/public/product-images/products/1778193906387.jpeg" 
-                    alt="Modelo Sinderella" 
-                    fill
-                    priority
-                    sizes="110px"
-                    className="object-cover"
-                  />
-                  <div className="absolute bottom-0 inset-x-0 bg-blue-900/90 text-white text-[7.5px] font-black tracking-widest text-center py-1 uppercase">
-                    50% OFF · 200 PTS
-                  </div>
-                </div>
+              {/* Glassmorphism Inner Border */}
+              <div className="absolute inset-0 border-[1.5px] border-white/30 rounded-2xl pointer-events-none mix-blend-overlay"></div>
+              
+              {/* Reflejo superior izquierdo intenso (Glare) */}
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/40 via-white/5 to-transparent pointer-events-none"></div>
+              
+              {/* Reflejo diagonal (estilo plástico tarjeta) */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -rotate-[30deg] scale-[1.5] -translate-x-4 -translate-y-12 pointer-events-none"></div>
 
-                {/* Lado derecho: Detalles de acumulación */}
-                <div className="flex-1 space-y-1.5 text-left">
-                  <div className="flex items-center gap-1">
-                    <Crown className="size-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-[#8dd5e3] font-['Poppins']">Club Subibaja</span>
-                  </div>
-                  <h4 className="text-xs font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight">
-                    ¡Compra y Acumula Puntos!
-                  </h4>
-                  <p className="text-[9.5px] text-slate-300 font-semibold leading-normal">
-                    Gana 1 punto por cada $1 USD. Canjéalos por regalos directos o un **50% de descuento** en tus calzados favoritos.
-                  </p>
+              {/* Glowing orbs (luces de fondo suaves) */}
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl pointer-events-none"></div>
+              
+              {/* Partículas brillantes de la imagen */}
+              <div className="absolute top-[30%] right-[30%] w-[3px] h-[3px] bg-yellow-100 rounded-full blur-[0.5px] opacity-90 shadow-[0_0_10px_3px_rgba(255,255,255,0.8)]"></div>
+              <div className="absolute bottom-[40%] left-[25%] w-[2px] h-[2px] bg-white rounded-full blur-[0.5px] opacity-80 shadow-[0_0_8px_2px_rgba(255,255,255,0.6)]"></div>
+              <div className="absolute top-[45%] left-[35%] w-[1.5px] h-[1.5px] bg-blue-100 rounded-full blur-[0.5px] opacity-90 shadow-[0_0_6px_2px_rgba(255,255,255,0.7)]"></div>
+              <div className="absolute bottom-[20%] right-[40%] w-[2px] h-[2px] bg-yellow-200 rounded-full blur-[0.5px] opacity-70 shadow-[0_0_6px_1px_rgba(253,224,71,0.5)]"></div>
+              <div className="absolute top-[20%] right-[15%] w-[1.5px] h-[1.5px] bg-white rounded-full blur-[0.5px] opacity-60"></div>
+              <div className="absolute bottom-[15%] right-[20%] w-[1px] h-[1px] bg-white rounded-full blur-[0.5px] opacity-50"></div>
+
+              {/* Top Left: Crown and Title */}
+              <div className="absolute top-5 left-6 right-6 z-20">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Crown className="size-5 md:size-6 text-[#d4af37] fill-[#d4af37] drop-shadow-md" />
+                  <span className="text-xl md:text-2xl font-medium tracking-wide text-white font-sans uppercase drop-shadow-sm">
+                    CLUB SUBIBAJA
+                  </span>
+                </div>
+                <div className="text-white font-medium text-[11px] md:text-sm tracking-[0.2em] uppercase ml-0.5 drop-shadow-md">
+                  Gana Puntos
                 </div>
               </div>
 
-              {/* Botón de acción */}
-              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                  ¿Ya tienes cuenta?
-                </span>
-                <Link 
-                  href="/puntos" 
-                  className="h-8 px-4 rounded-full font-black tracking-widest text-blue-900 text-[8.5px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 hover:bg-[#a6d5ff] cursor-pointer"
-                  style={{ backgroundColor: '#8dd5e3' }}
-                >
-                  <Sparkles className="size-3 text-amber-500 fill-amber-500" /> CONSULTAR PUNTOS
-                </Link>
+              {/* Luz blanca detrás de la niña para preservar sus colores naturales */}
+              <div className="absolute top-1/2 -right-10 md:-right-14 -translate-y-1/2 w-[190px] h-[190px] md:w-[240px] md:h-[240px] bg-white rounded-full blur-[35px] md:blur-[45px] pointer-events-none z-0"></div>
+
+              {/* Imagen de la niña sin fondo (Efecto Multiply) */}
+              <div className="absolute top-1/2 -right-8 md:-right-12 -translate-y-1/2 w-[220px] h-[220px] md:w-[280px] md:h-[280px] z-10 mix-blend-multiply transition-transform hover:scale-105">
+                <Image 
+                  src="/imagem_gift_card.jpeg" 
+                  alt="Niña con regalos" 
+                  fill 
+                  className="object-contain contrast-[1.05] brightness-[1.02]"
+                />
+              </div>
+
+              {/* Bottom Left: Points/Benefits Text & CTA */}
+              <div className="absolute bottom-5 left-6 z-10">
+                <div className="flex flex-col">
+                  <span className="text-[8px] md:text-[10px] text-blue-200 uppercase tracking-widest font-medium mb-1 drop-shadow-sm">
+                    Beneficios Exclusivos
+                  </span>
+                  <span className="text-2xl md:text-3xl font-bold text-white leading-none font-['Poppins'] tracking-tight mb-1 drop-shadow-md">
+                    HASTA 50% OFF
+                  </span>
+                  <span className="text-[9px] md:text-[11px] text-blue-100/80 font-light tracking-wide max-w-[200px] leading-tight mb-3">
+                    Acumula 1 pto por cada $1 USD
+                  </span>
+                  
+                  {/* Action Button (Moved to Left) */}
+                  <Link 
+                    href="/puntos" 
+                    className="w-fit h-7 md:h-8 px-4 rounded-full font-black tracking-widest text-blue-900 bg-white/95 text-[7px] md:text-[9px] uppercase shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer backdrop-blur-md"
+                  >
+                    CONSULTAR PUNTOS <ArrowRight className="size-2.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -808,11 +830,12 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 {/* Lado Izquierdo: Imagen de Niños */}
                 <div className="w-1/2 h-full relative">
                   <Image 
-                    src="/giftcard_kids.png" 
+                    src="/imagem_gift_card.jpeg" 
                     alt="Niños Subibaja"
                     fill
                     sizes="(max-width: 768px) 50vw, 30vw"
                     className="object-cover"
+                    unoptimized={true}
                   />
                   {/* Overlay sutil para mezclar con el azul/blanco */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10" />
@@ -1270,8 +1293,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                               </>
                             )}
                           </div>
-                          <span className="text-[8px] text-slate-400 font-bold">
-                            {offer.promoPrice > 0 ? `${bsPrice} BCV` : `0 BCV`} (antes: {origBsPrice} BCV)
+                          <span className="text-[8px] text-slate-500 font-bold">
+                            {offer.promoPrice > 0 ? `Bs ${bsPrice} BCV` : `Bs 0 BCV`} (antes: Bs {origBsPrice} BCV)
                           </span>
                         </div>
                         

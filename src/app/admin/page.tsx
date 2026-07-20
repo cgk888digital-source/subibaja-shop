@@ -240,7 +240,7 @@ export default function AdminPage() {
   const updateExchangeRate = async (val: string) => {
     const rate = parseFloat(val) || 0
     setExchangeRate(rate)
-    await supabase.from('settings').update({ value: rate }).eq('id', 'exchange_rate')
+    await supabase.from('settings').upsert({ id: 'exchange_rate', value: rate.toString() })
   }
 
   const selectProduct = (p: any) => {
@@ -671,9 +671,17 @@ export default function AdminPage() {
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Administración</p>
             <h1 className="text-xl font-black text-slate-900 font-['Poppins']">Subibaja OS</h1>
           </div>
-          <div className="px-3 py-1.5 rounded-2xl border border-emerald-100 flex items-center gap-1.5" style={{ backgroundColor: '#d1fae580' }}>
-            <RefreshCcw className="w-3 h-3 text-emerald-600 animate-spin-slow" />
-            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">BCV Auto: {exchangeRate} Bs</span>
+          <div className="px-3 py-1.5 rounded-2xl border border-emerald-100 flex items-center gap-2" style={{ backgroundColor: '#d1fae580' }}>
+            <RefreshCcw className="w-3 h-3 text-emerald-600" />
+            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">TASA BCV:</span>
+            <input 
+              type="number" 
+              step="0.01"
+              className="w-16 text-[10px] font-black text-emerald-900 bg-white border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-400"
+              value={exchangeRate}
+              onChange={(e) => updateExchangeRate(e.target.value)}
+            />
+            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wide">Bs</span>
           </div>
         </div>
         <div className="bg-slate-100/80 p-1 rounded-2xl flex flex-wrap gap-1">

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { ShoppingCart, X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { fetchBCVRate } from "@/lib/bcv"
+import { getColorName } from "@/lib/colors"
 
 export default function CartFloatingButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -65,7 +66,7 @@ export default function CartFloatingButton() {
     let itemsText = ""
     cart.forEach((item, index) => {
       const sizeText = item.size ? ` (Talla: ${item.size})` : ""
-      const colorText = item.color ? ` (Color: ${item.color})` : ""
+      const colorText = item.color ? ` (Color: ${getColorName(item.color)})` : ""
       itemsText += `${index + 1}. *${item.quantity}x ${item.title}*${sizeText}${colorText} - $${item.price} c/u\n`
     })
 
@@ -207,8 +208,8 @@ export default function CartFloatingButton() {
                   </div>
                   <div className="text-right">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Equivalente</span>
-                    <span className="text-sm font-bold text-slate-400 font-['Poppins']">
-                      {totalBs} BCV
+                    <span className="text-sm font-bold text-slate-500 font-['Poppins']">
+                      Bs {totalBs} BCV
                     </span>
                   </div>
                 </div>

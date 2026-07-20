@@ -12,6 +12,7 @@ import Link from "next/link"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import CartFloatingButton from "@/components/CartFloatingButton"
 import Image from "next/image"
+import { getColorName } from "@/lib/colors"
 
 interface ProductClientProps {
   initialProduct: any
@@ -210,7 +211,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     const activePrice = getActivePrice()
     const priceBs = (activePrice * exchangeRate).toFixed(0)
     const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
-    const colorText = selectedColor ? `\nColor: ${selectedColor}` : ''
+    const colorText = selectedColor ? `\nColor: ${getColorName(selectedColor)}` : ''
     const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${activePrice} (${priceBs} BCV)${sizeText}${colorText}\n\n¿Tienen disponibilidad?`
     window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
@@ -398,8 +399,8 @@ export default function ProductClient({ initialProduct, initialCategories, initi
               <span className="text-4xl font-black text-blue-900 leading-none font-['Poppins']">
                 ${getActivePrice()}
               </span>
-              <span className="text-sm text-gray-400 font-bold mt-1">
-                {(getActivePrice() * exchangeRate).toFixed(0)} BCV
+              <span className="text-sm text-slate-500 font-bold mt-1">
+                Bs {(getActivePrice() * exchangeRate).toFixed(0)} BCV
               </span>
               {!isOutOfStock && getStockForSelected() > 0 && (
                 <div className="mt-2 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5 shadow-sm">
