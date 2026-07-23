@@ -213,12 +213,12 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     const sizeText = selectedSize ? `\nTalla: ${selectedSize}` : ''
     const colorText = selectedColor ? `\nColor: ${getColorName(selectedColor)}` : ''
     
-    // Obtener la URL absoluta de la imagen para que WhatsApp genere la miniatura
+    // Obtener la URL absoluta de la imagen
     const imgUrl = product.image_url?.startsWith('http') 
       ? product.image_url 
       : `${window.location.origin}${product.image_url}`
 
-    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${activePrice} (${priceBs} BCV)${sizeText}${colorText}\n\n🖼️ Ver imagen: ${imgUrl}\n\n¿Tienen disponibilidad?`
+    const msg = `¡Hola! Me interesa este producto:\n\n*${product.title}*\nPrecio: $${activePrice} (${priceBs} BCV)${sizeText}${colorText}\n\n🔗 Link del producto:\n${window.location.href}\n\n🖼️ Ver imagen:\n${imgUrl}\n\n¿Tienen disponibilidad?`
     window.open(`https://wa.me/584142274385?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
