@@ -177,20 +177,22 @@ export default function HomeClient({ initialProducts, initialCategories, initial
     return (
       <Fragment key={product.id}>
         {showMiddleBanner && (
-          <div className="col-span-2 md:col-span-4 lg:col-span-5 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 relative aspect-[16/8] md:aspect-[21/9] group">
-            <Image 
-              src="/zapatos_subibaja.jpeg" 
-              alt="Zapatos Subibaja" 
-              fill
-              sizes="(max-width: 768px) 100vw, 100vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/10 to-transparent flex flex-col justify-end p-5 text-left">
-              <span className="text-[8px] font-black uppercase tracking-widest text-[#8dd5e3] font-['Poppins']">Colección Subibaja</span>
-              <h4 className="text-sm font-black font-['Poppins'] text-white tracking-tight uppercase leading-tight mt-1">
+          <div className="col-span-2 md:col-span-4 lg:col-span-5 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 flex flex-col bg-[#fef8f8] group">
+            <div className="relative w-full aspect-[16/8] md:aspect-[21/9]">
+              <Image 
+                src="/imagen_home.jpg" 
+                alt="Zapatos Subibaja" 
+                fill
+                sizes="(max-width: 768px) 100vw, 100vw"
+                className="object-contain transition-transform duration-700 group-hover:scale-105"
+              />
+            </div>
+            <div className="p-5 text-left bg-[#fef8f8]">
+              <span className="text-[8px] font-black uppercase tracking-widest text-blue-400 font-['Poppins']">Colección Subibaja</span>
+              <h4 className="text-sm font-black font-['Poppins'] text-blue-900 tracking-tight uppercase leading-tight mt-1">
                 Calidad y Diseño en Cada Paso
               </h4>
-              <p className="text-[9.5px] text-slate-200 font-semibold leading-normal mt-0.5 max-w-[280px]">
+              <p className="text-[9.5px] text-slate-500 font-semibold leading-normal mt-0.5">
                 Modelos exclusivos diseñados para brindar la máxima comodidad y estilo en el crecimiento de tus niños.
               </p>
             </div>
@@ -521,19 +523,17 @@ export default function HomeClient({ initialProducts, initialCategories, initial
         <main className="flex-1">
 
           {/* Hero Carousel */}
-          <section className="w-full aspect-[16/10] md:aspect-[21/9] bg-gray-50 overflow-hidden shadow-sm">
+          <section className="w-full aspect-[16/10] md:aspect-[21/9] bg-white overflow-hidden shadow-sm">
             <Swiper pagination={{ clickable: true }} autoplay={{ delay: 5000 }} modules={[Pagination, Autoplay]} className="w-full h-full">
               <SwiperSlide>
                 <div className="relative w-full h-full">
-                  <video
-                    src="/video-fachada-tienda.mp4"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
+                  <Image
+                    src="/portada.jpg"
+                    alt="Portada Subibaja"
+                    fill
+                    priority
+                    className="object-contain"
                   />
-
                 </div>
               </SwiperSlide>
             </Swiper>
