@@ -155,9 +155,7 @@ export default function TallasPage() {
                 className={`relative flex-shrink-0 w-14 h-14 rounded-xl border-2 overflow-hidden transition-all cursor-pointer ${
                   activeSlide === idx ? 'border-blue-900 scale-105 shadow-md' : 'border-slate-200 opacity-60 hover:opacity-100'
                 }`}
-              >                }`}
               >
-
                 <Image 
                   src={slide.image} 
                   alt={slide.title}
