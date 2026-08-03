@@ -319,16 +319,17 @@ export default function HomeClient({ initialProducts, initialCategories, initial
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/50">
           <div className="w-full px-5 h-16 flex items-center justify-between">
             {/* Logo a la izquierda */}
-            <Link href="/" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-all">
-              <Image
-                src="/Logo.jpg.jpeg"
-                alt="Subibaja"
-                width={38}
-                height={38}
-                className="rounded-full object-cover border border-slate-100 shadow-sm"
-                priority
-              />
-              <span className="font-['Poppins'] font-black text-blue-900 text-xs tracking-widest uppercase">Subibaja</span>
+            <Link href="/" className="flex items-center gap-3 hover:scale-105 active:scale-95 transition-all">
+              <div className="relative size-14 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-white">
+                <Image
+                  src="/logo-principal.jpg"
+                  alt="Subibaja"
+                  fill
+                  className="object-contain rounded-full"
+                  priority
+                />
+              </div>
+              <span className="font-['Poppins'] font-black text-blue-900 text-sm tracking-widest uppercase">Subibaja</span>
             </Link>
 
             {/* Menú Hamburguesa a la derecha */}
@@ -576,14 +577,14 @@ export default function HomeClient({ initialProducts, initialCategories, initial
               
               <div className="relative p-5 border border-white/30 rounded-[32px]">
                 <div className="flex gap-4 items-center">
-                  {/* Logotipo arreglado sin círculo blanco */}
-                  <div className="w-[80px] h-[80px] relative flex items-center justify-center flex-shrink-0 mix-blend-multiply">
+                  {/* Logotipo redondo natural ampliado */}
+                  <div className="relative size-24 rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0">
                     <Image 
-                      src="/logo-fino.png" 
+                      src="/logo-principal.jpg" 
                       alt="Logo Subibaja" 
                       fill
-                      sizes="80px"
-                      className="object-contain"
+                      sizes="96px"
+                      className="object-contain rounded-full"
                     />
                   </div>
 

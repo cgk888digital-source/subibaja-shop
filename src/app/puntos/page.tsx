@@ -685,11 +685,11 @@ export default function LoyaltyPage() {
             <div className="relative w-full max-w-[380px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 text-center z-10 transition-all duration-300 animate-in fade-in zoom-in-95 slide-in-from-bottom-10">
               
               {/* Top Logo Visual */}
-              <div className="mx-auto w-16 h-16 rounded-full overflow-hidden shadow-sm border border-slate-100 bg-white">
+              <div className="mx-auto w-20 h-20 rounded-full overflow-hidden bg-white flex items-center justify-center">
                 <img 
-                  src="/Logo.jpg.jpeg" 
+                  src="/logo-principal.jpg" 
                   alt="Subibaja Logo" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain rounded-full"
                 />
               </div>
               
