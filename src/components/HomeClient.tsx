@@ -320,7 +320,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
           <div className="w-full px-5 h-16 flex items-center justify-between">
             {/* Logo a la izquierda */}
             <Link href="/" className="flex items-center gap-3 hover:scale-105 active:scale-95 transition-all">
-              <div className="relative size-14 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-white">
+              <div className="relative size-14 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
                 <Image
                   src="/logo-principal.jpg"
                   alt="Subibaja"
@@ -577,8 +577,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
               
               <div className="relative p-5 border border-white/30 rounded-[32px]">
                 <div className="flex gap-4 items-center">
-                  {/* Logotipo redondo natural ampliado */}
-                  <div className="relative size-24 rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0">
+                  {/* Logotipo redondo natural ampliado sin fondo blanco */}
+                  <div className="relative size-24 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
                     <Image 
                       src="/logo-principal.jpg" 
                       alt="Logo Subibaja" 
