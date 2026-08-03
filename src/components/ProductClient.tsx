@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import CartFloatingButton from "@/components/CartFloatingButton"
 import Image from "next/image"
 import { getColorName } from "@/lib/colors"
+import SizeGuideModal from "@/components/SizeGuideModal"
 
 interface ProductClientProps {
   initialProduct: any
@@ -32,6 +33,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
   const [justLiked, setJustLiked] = useState(false)
   const [categories, setCategories] = useState<any[]>(initialCategories)
   const [isAdded, setIsAdded] = useState(false)
+  const [showSizeGuide, setShowSizeGuide] = useState(false)
 
   const getColorHex = (colorName: string) => {
     const normalized = colorName.toLowerCase().trim()
@@ -450,6 +452,20 @@ export default function ProductClient({ initialProduct, initialCategories, initi
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 pb-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowSizeGuide(true)}
+                      className="w-full mb-3 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100/70 border border-blue-200/60 text-blue-950 text-[10px] font-black uppercase tracking-wider flex items-center justify-between transition-all active:scale-98 cursor-pointer shadow-2xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Ruler className="size-3.5 text-blue-800" />
+                        <span>¿Cómo medir el pie? Ver Guía de Tallas</span>
+                      </div>
+                      <span className="bg-blue-900 text-white text-[8px] font-black px-2 py-0.5 rounded-full">
+                        10 PASOS
+                      </span>
+                    </button>
+
                     <div className="flex flex-wrap gap-2.5">
                       {getParsedSizes().map((size: string) => (
                         <button
@@ -563,7 +579,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
 
         {/* Carrito Flotante */}
         <CartFloatingButton />
-
+        <SizeGuideModal isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, Fragment } from "react"
-import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent, BookOpen, Gamepad2, ArrowRight } from "lucide-react"
+import { ShoppingCart, Heart, Home as HomeIcon, LayoutGrid as GridIcon, User, Loader2, LayoutGrid, Footprints, Shirt, Star, ShoppingBag, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, Search, X, MapPin, Menu, ChevronDown, ChevronUp, Percent, BookOpen, Gamepad2, ArrowRight, Ruler } from "lucide-react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Pagination, Autoplay } from "swiper/modules"
@@ -378,6 +378,14 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     <Gift className="size-3.5 text-blue-900" />
                     <span>Giftcards</span>
                   </Link>
+                  <Link 
+                    href="/tallas" 
+                    onClick={() => setShowHamburgerMenu(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors"
+                  >
+                    <Ruler className="size-3.5 text-blue-900" />
+                    <span>Guía de Tallas</span>
+                  </Link>
                 </div>
 
                 <div className="h-[1px] bg-slate-100 w-full" />
@@ -604,6 +612,29 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   </Link>
                 </div>
               </div>
+            </div>
+
+            {/* Acceso Rápido - Guía de Tallas */}
+            <div className="mt-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between gap-3 transition-transform hover:scale-[1.01]">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-900">
+                  <Ruler className="size-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-blue-900 font-['Poppins'] tracking-tight">
+                    ¿Dudas con la talla del pie?
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
+                    Aprende a medir en 10 sencillos pasos
+                  </p>
+                </div>
+              </div>
+              <Link 
+                href="/tallas" 
+                className="h-8 px-4 rounded-xl font-black text-[9px] uppercase tracking-widest text-blue-900 bg-[#8dd5e3] shadow-xs flex items-center gap-1 transition-all hover:scale-105 active:scale-95 whitespace-nowrap cursor-pointer"
+              >
+                VER GUÍA <ArrowRight className="size-3" />
+              </Link>
             </div>
           </div>
 
