@@ -10,41 +10,62 @@ export default function CategoryManager({ categories, setCategories, supabase }:
 
   const handleUpdate = async (id: string) => {
     if (!editName.trim()) return
-    const { error } = await supabase.from('categories').update({ name: editName }).eq('id', id)
+    const oldCat = categories.find(c => c.id === id)
+    const { error } = await supabase.from('categories').update({ name: editName.trim() }).eq('id', id)
     if (!error) {
-      setCategories(categories.map(c => c.id === id ? { ...c, name: editName } : c))
+      if (oldCat && oldCat.name !== editName.trim()) {
+        if (!oldCat.parent_id) {
+          await supabase.from('products').update({ category: editName.trim() }).eq('category', oldCat.name)
+        }
+      }
+      setCategories(categories.map(c => c.id === id ? { ...c, name: editName.trim() } : c))
       setEditingId(null)
-    } else alert("Error al actualizar")
+    } else {
+      alert("Error al actualizar: " + (error.message || "No se pudo actualizar"))
+    }
   }
 
   const handleToggleFeatured = async (id: string, currentVal: boolean) => {
     const { error } = await supabase.from('categories').update({ is_featured_on_home: !currentVal }).eq('id', id)
     if (!error) {
       setCategories(categories.map(c => c.id === id ? { ...c, is_featured_on_home: !currentVal } : c))
-    } else alert("Error al actualizar")
+    } else alert("Error al actualizar: " + (error?.message || ""))
   }
 
   const handleUpdateSortOrder = async (id: string, newOrder: number) => {
     const { error } = await supabase.from('categories').update({ sort_order: newOrder }).eq('id', id)
     if (!error) {
       setCategories(categories.map(c => c.id === id ? { ...c, sort_order: newOrder } : c))
-    } else alert("Error al actualizar orden")
+    } else alert("Error al actualizar orden: " + (error?.message || ""))
   }
-
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Seguro que deseas eliminar esta categoría? (Los productos no se borrarán)")) return
-    // Also delete children conceptually if cascade is not set, or let supabase handle cascade
+    
+    const getDescendantIds = (catId: string): string[] => {
+      const children = categories.filter(c => c.parent_id === catId)
+      let ids: string[] = []
+      for (const child of children) {
+        ids.push(child.id)
+        ids = ids.concat(getDescendantIds(child.id))
+      }
+      return ids
+    }
+
+    const allRemovedIds = new Set([id, ...getDescendantIds(id)])
+
     const { error } = await supabase.from('categories').delete().eq('id', id)
     if (!error) {
-      setCategories(categories.filter(c => c.id !== id && c.parent_id !== id)) // very basic cleanup
-    } else alert("Error al eliminar")
+      setCategories(categories.filter(c => !allRemovedIds.has(c.id)))
+    } else {
+      alert("Error al eliminar categoría: " + (error.message || "No se pudo eliminar"))
+    }
   }
 
   const handleCreate = async () => {
     if (!newCatName.trim()) return
     const { data, error } = await supabase.from('categories').insert([{
-      name: newCatName,
+      name: newCatName.trim(),
       parent_id: newCatParent,
       icon: 'Tag'
     }]).select()
@@ -52,7 +73,9 @@ export default function CategoryManager({ categories, setCategories, supabase }:
       setCategories([...categories, data[0]])
       setNewCatName("")
       setNewCatParent(null)
-    } else alert("Error al crear")
+    } else {
+      alert("Error al crear categoría: " + (error?.message || ""))
+    }
   }
 
   return (

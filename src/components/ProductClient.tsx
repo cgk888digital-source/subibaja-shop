@@ -340,6 +340,11 @@ export default function ProductClient({ initialProduct, initialCategories, initi
                 TOP
               </div>
             )}
+            {(product.badge === 'descuentos' || product.badge === 'descuento') && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#10b981] text-white text-[9px] font-black tracking-wider py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none">
+                DESCUENTOS
+              </div>
+            )}
             <Swiper
               pagination={{ clickable: true }}
               navigation={true}

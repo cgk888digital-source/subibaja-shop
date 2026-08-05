@@ -998,6 +998,7 @@ export default function AdminPage() {
                       <option value="">Ninguna</option>
                       <option value="nuevo">NUEVO (Azul)</option>
                       <option value="top">TOP (Rojo)</option>
+                      <option value="descuentos">DESCUENTOS (Verde)</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                   </div>

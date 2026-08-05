@@ -205,7 +205,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
           {/* ── IMAGEN: full-bleed, aspect-square, sin padding, bordes superiores heredados ── */}
           <div className="relative aspect-square overflow-hidden">
             {(() => {
-              const displayBadge = index === 0 ? 'nuevo' : index === 1 ? 'top' : (product as any).badge;
+              const displayBadge = (product as any).badge || (index === 0 ? 'nuevo' : index === 1 ? 'top' : null);
               if (displayBadge === 'nuevo') {
                 return (
                   <div className="absolute top-3 -left-8 w-28 bg-[#00ced1] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
@@ -217,6 +217,13 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 return (
                   <div className="absolute top-3 -left-8 w-28 bg-[#f44336] text-white text-[9px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
                     TOP
+                  </div>
+                );
+              }
+              if (displayBadge === 'descuentos' || displayBadge === 'descuento') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#10b981] text-white text-[7px] font-black tracking-wider py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                    DESCUENTOS
                   </div>
                 );
               }
