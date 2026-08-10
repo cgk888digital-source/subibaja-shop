@@ -97,19 +97,28 @@ export default function SortableProductList({ products, setProducts, supabase, c
                 className="h-8 px-2 rounded-lg border border-slate-200 text-xs font-bold text-blue-900 bg-white"
               >
                 <option value="Todos">Todos los productos</option>
-                {categories.filter(c => !c.parent_id).map(main => (
-                  <optgroup key={main.id} label={main.name}>
-                    <option value={main.name}>{main.name} (Todo)</option>
-                    {categories.filter(sub => sub.parent_id === main.id).map(sub => (
-                      <Fragment key={sub.id}>
-                        <option value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</option>
-                        {categories.filter(leaf => leaf.parent_id === sub.id).map(leaf => (
-                          <option key={leaf.id} value={leaf.name}>&nbsp;&nbsp;&nbsp;&nbsp;↳ {leaf.name}</option>
+                {categories
+                  .filter(c => !c.parent_id)
+                  .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                  .map(main => (
+                    <optgroup key={main.id} label={main.name}>
+                      <option value={main.name}>{main.name} (Todo)</option>
+                      {categories
+                        .filter(sub => sub.parent_id === main.id)
+                        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                        .map(sub => (
+                          <Fragment key={sub.id}>
+                            <option value={sub.name}>&nbsp;&nbsp;↳ {sub.name}</option>
+                            {categories
+                              .filter(leaf => leaf.parent_id === sub.id)
+                              .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                              .map(leaf => (
+                                <option key={leaf.id} value={leaf.name}>&nbsp;&nbsp;&nbsp;&nbsp;↳ {leaf.name}</option>
+                              ))}
+                          </Fragment>
                         ))}
-                      </Fragment>
-                    ))}
-                  </optgroup>
-                ))}
+                    </optgroup>
+                  ))}
               </select>
             </div>
           )}

@@ -120,7 +120,7 @@ export default function AdminPage() {
       if (prods) setProducts(prods)
       const { data: salesData } = await supabase.from('sales').select('*').order('created_at', { ascending: false })
       if (salesData) setSales(salesData)
-      const { data: cats } = await supabase.from('categories').select('*').order('created_at', { ascending: true })
+      const { data: cats } = await supabase.from('categories').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
       if (cats) {
         setCategories(cats)
         if (cats.length > 0 && !formData.category) {
@@ -222,7 +222,7 @@ export default function AdminPage() {
       const insertData: any = { name: newCatName.trim(), icon: newCatIcon }
       if (newCatParentId) insertData.parent_id = newCatParentId
       await supabase.from('categories').insert([insertData])
-      const { data: cats } = await supabase.from('categories').select('*').order('created_at', { ascending: true })
+      const { data: cats } = await supabase.from('categories').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
       if (cats) setCategories(cats)
       if (!newCatParentId) {
         setFormData(f => ({ ...f, category: newCatName.trim() }))

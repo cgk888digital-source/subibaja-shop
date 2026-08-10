@@ -10,7 +10,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const [exchangeRate, { data: product }, { data: categories }] = await Promise.all([
     fetchBCVRate(),
     supabase.from('products').select('*').eq('id', id).single(),
-    supabase.from('categories').select('*').order('created_at', { ascending: true })
+    supabase.from('categories').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
   ])
 
   

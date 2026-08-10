@@ -112,7 +112,7 @@ export default function DashboardPage() {
       supabase.from("sales").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("settings").select("*").eq("id", "exchange_rate").single(),
-      supabase.from("categories").select("*").order("created_at", { ascending: true }),
+      supabase.from("categories").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
       supabase.from("products").select("id,title,category,stock_quantity").order("title"),
     ])
     if (s)     setSales(s)
