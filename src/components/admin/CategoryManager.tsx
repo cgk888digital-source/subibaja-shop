@@ -1,5 +1,6 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Plus, Trash2, Edit2, Check, X, Tag, Search, Star, ChevronUp, ChevronDown } from "lucide-react"
+import { revalidateStorefront } from "@/lib/revalidate"
 
 export default function CategoryManager({ categories, setCategories, supabase }: { categories: any[], setCategories: any, supabase: any }) {
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -7,6 +8,17 @@ export default function CategoryManager({ categories, setCategories, supabase }:
   const [newCatName, setNewCatName] = useState("")
   const [newCatParent, setNewCatParent] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // El input numerico de posicion dispara un update por cada tecla:
+  // agrupamos las invalidaciones de cache para no llamar a /api/revalidate en cada una.
+  const revalidateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const queueRevalidate = () => {
+    if (revalidateTimer.current) clearTimeout(revalidateTimer.current)
+    revalidateTimer.current = setTimeout(() => { revalidateStorefront() }, 800)
+  }
+  useEffect(() => () => {
+    if (revalidateTimer.current) clearTimeout(revalidateTimer.current)
+  }, [])
 
   const handleUpdate = async (id: string) => {
     if (!editName.trim()) return
@@ -20,6 +32,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
       }
       setCategories(categories.map(c => c.id === id ? { ...c, name: editName.trim() } : c))
       setEditingId(null)
+      queueRevalidate()
     } else {
       alert("Error al actualizar: " + (error.message || "No se pudo actualizar"))
     }
@@ -29,6 +42,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
     const { error } = await supabase.from('categories').update({ is_featured_on_home: !currentVal }).eq('id', id)
     if (!error) {
       setCategories(categories.map(c => c.id === id ? { ...c, is_featured_on_home: !currentVal } : c))
+      queueRevalidate()
     } else alert("Error al actualizar: " + (error?.message || ""))
   }
 
@@ -36,6 +50,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
     const { error } = await supabase.from('categories').update({ sort_order: newOrder }).eq('id', id)
     if (!error) {
       setCategories(categories.map(c => c.id === id ? { ...c, sort_order: newOrder } : c))
+      queueRevalidate()
     } else alert("Error al actualizar orden: " + (error?.message || ""))
   }
 
@@ -80,6 +95,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
       await Promise.all(updatedSiblings.map(item =>
         supabase.from('categories').update({ sort_order: item.sort_order }).eq('id', item.id)
       ))
+      queueRevalidate()
     } catch (err: any) {
       console.error("Error guardando nuevo orden de categoría:", err)
       alert("Error guardando el nuevo orden: " + (err.message || ""))
@@ -104,6 +120,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
     const { error } = await supabase.from('categories').delete().eq('id', id)
     if (!error) {
       setCategories(categories.filter(c => !allRemovedIds.has(c.id)))
+      queueRevalidate()
     } else {
       alert("Error al eliminar categoría: " + (error.message || "No se pudo eliminar"))
     }
@@ -124,6 +141,7 @@ export default function CategoryManager({ categories, setCategories, supabase }:
       setCategories([...categories, data[0]])
       setNewCatName("")
       setNewCatParent(null)
+      queueRevalidate()
     } else {
       alert("Error al crear categoría: " + (error?.message || ""))
     }
