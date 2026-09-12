@@ -2498,6 +2498,9 @@ export default function AdminPage() {
                             // Populate Generator Inputs
                             setGiftCardForm({
                               code: `SB-GIFT-${order.amount}-${Math.floor(1000 + Math.random() * 9000)}`,
+                              title: `Gift Card $${order.amount}`,
+                              description: "",
+                              image_url: "",
                               balance: order.amount.toString(),
                               ownerName: order.name,
                               ownerPhone: order.phone

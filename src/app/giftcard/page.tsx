@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, Sparkles, User, Smartphone, Mail, Loader2, Star, Crown, Ticket, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
