@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from "react"
 import {
   Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote, Trash2, Pencil,
-  Type, Ruler, Info, Search, X, Plus, ChevronDown, Palette, Smartphone, Ticket, User,
-  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2
+  Type, Ruler, Info, Search, X, Plus, ChevronDown, ChevronUp, Image as ImageIcon, Palette, Smartphone, Ticket, User,
+  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2,
+  Copy, ExternalLink, MessageCircle
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,10 +12,16 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { revalidateStorefront } from "@/lib/revalidate"
 import CategoryManager from "@/components/admin/CategoryManager"
 import SortableProductList from "@/components/admin/SortableProductList"
 import { fetchBCVRate } from "@/lib/bcv"
 
+const InstagramIcon = ({ className = "size-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+  </svg>
+)
 
 const ADMIN_PASSWORD = "SUBIBAJA2024"
 const CAT_ICONS: Record<string, React.ElementType> = {
@@ -65,17 +72,32 @@ export default function AdminPage() {
   const [customerPhone, setCustomerPhone] = useState("")
   const [loyaltyMembers, setLoyaltyMembers] = useState<any[]>([])
   const [rewardForm, setRewardForm] = useState({ title: "", description: "", pointsRequired: "", image_url: "" })
-  const [giftCardForm, setGiftCardForm] = useState({ code: "", balance: "", ownerName: "", ownerPhone: "" })
+  const [giftCardForm, setGiftCardForm] = useState({ code: "", title: "", description: "", balance: "", image_url: "", ownerName: "", ownerPhone: "" })
   const [giftCards, setGiftCards] = useState<any[]>([])
   const [giftCardOrders, setGiftCardOrders] = useState<any[]>([])
   const [savingReward, setSavingReward] = useState(false)
   const [savingGift, setSavingGift] = useState(false)
+  const [editingGiftCard, setEditingGiftCard] = useState<any | null>(null)
+  const [uploadingGiftCardId, setUploadingGiftCardId] = useState<string | null>(null)
+  const [uploadingGiftImg, setUploadingGiftImg] = useState(false)
+  const [showNewGiftCardForm, setShowNewGiftCardForm] = useState(false)
   const [rewards, setRewards] = useState<any[]>([])
   const [uploadingRewardImg, setUploadingRewardImg] = useState(false)
-  const [generatedVoucher, setGeneratedVoucher] = useState<{ id: string, points: number, amount_usd: number } | null>(null)
+  const [editingReward, setEditingReward] = useState<any | null>(null)
+  const [uploadingRewardId, setUploadingRewardId] = useState<string | null>(null)
+  const [showNewRewardForm, setShowNewRewardForm] = useState(false)
+  const [generatedVoucher, setGeneratedVoucher] = useState<{ id: string, points: number, amount_usd: number, phone?: string } | null>(null)
   const [generatingQr, setGeneratingQr] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
+
+  // Banners carousel state
+  const [banners, setBanners] = useState<any[]>([])
+  const [bannerSection, setBannerSection] = useState<'hero' | 'middle' | 'instagram'>('hero')
+  const [newBannerTitle, setNewBannerTitle] = useState("")
+  const [newBannerImage, setNewBannerImage] = useState("")
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [savingBanner, setSavingBanner] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const catDropdownRef = useRef<HTMLDivElement>(null)
@@ -138,28 +160,120 @@ export default function AdminPage() {
       if (giftCardsData) setGiftCards(giftCardsData)
       const { data: giftCardOrdersData } = await supabase.from('gift_card_orders').select('*').order('created_at', { ascending: false })
       if (giftCardOrdersData) setGiftCardOrders(giftCardOrdersData)
+
+      // Fetch banners for carousel
+      const { data: bannersData } = await supabase.from('banners').select('*').order('sort_order', { ascending: true })
+      if (bannersData) setBanners(bannersData)
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   const handleSaveReward = async () => {
-    if (!rewardForm.title || !rewardForm.pointsRequired || !rewardForm.image_url) { alert("Faltan datos del premio"); return }
+    if (!rewardForm.title || !rewardForm.pointsRequired) { alert("Faltan datos del premio (título y puntos requeridos)"); return }
     try {
       setSavingReward(true)
       await supabase.from('rewards').insert([{
         title: rewardForm.title,
         description: rewardForm.description,
         points_required: parseInt(rewardForm.pointsRequired),
-        image_url: rewardForm.image_url,
+        image_url: rewardForm.image_url || '/logo-principal.jpg',
         is_active: true
       }])
       setRewardForm({ title: "", description: "", pointsRequired: "", image_url: "" })
+      setShowNewRewardForm(false)
       fetchInitialData()
       alert("¡Premio publicado en el catálogo!")
     } catch (err: any) { alert(err.message) } finally { setSavingReward(false) }
   }
 
+  const handleUpdateRewardImage = async (rewardId: string, file: File) => {
+    try {
+      setUploadingRewardId(rewardId)
+      const fileName = `rewards_${Date.now()}.${file.name.split('.').pop()}`
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`products/${fileName}`, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`products/${fileName}`)
+      const newUrl = data.publicUrl
+      const { error: updateError } = await supabase
+        .from('rewards')
+        .update({ image_url: newUrl })
+        .eq('id', rewardId)
+      if (updateError) throw updateError
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message || 'Error al subir la imagen del premio')
+    } finally {
+      setUploadingRewardId(null)
+    }
+  }
+
+  const handleResetRewardToLogo = async (rewardId: string) => {
+    try {
+      setUploadingRewardId(rewardId)
+      const { error } = await supabase
+        .from('rewards')
+        .update({ image_url: '/logo-principal.jpg' })
+        .eq('id', rewardId)
+      if (error) throw error
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message || 'Error al restablecer logo')
+    } finally {
+      setUploadingRewardId(null)
+    }
+  }
+
+  const handleToggleRewardActive = async (reward: any) => {
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .update({ is_active: !reward.is_active })
+        .eq('id', reward.id)
+      if (error) throw error
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  const handleDeleteReward = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar este premio del catálogo?')) return
+    try {
+      const { error } = await supabase.from('rewards').delete().eq('id', id)
+      if (error) throw error
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  const handleSaveRewardEdit = async () => {
+    if (!editingReward || !editingReward.title || !editingReward.points_required) {
+      alert('Faltan datos del premio (título y puntos)');
+      return;
+    }
+    try {
+      const { error } = await supabase.from('rewards').update({
+        title: editingReward.title,
+        description: editingReward.description,
+        points_required: parseInt(editingReward.points_required),
+        image_url: editingReward.image_url || '/logo-principal.jpg',
+        is_active: editingReward.is_active
+      }).eq('id', editingReward.id)
+      if (error) throw error
+      setEditingReward(null)
+      await fetchInitialData()
+      alert('¡Premio actualizado con éxito!')
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   const handleCreateGiftCard = async () => {
-    if (!giftCardForm.balance) { alert("Falta ingresar el monto"); return }
+    if (!giftCardForm.balance) { alert("Falta ingresar el monto / precio de la tarjeta"); return }
     try {
       setSavingGift(true)
       let finalCode = giftCardForm.code.trim().toUpperCase()
@@ -171,18 +285,136 @@ export default function AdminPage() {
         }
         finalCode = generated
       }
+      const balanceNum = parseFloat(giftCardForm.balance)
       await supabase.from('gift_cards').insert([{
         code: finalCode,
-        balance: parseFloat(giftCardForm.balance),
-        initial_value: parseFloat(giftCardForm.balance),
+        title: giftCardForm.title?.trim() || `Gift Card $${balanceNum} USD`,
+        description: giftCardForm.description?.trim() || 'Tarjeta de regalo válida en boutique Subibaja y compras online.',
+        balance: balanceNum,
+        initial_value: balanceNum,
+        image_url: giftCardForm.image_url || '/imagem_gift_card.jpeg',
         is_active: true,
         owner_name: giftCardForm.ownerName.trim() || null,
         owner_phone: giftCardForm.ownerPhone.trim() || null
       }])
-      setGiftCardForm({ code: "", balance: "", ownerName: "", ownerPhone: "" })
+      setGiftCardForm({ code: "", title: "", description: "", balance: "", image_url: "", ownerName: "", ownerPhone: "" })
+      setShowNewGiftCardForm(false)
       fetchInitialData()
       alert("¡Tarjeta de regalo creada con éxito!")
     } catch (err: any) { alert(err.message) } finally { setSavingGift(false) }
+  }
+
+  const handleGiftCardImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0]
+      if (!file) return
+      setUploadingGiftImg(true)
+      const fileName = `giftcard_${Date.now()}.${file.name.split('.').pop()}`
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`products/${fileName}`, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`products/${fileName}`)
+      setGiftCardForm(prev => ({ ...prev, image_url: data.publicUrl }))
+    } catch (err: any) {
+      alert(err.message || 'Error al subir imagen de la tarjeta')
+    } finally {
+      setUploadingGiftImg(false)
+    }
+  }
+
+  const handleUpdateGiftCardImage = async (giftCardId: string, file: File) => {
+    try {
+      setUploadingGiftCardId(giftCardId)
+      const fileName = `giftcard_${Date.now()}.${file.name.split('.').pop()}`
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`products/${fileName}`, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`products/${fileName}`)
+      const newUrl = data.publicUrl
+      const { error: updateError } = await supabase
+        .from('gift_cards')
+        .update({ image_url: newUrl })
+        .eq('id', giftCardId)
+      if (updateError) throw updateError
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar imagen de la tarjeta')
+    } finally {
+      setUploadingGiftCardId(null)
+    }
+  }
+
+  const handleResetGiftCardToLogo = async (giftCardId: string) => {
+    try {
+      setUploadingGiftCardId(giftCardId)
+      const { error } = await supabase
+        .from('gift_cards')
+        .update({ image_url: '/logo-principal.jpg' })
+        .eq('id', giftCardId)
+      if (error) throw error
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message || 'Error al restablecer logo')
+    } finally {
+      setUploadingGiftCardId(null)
+    }
+  }
+
+  const handleToggleGiftCardActive = async (card: any) => {
+    try {
+      const { error } = await supabase
+        .from('gift_cards')
+        .update({ is_active: !card.is_active })
+        .eq('id', card.id)
+      if (error) throw error
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  const handleDeleteGiftCard = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar esta tarjeta de regalo?')) return
+    try {
+      const { error } = await supabase.from('gift_cards').delete().eq('id', id)
+      if (error) throw error
+      await fetchInitialData()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  const handleSaveGiftCardEdit = async () => {
+    if (!editingGiftCard || !editingGiftCard.balance) {
+      alert('Falta ingresar el monto / precio de la tarjeta');
+      return;
+    }
+    try {
+      const balanceNum = parseFloat(editingGiftCard.balance)
+      const { error } = await supabase.from('gift_cards').update({
+        title: editingGiftCard.title?.trim() || `Gift Card $${balanceNum} USD`,
+        description: editingGiftCard.description?.trim() || '',
+        code: editingGiftCard.code?.trim().toUpperCase(),
+        balance: balanceNum,
+        initial_value: balanceNum,
+        image_url: editingGiftCard.image_url || '/imagem_gift_card.jpeg',
+        is_active: editingGiftCard.is_active,
+        owner_name: editingGiftCard.owner_name?.trim() || null,
+        owner_phone: editingGiftCard.owner_phone?.trim() || null
+      }).eq('id', editingGiftCard.id)
+      if (error) throw error
+      setEditingGiftCard(null)
+      await fetchInitialData()
+      alert('¡Tarjeta de regalo actualizada con éxito!')
+    } catch (err: any) {
+      alert(err.message)
+    }
   }
 
   const generateRandomGiftCode = () => {
@@ -342,7 +574,8 @@ export default function AdminPage() {
       setGeneratedVoucher({
         id: voucherData.id,
         points: voucherData.points,
-        amount_usd: amountUsd
+        amount_usd: amountUsd,
+        phone: customerPhone ? customerPhone.trim() : ""
       })
 
       // Reset form
@@ -408,6 +641,119 @@ export default function AdminPage() {
 
   const removeGalleryImage = (index: number) => {
     setGalleryUrls(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleBannerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0]
+      if (!file) return
+      setUploadingBanner(true)
+      const fileName = `banner_${Date.now()}.${file.name.split('.').pop()}`
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(`banners/${fileName}`, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`banners/${fileName}`)
+      setNewBannerImage(data.publicUrl)
+    } catch (err: any) {
+      alert(err.message || 'Error al subir banner')
+    } finally {
+      setUploadingBanner(false)
+    }
+  }
+
+  const handleAddBanner = async () => {
+    if (!newBannerImage.trim()) {
+      alert("Por favor selecciona o sube una imagen para el banner.")
+      return
+    }
+    try {
+      setSavingBanner(true)
+      const currentList = banners.filter(b => (
+        bannerSection === 'instagram' ? b.position === 'instagram' :
+        bannerSection === 'middle' ? b.position === 'middle' :
+        (b.position || 'hero') === 'hero'
+      ))
+      const maxSort = currentList.reduce((max, b) => Math.max(max, b.sort_order || 0), 0)
+      const { data, error } = await supabase.from('banners').insert([{
+        title: newBannerTitle.trim() || `Banner ${currentList.length + 1}`,
+        image_url: newBannerImage.trim(),
+        sort_order: maxSort + 1,
+        is_active: true,
+        position: bannerSection
+      }]).select().single()
+
+      if (error) throw error
+      if (data) {
+        setBanners(prev => [...prev, data])
+      }
+      setNewBannerTitle("")
+      setNewBannerImage("")
+      await revalidateStorefront()
+      alert("¡Imagen añadida exitosamente!")
+    } catch (err: any) {
+      alert(err.message || 'Error al guardar banner')
+    } finally {
+      setSavingBanner(false)
+    }
+  }
+
+  const handleDeleteBanner = async (id: string) => {
+    if (!confirm("¿Deseas eliminar esta imagen?")) return
+    try {
+      const { error } = await supabase.from('banners').delete().eq('id', id)
+      if (error) throw error
+      setBanners(prev => prev.filter(b => b.id !== id))
+      await revalidateStorefront()
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar banner')
+    }
+  }
+
+  const handleToggleBanner = async (id: string, currentActive: boolean) => {
+    try {
+      const nextActive = !currentActive
+      const { error } = await supabase.from('banners').update({ is_active: nextActive }).eq('id', id)
+      if (error) throw error
+      setBanners(prev => prev.map(b => b.id === id ? { ...b, is_active: nextActive } : b))
+      await revalidateStorefront()
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar banner')
+    }
+  }
+
+  const handleMoveBanner = async (bannerId: string, direction: 'up' | 'down') => {
+    const list = banners.filter(b => (
+      bannerSection === 'instagram' ? b.position === 'instagram' :
+      bannerSection === 'middle' ? b.position === 'middle' :
+      (b.position || 'hero') === 'hero'
+    ))
+    const index = list.findIndex(b => b.id === bannerId)
+    if (index === -1) return
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= list.length) return
+
+    const itemA = list[index]
+    const itemB = list[targetIndex]
+    
+    setBanners(prev => prev.map(b => {
+      if (b.id === itemA.id) return { ...b, sort_order: targetIndex + 1 }
+      if (b.id === itemB.id) return { ...b, sort_order: index + 1 }
+      return b
+    }))
+
+    try {
+      await Promise.all([
+        supabase.from('banners').update({ sort_order: targetIndex + 1 }).eq('id', itemA.id),
+        supabase.from('banners').update({ sort_order: index + 1 }).eq('id', itemB.id)
+      ])
+      await revalidateStorefront()
+    } catch (err: any) {
+      console.error(err)
+      fetchInitialData()
+    }
   }
 
   const handleStartEditProduct = (p: any) => {
@@ -685,10 +1031,10 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="bg-slate-100/80 p-1 rounded-2xl flex flex-wrap gap-1">
-          {['dashboard', 'inventory', 'upload', 'categories', 'organize', 'club'].map((tab) => (
+          {['dashboard', 'inventory', 'upload', 'banners', 'categories', 'organize', 'club'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`flex-1 min-w-[70px] py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === tab ? 'bg-white shadow-md text-blue-600' : 'text-slate-400'}`}>
-              {tab === 'dashboard' ? 'Ventas' : tab === 'inventory' ? 'Stock' : tab === 'upload' ? 'Cargar' : tab === 'categories' ? 'Cats' : tab === 'organize' ? 'Orden' : 'Club'}
+              className={`flex-1 min-w-[60px] py-2.5 text-[10px] font-black rounded-xl transition-all uppercase tracking-widest ${activeTab === tab ? 'bg-white shadow-md text-blue-600' : 'text-slate-400'}`}>
+              {tab === 'dashboard' ? 'Ventas' : tab === 'inventory' ? 'Stock' : tab === 'upload' ? 'Cargar' : tab === 'banners' ? 'Banners' : tab === 'categories' ? 'Cats' : tab === 'organize' ? 'Orden' : 'Club'}
             </button>
           ))}
           <Link href="/admin/dashboard" className="flex-1 min-w-[70px]">
@@ -862,7 +1208,24 @@ export default function AdminPage() {
               <div key={product.id} className="bg-white rounded-[28px] shadow-sm p-4 flex items-center gap-4">
                 <img src={product.image_url} className="size-14 rounded-2xl object-cover flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-black text-slate-800 text-sm line-clamp-1">{product.title}</h4>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-black text-slate-800 text-sm line-clamp-1">{product.title}</h4>
+                    {product.badge && (
+                      <span className={`text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                        product.badge === 'agotado' || product.badge === 'agotado_rojo'
+                          ? 'bg-slate-800 text-white'
+                          : product.badge === 'nuevo'
+                          ? 'bg-[#00ced1] text-white'
+                          : product.badge === 'rebaja'
+                          ? 'bg-[#ef4444] text-white'
+                          : product.badge === 'rebaja_azul'
+                          ? 'bg-[#1e40af] text-white'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {product.badge === 'agotado' || product.badge === 'agotado_rojo' ? 'AGOTADO' : product.badge}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs font-black text-blue-500">${product.price}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
@@ -996,9 +1359,13 @@ export default function AdminPage() {
                       className="w-full h-14 rounded-2xl bg-slate-50 border-0 pl-12 font-bold text-sm text-slate-700 outline-none appearance-none"
                     >
                       <option value="">Ninguna</option>
-                      <option value="nuevo">NUEVO (Azul)</option>
+                      <option value="nuevo">NUEVO (Celeste)</option>
                       <option value="top">TOP (Rojo)</option>
                       <option value="descuentos">DESCUENTOS (Verde)</option>
+                      <option value="rebaja">REBAJA (Rojo)</option>
+                      <option value="rebaja_azul">REBAJA (Azul)</option>
+                      <option value="agotado">AGOTADO (Gris oscuro)</option>
+                      <option value="agotado_rojo">AGOTADO (Rojo)</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                   </div>
@@ -1531,7 +1898,294 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ── TAB CLUB ── */}
+        {/* ── TAB BANNERS (CARRUSELES) ── */}
+        {activeTab === 'banners' && (() => {
+          const currentBanners = banners.filter(b => (
+            bannerSection === 'instagram' ? b.position === 'instagram' :
+            bannerSection === 'middle' ? b.position === 'middle' :
+            (b.position || 'hero') === 'hero'
+          ))
+          return (
+            <div className="space-y-6 animate-fade-in">
+              {/* Selector de tipo de carrusel / feed */}
+              <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 flex gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setBannerSection('hero')}
+                  className={`flex-1 min-w-[130px] py-3 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    bannerSection === 'hero'
+                      ? 'bg-[#8dd5e3] text-blue-900 shadow-xs'
+                      : 'bg-slate-50 text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <ImageIcon className="size-4" />
+                  Carrusel Superior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBannerSection('middle')}
+                  className={`flex-1 min-w-[130px] py-3 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    bannerSection === 'middle'
+                      ? 'bg-[#8dd5e3] text-blue-900 shadow-xs'
+                      : 'bg-slate-50 text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <ImageIcon className="size-4" />
+                  Carrusel Intermedio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBannerSection('instagram')}
+                  className={`flex-1 min-w-[130px] py-3 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    bannerSection === 'instagram'
+                      ? 'bg-[#8dd5e3] text-blue-900 shadow-xs'
+                      : 'bg-slate-50 text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <InstagramIcon className="size-4 text-pink-600" />
+                  Feed Instagram (Footer)
+                </button>
+              </div>
+
+              {/* Header info */}
+              <div className="bg-white rounded-[32px] shadow-sm p-6 space-y-3 border border-slate-100/80">
+                <div className="flex items-center gap-3">
+                  <div className="size-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#8dd5e340' }}>
+                    {bannerSection === 'instagram' ? (
+                      <InstagramIcon className="size-5 text-pink-600" />
+                    ) : (
+                      <ImageIcon className="size-5 text-blue-900" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide font-['Poppins']">
+                      {bannerSection === 'hero'
+                        ? 'Carrusel Superior (Header Principal)'
+                        : bannerSection === 'middle'
+                        ? 'Carrusel Intermedio (Entre Productos)'
+                        : 'Feed de Instagram (Footer de la Tienda)'}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400">
+                      {bannerSection === 'hero'
+                        ? 'Fotos principales arriba en la portada de la tienda (rotan cada 2 segundos)'
+                        : bannerSection === 'middle'
+                        ? 'Fotos de la sección intermedia en el catálogo de productos (rotan cada 2 segundos)'
+                        : 'Fotos mostradas en la galería del footer al final de la tienda (enlazan a @subibajatiendas)'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Formulario para agregar banner / post */}
+              <div className="bg-white rounded-[32px] shadow-sm p-6 space-y-4 border border-slate-100/80">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Agregar Foto a {bannerSection === 'hero' ? 'Carrusel Superior' : bannerSection === 'middle' ? 'Carrusel Intermedio' : 'Feed de Instagram'}
+                  </p>
+                  {newBannerImage && (
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">
+                      Imagen lista
+                    </span>
+                  )}
+                </div>
+
+                {/* Vista previa de la imagen */}
+                {newBannerImage ? (
+                  <div className={`relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center group ${bannerSection === 'instagram' ? 'max-w-xs mx-auto aspect-square' : 'aspect-[21/9]'}`}>
+                    <img
+                      src={newBannerImage}
+                      alt="Vista previa banner"
+                      className={`w-full h-full ${bannerSection === 'instagram' ? 'object-cover' : 'object-contain'}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNewBannerImage("")}
+                      className="absolute top-2 right-2 bg-slate-900/70 hover:bg-red-500 text-white p-1.5 rounded-full backdrop-blur-xs transition-colors shadow-sm cursor-pointer"
+                      title="Quitar imagen"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center w-full rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100/70 cursor-pointer transition-colors px-4 text-center ${bannerSection === 'instagram' ? 'py-8' : 'aspect-[21/9]'}`}>
+                    {uploadingBanner ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="size-7 animate-spin text-blue-500" />
+                        <span className="text-xs font-bold text-slate-500">Subiendo imagen a la nube...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="size-10 rounded-full bg-white shadow-xs flex items-center justify-center text-blue-500">
+                          {bannerSection === 'instagram' ? <InstagramIcon className="size-5 text-pink-600" /> : <Camera className="size-5" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-700">Toca para subir una foto desde tu equipo</p>
+                          <p className="text-[10px] text-slate-400 font-semibold">
+                            {bannerSection === 'instagram'
+                              ? 'Formato cuadrado o vertical recomendado (1:1 o 4:5)'
+                              : 'Formato horizontal recomendado (16:9 o 21:9)'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerImageUpload}
+                      disabled={uploadingBanner}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+
+                {/* URL directa opcional */}
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    O pegar URL de imagen
+                  </Label>
+                  <Input
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    value={newBannerImage}
+                    onChange={(e) => setNewBannerImage(e.target.value)}
+                    className="h-11 rounded-xl bg-slate-50 border-0 px-4 text-xs font-semibold text-slate-700"
+                  />
+                </div>
+
+                {/* Título opcional */}
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    {bannerSection === 'instagram' ? 'Leyenda / Texto de la foto (Opcional)' : 'Título o Nota (Opcional)'}
+                  </Label>
+                  <Input
+                    placeholder={bannerSection === 'instagram' ? 'Ej: ¡Nueva colección infantil disponible en tienda! ✨' : 'Ej: Calzado Infantil, Colección Subibaja...'}
+                    value={newBannerTitle}
+                    onChange={(e) => setNewBannerTitle(e.target.value)}
+                    className="h-11 rounded-xl bg-slate-50 border-0 px-4 text-xs font-semibold text-slate-700"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddBanner}
+                  disabled={savingBanner || uploadingBanner || !newBannerImage.trim()}
+                  className="w-full h-12 rounded-full font-black tracking-widest text-blue-900 text-xs uppercase shadow-sm active:scale-95 disabled:opacity-40 transition-transform cursor-pointer"
+                  style={{ backgroundColor: '#8dd5e3' }}
+                >
+                  {savingBanner ? 'GUARDANDO...' : `+ AGREGAR A ${bannerSection === 'hero' ? 'CARRUSEL SUPERIOR' : bannerSection === 'middle' ? 'CARRUSEL INTERMEDIO' : 'FEED DE INSTAGRAM'}`}
+                </button>
+              </div>
+
+              {/* Listado de Banners Actuales */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Fotos ({currentBanners.filter(b => b.is_active).length} activas de {currentBanners.length})
+                  </p>
+                  <span className="text-[9px] font-bold text-slate-400">
+                    {bannerSection === 'instagram' ? 'Mostradas en el footer de último' : 'Rotación: cada 2 seg'}
+                  </span>
+                </div>
+
+                {currentBanners.length === 0 ? (
+                  <div className="bg-white rounded-3xl p-8 text-center text-slate-400 text-xs font-bold border border-slate-100">
+                    No hay imágenes cargadas en esta sección aún.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {currentBanners.map((banner, index) => (
+                      <div
+                        key={banner.id}
+                        className={`bg-white rounded-2xl p-4 shadow-sm border transition-all flex items-center gap-3 ${
+                          banner.is_active ? 'border-slate-100 hover:border-blue-200' : 'border-slate-100 opacity-60 bg-slate-50/50'
+                        }`}
+                      >
+                        {/* Control de Orden */}
+                        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveBanner(banner.id, 'up')}
+                            disabled={index === 0}
+                            className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-20 text-slate-600 transition-colors cursor-pointer"
+                            title="Subir posición"
+                          >
+                            <ChevronUp className="size-4" />
+                          </button>
+                          <span className="text-[10px] font-black text-slate-400 font-mono">
+                            {index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveBanner(banner.id, 'down')}
+                            disabled={index === currentBanners.length - 1}
+                            className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-20 text-slate-600 transition-colors cursor-pointer"
+                            title="Bajar posición"
+                          >
+                            <ChevronDown className="size-4" />
+                          </button>
+                        </div>
+
+                        {/* Miniatura */}
+                        <div className={`${bannerSection === 'instagram' ? 'w-16 h-16' : 'w-24 h-16'} rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center`}>
+                          <img
+                            src={banner.image_url}
+                            alt={banner.title || 'Banner'}
+                            className={`w-full h-full ${bannerSection === 'instagram' ? 'object-cover' : 'object-contain'}`}
+                          />
+                        </div>
+
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-black text-slate-800 truncate">
+                              {banner.title || `Foto #${index + 1}`}
+                            </p>
+                            <span
+                              className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                banner.is_active
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-slate-200 text-slate-500'
+                              }`}
+                            >
+                              {banner.is_active ? 'Activa' : 'Pausada'}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-slate-400 truncate mt-0.5 font-mono">
+                            {banner.image_url}
+                          </p>
+                        </div>
+
+                        {/* Acciones */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleBanner(banner.id, banner.is_active)}
+                            className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                              banner.is_active
+                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {banner.is_active ? 'Pausar' : 'Activar'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBanner(banner.id)}
+                            className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                            title="Eliminar banner"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* ── TAB CATEGORIAS ── */}
         {activeTab === 'categories' && (
           <CategoryManager categories={categories} setCategories={setCategories} supabase={supabase} />
         )}
@@ -1543,97 +2197,270 @@ export default function AdminPage() {
         {activeTab === 'club' && (
           <div className="space-y-6 animate-fade-in">
 
-            {/* Generar Tarjeta de Regalo */}
+            {/* Listado y Gestión de Tarjetas de Regalo */}
             <div className="bg-white rounded-[32px] shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Ticket className="size-5 text-blue-400" />
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Generar Tarjeta de Regalo</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350" />
-                    <Input
-                      placeholder="Código (Ej: SB-REGALO-100)"
-                      value={giftCardForm.code}
-                      onChange={(e) => setGiftCardForm({ ...giftCardForm, code: e.target.value })}
-                      className="h-12 rounded-xl bg-slate-50 border-0 pl-11 font-mono font-bold text-xs uppercase"
-                    />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Ticket className="size-5 text-rose-500" />
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                      Tarjetas de Regalo ({giftCards.length})
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold">
+                      Edita el diseño, precio, código y foto con el lápiz cuando quieras
+                    </p>
                   </div>
-                  <button
-                    onClick={generateRandomGiftCode}
-                    className="px-3 rounded-xl border border-slate-200 text-[10px] font-black tracking-wider uppercase text-slate-505 hover:bg-slate-50 active:scale-95 transition-transform cursor-pointer"
-                  >
-                    🎲 Aleatorio
-                  </button>
-                </div>
-                <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350" />
-                  <Input
-                    placeholder="Monto USD inicial"
-                    type="number"
-                    value={giftCardForm.balance}
-                    onChange={(e) => setGiftCardForm({ ...giftCardForm, balance: e.target.value })}
-                    className="h-12 rounded-xl bg-slate-50 border-0 pl-11 font-black text-xs"
-                  />
-                </div>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
-                  <Input
-                    placeholder="Nombre del Cliente (Dueño)"
-                    value={giftCardForm.ownerName}
-                    onChange={(e) => setGiftCardForm({ ...giftCardForm, ownerName: e.target.value })}
-                    className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-semibold text-slate-700"
-                  />
-                </div>
-                <div className="relative">
-                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
-                  <Input
-                    placeholder="Teléfono del Cliente (Dueño)"
-                    value={giftCardForm.ownerPhone}
-                    onChange={(e) => setGiftCardForm({ ...giftCardForm, ownerPhone: e.target.value })}
-                    className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-semibold text-slate-700"
-                  />
                 </div>
                 <button
-                  onClick={handleCreateGiftCard}
-                  disabled={savingGift || !giftCardForm.balance}
-                  className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
-                  style={{ backgroundColor: '#8dd5e3' }}
+                  onClick={() => setShowNewGiftCardForm(!showNewGiftCardForm)}
+                  className="px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#8dd5e3] hover:bg-[#7bc8d6] text-blue-950 transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-xs"
                 >
-                  {savingGift ? 'GENERANDO...' : 'CREAR TARJETA DE REGALO'}
+                  <Plus className="size-3" />
+                  {showNewGiftCardForm ? 'Cerrar Formulario' : 'Nueva Tarjeta'}
                 </button>
               </div>
-            </div>
 
-            {/* Listado de Tarjetas de Regalo */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tarjetas de Regalo ({giftCards.length})</p>
-              {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-slate-300" /></div>
-              ) : giftCards.length === 0 ? (
-                <div className="bg-white rounded-3xl p-6 text-center text-slate-350 text-xs font-bold">No hay tarjetas de regalo creadas aún</div>
-              ) : (
-                giftCards.map(gc => (
-                  <div key={gc.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
-                    <div className="min-w-0 flex-1 pr-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-slate-800 tracking-wide">{gc.code}</span>
-                        {!gc.is_active && (
-                          <span className="bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Inactiva</span>
-                        )}
-                      </div>
-                      <p className="text-[9px] text-slate-400 mt-0.5 truncate font-bold">
-                        {gc.owner_name ? `Dueño: ${gc.owner_name}` : 'Sin dueño asignado'}
-                        {gc.owner_phone ? ` (${gc.owner_phone})` : ''}
-                      </p>
+              {/* Formulario para generar nueva tarjeta de regalo (colapsable) */}
+              {showNewGiftCardForm && (
+                <div className="p-4 bg-slate-50 rounded-2xl border border-rose-100/60 space-y-4 animate-in fade-in zoom-in-95">
+                  <p className="text-[10px] font-black uppercase text-blue-900 tracking-wider">
+                    Registrar Nueva Tarjeta de Regalo
+                  </p>
+                  <div className="space-y-3">
+                    {/* Foto o Diseño de la Gift Card */}
+                    <div className="relative border-2 border-dashed border-slate-200 rounded-2xl p-4 bg-white flex flex-col items-center justify-center aspect-[1.8/1] max-w-sm mx-auto overflow-hidden group">
+                      {giftCardForm.image_url ? (
+                        <img 
+                          src={giftCardForm.image_url} 
+                          className={`absolute inset-0 w-full h-full ${giftCardForm.image_url.includes('logo') ? 'object-contain p-4' : 'object-cover'}`} 
+                        />
+                      ) : (
+                        <>
+                          <div className="bg-rose-50 p-3 rounded-2xl shadow-xs mb-1"><Camera className="text-rose-500 size-5" /></div>
+                          <span className="text-slate-500 font-bold text-xs">Subir Diseño o Foto de Gift Card</span>
+                          <span className="text-slate-400 text-[9px] font-medium mt-0.5">(Opcional: Si no subes foto se usará el diseño oficial)</span>
+                        </>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleGiftCardImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploadingGiftImg} />
+                      {uploadingGiftImg && <div className="absolute inset-0 bg-white/70 flex items-center justify-center"><Loader2 className="animate-spin text-blue-500 size-6" /></div>}
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <span className="text-xs font-black text-blue-900 font-['Poppins']">${Number(gc.balance).toFixed(2)}</span>
-                      <span className="text-[7px] text-slate-400 block font-bold">inicial: ${Number(gc.initial_value).toFixed(2)}</span>
+
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Type className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                        <Input
+                          placeholder="Nombre / Título (Ej: Gift Card $50 USD)"
+                          value={giftCardForm.title}
+                          onChange={(e) => setGiftCardForm({ ...giftCardForm, title: e.target.value })}
+                          className="h-11 rounded-xl bg-white border border-slate-200 pl-11 text-xs font-semibold text-slate-700"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="relative">
+                          <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                          <Input
+                            placeholder="Monto / Precio USD (Ej: 50)"
+                            type="number"
+                            value={giftCardForm.balance}
+                            onChange={(e) => setGiftCardForm({ ...giftCardForm, balance: e.target.value })}
+                            className="h-11 rounded-xl bg-white border border-slate-200 pl-11 text-xs font-black text-slate-700"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                            <Input
+                              placeholder="Código (Ej: SB-GIFT-50)"
+                              value={giftCardForm.code}
+                              onChange={(e) => setGiftCardForm({ ...giftCardForm, code: e.target.value.toUpperCase() })}
+                              className="h-11 rounded-xl bg-white border border-slate-200 pl-11 font-mono font-bold text-xs uppercase text-slate-700"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={generateRandomGiftCode}
+                            className="px-3 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 text-[10px] font-black tracking-wider uppercase text-slate-600 active:scale-95 transition-transform cursor-pointer"
+                          >
+                            🎲 Auto
+                          </button>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <Info className="absolute left-4 top-3.5 size-4 text-slate-350 pointer-events-none" />
+                        <textarea
+                          placeholder="Descripción (Ej: El obsequio ideal para sorprender en boutique. Válido para ropa y calzado.)"
+                          value={giftCardForm.description}
+                          onChange={(e) => setGiftCardForm({ ...giftCardForm, description: e.target.value })}
+                          className="w-full min-h-[60px] rounded-xl bg-white border border-slate-200 pl-11 pt-3 text-xs font-medium outline-none resize-none placeholder:text-slate-400 text-slate-750"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="relative">
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                          <Input
+                            placeholder="Nombre del Cliente (Opcional)"
+                            value={giftCardForm.ownerName}
+                            onChange={(e) => setGiftCardForm({ ...giftCardForm, ownerName: e.target.value })}
+                            className="h-11 rounded-xl bg-white border border-slate-200 pl-11 text-xs font-semibold text-slate-700"
+                          />
+                        </div>
+                        <div className="relative">
+                          <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                          <Input
+                            placeholder="Teléfono del Cliente (Opcional)"
+                            value={giftCardForm.ownerPhone}
+                            onChange={(e) => setGiftCardForm({ ...giftCardForm, ownerPhone: e.target.value })}
+                            className="h-11 rounded-xl bg-white border border-slate-200 pl-11 text-xs font-semibold text-slate-700"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleCreateGiftCard}
+                        disabled={savingGift || uploadingGiftImg || !giftCardForm.balance}
+                        className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
+                        style={{ backgroundColor: '#8dd5e3' }}
+                      >
+                        {savingGift ? 'GUARDANDO...' : 'CREAR TARJETA DE REGALO'}
+                      </button>
                     </div>
                   </div>
-                ))
+                </div>
+              )}
+
+              {/* Lista de Tarjetas de Regalo */}
+              {loading ? (
+                <div className="flex justify-center py-6"><Loader2 className="size-6 animate-spin text-slate-300" /></div>
+              ) : giftCards.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-xs font-bold bg-slate-50 rounded-2xl">
+                  No hay tarjetas de regalo creadas aún
+                </div>
+              ) : (
+                <div className="space-y-3 pt-1">
+                  {giftCards.map((gc) => {
+                    const isLogo = gc.image_url?.includes('logo')
+                    return (
+                      <div
+                        key={gc.id}
+                        className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                          gc.is_active ? 'bg-white border-slate-100 hover:border-blue-100 shadow-xs' : 'bg-slate-50/70 border-slate-200 opacity-65'
+                        }`}
+                      >
+                        {/* Thumbnail y Cambio Rápido de Foto */}
+                        <div className="flex items-center gap-3.5 w-full sm:w-auto flex-1 min-w-0">
+                          <div className="relative group w-20 h-14 rounded-xl flex-shrink-0 flex items-center justify-center border border-slate-200 bg-gradient-to-r from-blue-900 to-indigo-950 overflow-hidden shadow-xs">
+                            <img
+                              src={gc.image_url || '/imagem_gift_card.jpeg'}
+                              alt={gc.title || gc.code}
+                              className={`w-full h-full ${isLogo ? 'object-contain p-1.5' : 'object-cover'}`}
+                            />
+                            {uploadingGiftCardId === gc.id ? (
+                              <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center">
+                                <Loader2 className="size-5 animate-spin text-blue-500" />
+                              </div>
+                            ) : (
+                              <label
+                                className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[8px] font-black uppercase text-center p-1"
+                                title="Cambiar foto o diseño de esta tarjeta"
+                              >
+                                <Camera className="size-4 mb-0.5" />
+                                <span>Cambiar</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleUpdateGiftCardImage(gc.id, file)
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-black text-xs text-slate-800 truncate">
+                                {gc.title || `Gift Card $${Number(gc.balance).toFixed(0)} USD`}
+                              </h4>
+                              <span className="text-[9px] font-black text-blue-900 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full flex-shrink-0 font-['Poppins']">
+                                ${Number(gc.balance).toFixed(2)} USD
+                              </span>
+                              <span className="text-[9px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded flex-shrink-0">
+                                {gc.code}
+                              </span>
+                              {!gc.is_active && (
+                                <span className="text-[8px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">
+                                  Pausada
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 font-medium">
+                              {gc.description || 'Tarjeta de regalo Subibaja'}
+                            </p>
+                            {gc.owner_name && (
+                              <p className="text-[9px] text-slate-500 font-bold mt-0.5">
+                                Asignada a: {gc.owner_name} {gc.owner_phone ? `(${gc.owner_phone})` : ''}
+                              </p>
+                            )}
+                            
+                            {/* Botones de acción directa sobre la foto */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <label className="text-[9px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100/70 px-2 py-1 rounded-lg cursor-pointer flex items-center gap-1 transition-all">
+                                <Camera className="size-3" />
+                                <span>Cambiar Foto / Diseño</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleUpdateGiftCardImage(gc.id, file)
+                                  }}
+                                />
+                              </label>
+                              {!isLogo && (
+                                <button
+                                  onClick={() => handleResetGiftCardToLogo(gc.id)}
+                                  className="text-[9px] font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/70 px-2 py-1 rounded-lg cursor-pointer transition-all"
+                                  title="Restablecer al logo oficial"
+                                >
+                                  Usar Logo
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Botones de edición y estado */}
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          <button
+                            onClick={() => setEditingGiftCard({ ...gc })}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
+                            title="Editar detalles de la tarjeta"
+                          >
+                            <Pencil className="size-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleGiftCardActive(gc)}
+                            className={`px-2 py-1 rounded-xl transition-colors cursor-pointer text-[9px] font-black uppercase ${
+                              gc.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            }`}
+                            title={gc.is_active ? 'Pausar tarjeta' : 'Activar tarjeta'}
+                          >
+                            {gc.is_active ? 'Activa' : 'Pausada'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGiftCard(gc.id)}
+                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                            title="Eliminar tarjeta"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 
@@ -1692,66 +2519,219 @@ export default function AdminPage() {
               )}
             </div>
 
-            {/* Registrar Premio del Club */}
+            {/* Listado y Gestión de Premios del Catálogo */}
             <div className="bg-white rounded-[32px] shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Gift className="size-5 text-blue-400" />
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Publicar Premio del Club</h3>
-              </div>
-              <div className="space-y-4">
-                {/* Reward Image Upload */}
-                <div className="relative border-2 border-dashed border-slate-100 rounded-2xl p-6 bg-slate-50 flex flex-col items-center justify-center aspect-video overflow-hidden">
-                  {rewardForm.image_url ? (
-                    <img src={rewardForm.image_url} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <>
-                      <div className="bg-white p-3 rounded-2xl shadow-xs mb-2"><Camera className="text-blue-400 size-5" /></div>
-                      <span className="text-slate-400 font-bold text-xs">Foto del Premio</span>
-                    </>
-                  )}
-                  <input type="file" accept="image/*" onChange={handleRewardImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploadingRewardImg} />
-                  {uploadingRewardImg && <div className="absolute inset-0 bg-white/70 flex items-center justify-center"><Loader2 className="animate-spin text-blue-400 size-6" /></div>}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Gift className="size-5 text-blue-500" />
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                      Premios del Catálogo ({rewards.length})
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold">
+                      Cambia la foto por producto o logo cuando quieras
+                    </p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setShowNewRewardForm(!showNewRewardForm)}
+                  className="px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#8dd5e3] hover:bg-[#7bc8d6] text-blue-950 transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-xs"
+                >
+                  <Plus className="size-3" />
+                  {showNewRewardForm ? 'Cerrar Formulario' : 'Nuevo Premio'}
+                </button>
+              </div>
 
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Type className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
-                    <Input
-                      placeholder="Título del Premio (Ej: Lazo de regalo)"
-                      value={rewardForm.title}
-                      onChange={(e) => setRewardForm({ ...rewardForm, title: e.target.value })}
-                      className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-semibold text-slate-700"
-                    />
+              {/* Formulario para publicar nuevo premio (colapsable) */}
+              {showNewRewardForm && (
+                <div className="p-4 bg-slate-50 rounded-2xl border border-blue-100/60 space-y-4 animate-in fade-in zoom-in-95">
+                  <p className="text-[10px] font-black uppercase text-blue-900 tracking-wider">
+                    Registrar Nuevo Premio
+                  </p>
+                  <div className="space-y-3">
+                    {/* Reward Image Upload */}
+                    <div className="relative border-2 border-dashed border-slate-200 rounded-2xl p-4 bg-white flex flex-col items-center justify-center aspect-video overflow-hidden group">
+                      {rewardForm.image_url ? (
+                        <img 
+                          src={rewardForm.image_url} 
+                          className={`absolute inset-0 w-full h-full ${rewardForm.image_url.includes('logo') ? 'object-contain p-4' : 'object-cover'}`} 
+                        />
+                      ) : (
+                        <>
+                          <div className="bg-blue-50 p-3 rounded-2xl shadow-xs mb-1"><Camera className="text-blue-500 size-5" /></div>
+                          <span className="text-slate-500 font-bold text-xs">Subir Foto del Premio</span>
+                          <span className="text-slate-400 text-[9px] font-medium mt-0.5">(Opcional: Si no subes foto se usará el Logo de la tienda)</span>
+                        </>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleRewardImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" disabled={uploadingRewardImg} />
+                      {uploadingRewardImg && <div className="absolute inset-0 bg-white/70 flex items-center justify-center"><Loader2 className="animate-spin text-blue-500 size-6" /></div>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Type className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                        <Input
+                          placeholder="Título del Premio (Ej: Lazo Boutique de Regalo)"
+                          value={rewardForm.title}
+                          onChange={(e) => setRewardForm({ ...rewardForm, title: e.target.value })}
+                          className="h-11 rounded-xl bg-white border border-slate-200 pl-11 text-xs font-semibold text-slate-700"
+                        />
+                      </div>
+                      <div className="relative">
+                        <Info className="absolute left-4 top-3.5 size-4 text-slate-350 pointer-events-none" />
+                        <textarea
+                          placeholder="Descripción del premio (Ej: Válido para cualquier modelo en tienda)"
+                          value={rewardForm.description}
+                          onChange={(e) => setRewardForm({ ...rewardForm, description: e.target.value })}
+                          className="w-full min-h-[70px] rounded-xl bg-white border border-slate-200 pl-11 pt-3 text-xs font-medium outline-none resize-none placeholder:text-slate-400 text-slate-750"
+                        />
+                      </div>
+                      <div className="relative">
+                        <Star className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                        <Input
+                          placeholder="Puntos requeridos (Ej: 50)"
+                          type="number"
+                          value={rewardForm.pointsRequired}
+                          onChange={(e) => setRewardForm({ ...rewardForm, pointsRequired: e.target.value })}
+                          className="h-11 rounded-xl bg-white border border-slate-200 pl-11 text-xs font-black text-slate-700"
+                        />
+                      </div>
+                      <button
+                        onClick={handleSaveReward}
+                        disabled={savingReward || uploadingRewardImg || !rewardForm.title || !rewardForm.pointsRequired}
+                        className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
+                        style={{ backgroundColor: '#8dd5e3' }}
+                      >
+                        {savingReward ? 'GUARDANDO...' : 'PUBLICAR EN EL CATÁLOGO'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <Info className="absolute left-4 top-4 size-4 text-slate-350 pointer-events-none" />
-                    <textarea
-                      placeholder="Descripción / Restricciones del premio"
-                      value={rewardForm.description}
-                      onChange={(e) => setRewardForm({ ...rewardForm, description: e.target.value })}
-                      className="w-full min-h-[80px] rounded-xl bg-slate-50 border-0 pl-11 pt-3.5 text-xs font-medium outline-none resize-none placeholder:text-slate-400 text-slate-750"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Star className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
-                    <Input
-                      placeholder="Puntos requeridos (Ej: 100)"
-                      type="number"
-                      value={rewardForm.pointsRequired}
-                      onChange={(e) => setRewardForm({ ...rewardForm, pointsRequired: e.target.value })}
-                      className="h-12 rounded-xl bg-slate-50 border-0 pl-11 text-xs font-black text-slate-700"
-                    />
-                  </div>
-                  <button
-                    onClick={handleSaveReward}
-                    disabled={savingReward || uploadingRewardImg || !rewardForm.title || !rewardForm.pointsRequired || !rewardForm.image_url}
-                    className="w-full h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 disabled:opacity-50 transition-transform cursor-pointer"
-                    style={{ backgroundColor: '#8dd5e3' }}
-                  >
-                    {savingReward ? 'PUBLICANDO...' : 'PUBLICAR PREMIO'}
-                  </button>
                 </div>
-              </div>
+              )}
+
+              {/* Lista de Premios Actuales */}
+              {loading ? (
+                <div className="flex justify-center py-6"><Loader2 className="size-6 animate-spin text-slate-300" /></div>
+              ) : rewards.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-xs font-bold bg-slate-50 rounded-2xl">
+                  No hay premios en el catálogo aún
+                </div>
+              ) : (
+                <div className="space-y-3 pt-1">
+                  {rewards.map((rew) => {
+                    const isLogo = !rew.image_url || rew.image_url.includes('logo')
+                    return (
+                      <div
+                        key={rew.id}
+                        className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                          rew.is_active ? 'bg-white border-slate-100 hover:border-blue-100 shadow-xs' : 'bg-slate-50/70 border-slate-200 opacity-65'
+                        }`}
+                      >
+                        {/* Thumbnail y Cambio Rápido de Foto */}
+                        <div className="flex items-center gap-3.5 w-full sm:w-auto flex-1 min-w-0">
+                          <div className="relative group w-16 h-16 rounded-2xl flex-shrink-0 flex items-center justify-center border border-slate-100 bg-gradient-to-br from-[#8dd5e3]/20 via-white to-pink-50/30 overflow-hidden shadow-xs">
+                            <img
+                              src={rew.image_url || '/logo-principal.jpg'}
+                              alt={rew.title}
+                              className={`w-full h-full ${isLogo ? 'object-contain p-1.5' : 'object-cover'}`}
+                            />
+                            {uploadingRewardId === rew.id ? (
+                              <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center">
+                                <Loader2 className="size-5 animate-spin text-blue-500" />
+                              </div>
+                            ) : (
+                              <label
+                                className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[8px] font-black uppercase text-center p-1"
+                                title="Cambiar foto de este premio"
+                              >
+                                <Camera className="size-4 mb-0.5" />
+                                <span>Cambiar</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleUpdateRewardImage(rew.id, file)
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-black text-xs text-slate-800 truncate">{rew.title}</h4>
+                              <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                                {rew.points_required} pts
+                              </span>
+                              {!rew.is_active && (
+                                <span className="text-[8px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">
+                                  Pausado
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 font-medium">{rew.description || 'Sin descripción'}</p>
+                            
+                            {/* Botones de acción directa sobre la foto */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <label className="text-[9px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100/70 px-2 py-1 rounded-lg cursor-pointer flex items-center gap-1 transition-all">
+                                <Camera className="size-3" />
+                                <span>{isLogo ? 'Colocar Foto de Producto' : 'Cambiar Foto'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleUpdateRewardImage(rew.id, file)
+                                  }}
+                                />
+                              </label>
+                              {!isLogo && (
+                                <button
+                                  onClick={() => handleResetRewardToLogo(rew.id)}
+                                  className="text-[9px] font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/70 px-2 py-1 rounded-lg cursor-pointer transition-all"
+                                  title="Restablecer al logo oficial"
+                                >
+                                  Usar Logo
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Botones de edición y estado */}
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          <button
+                            onClick={() => setEditingReward({ ...rew })}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
+                            title="Editar título y puntos"
+                          >
+                            <Pencil className="size-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleRewardActive(rew)}
+                            className={`px-2 py-1 rounded-xl transition-colors cursor-pointer text-[9px] font-black uppercase ${
+                              rew.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            }`}
+                            title={rew.is_active ? 'Pausar premio' : 'Activar premio'}
+                          >
+                            {rew.is_active ? 'Activo' : 'Pausado'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReward(rew.id)}
+                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                            title="Eliminar premio"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Listado de Miembros del Club */}
@@ -1815,36 +2795,105 @@ export default function AdminPage() {
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 animate-fade-in"
             onClick={() => setGeneratedVoucher(null)}
           />
-          <div className="relative w-full max-w-[380px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 text-center z-10 animate-in fade-in zoom-in-95 slide-in-from-bottom-10">
-            <div className="mx-auto w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-900 relative shadow-sm border border-blue-100/30">
-              <Crown className="size-6 fill-blue-100 text-blue-900" />
-              <Sparkles className="size-4 text-amber-400 fill-amber-400 absolute -top-1 -right-1 animate-pulse" />
+          <div className="relative w-full max-w-[390px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-3.5 text-center z-10 animate-in fade-in zoom-in-95 slide-in-from-bottom-10 max-h-[92vh] overflow-y-auto">
+            <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-900 relative shadow-sm border border-blue-100/30">
+              <Crown className="size-5 fill-blue-100 text-blue-900" />
+              <Sparkles className="size-3.5 text-amber-400 fill-amber-400 absolute -top-1 -right-1 animate-pulse" />
             </div>
 
             <div className="space-y-1">
-              <span className="text-[8px] font-black tracking-widest text-[#8dd5e3] bg-blue-900 px-3 py-1 rounded-full uppercase inline-block">Código QR de Puntos</span>
-              <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-2 uppercase">
-                ¡Escanea para acumular!
+              <span className="text-[8px] font-black tracking-widest text-[#8dd5e3] bg-blue-900 px-3 py-0.5 rounded-full uppercase inline-block">Código QR y Link de Puntos</span>
+              <h3 className="text-sm font-black text-blue-900 font-['Poppins'] tracking-tight mt-1 uppercase">
+                ¡Escanea o toca el link!
               </h3>
-              <p className="text-[11px] text-slate-405 font-bold">
-                Compra de ${generatedVoucher.amount_usd.toFixed(2)} USD = {generatedVoucher.points} Puntos
+              <p className="text-[11px] text-slate-500 font-bold">
+                Compra de ${generatedVoucher.amount_usd.toFixed(2)} USD = <span className="text-blue-900 font-black">{generatedVoucher.points} Puntos</span>
               </p>
             </div>
 
-            {/* QR Image Container */}
-            <div className="mx-auto bg-slate-50 p-4 rounded-3xl border border-slate-100/80 shadow-inner flex items-center justify-center w-64 h-64">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-                  `${window.location.origin}/puntos?claim=${generatedVoucher.id}`
-                )}`}
-                alt="QR Points Voucher"
-                className="w-full h-full object-contain rounded-xl"
-              />
-            </div>
+            {(() => {
+              const claimUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/puntos?claim=${generatedVoucher.id}`
+              return (
+                <div className="space-y-3">
+                  {/* QR Image Container Clickable */}
+                  <a 
+                    href={claimUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Toca para abrir enlace directamente"
+                    className="mx-auto bg-slate-50 p-3 rounded-2xl border border-slate-100/80 shadow-inner flex flex-col items-center justify-center w-48 h-48 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer group"
+                  >
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(claimUrl)}`}
+                      alt="QR Points Voucher"
+                      className="w-full h-full object-contain rounded-xl"
+                    />
+                  </a>
 
-            <p className="text-[9px] text-slate-400 leading-normal font-semibold px-4">
-              El cliente debe escanear este código con su celular para sumar los puntos a su cuenta VIP o registrarse.
-            </p>
+                  {/* Card con Link Directo para Celular / Compras Online */}
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 text-left space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                        Link para compras online
+                      </span>
+                      <a
+                        href={claimUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] font-black text-blue-600 hover:text-blue-800 flex items-center gap-1 uppercase"
+                      >
+                        Abrir <ExternalLink className="size-2.5" />
+                      </a>
+                    </div>
+                    
+                    <a
+                      href={claimUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-[10px] font-bold text-blue-600 hover:underline break-all bg-white p-2 rounded-xl border border-slate-200/80 shadow-2xs font-mono"
+                    >
+                      {claimUrl}
+                    </a>
+
+                    <div className="flex gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(claimUrl)
+                          alert("¡Enlace de puntos copiado al portapapeles!")
+                        }}
+                        className="flex-1 py-2 px-2 rounded-xl text-[9px] font-black uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all active:scale-95 flex items-center justify-center gap-1 cursor-pointer shadow-xs"
+                      >
+                        <Copy className="size-3 text-slate-500" />
+                        Copiar Link
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const msg = `¡Hola! Gracias por tu compra en Subibaja. Acumulaste ${generatedVoucher.points} puntos ($${generatedVoucher.amount_usd.toFixed(2)} USD). Haz clic en este enlace desde tu celular para sumarlos a tu cuenta o registrarte en el Club VIP:\n\n${claimUrl}`
+                          let targetUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`
+                          if (generatedVoucher.phone) {
+                            let cleanPhone = generatedVoucher.phone.replace(/[^0-9]/g, '')
+                            if (cleanPhone.startsWith('0')) cleanPhone = '58' + cleanPhone.substring(1)
+                            targetUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
+                          }
+                          window.open(targetUrl, '_blank')
+                        }}
+                        className="flex-1 py-2 px-2 rounded-xl text-[9px] font-black uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white transition-all active:scale-95 flex items-center justify-center gap-1 cursor-pointer shadow-xs"
+                      >
+                        <MessageCircle className="size-3 text-white" />
+                        WhatsApp
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[8.5px] text-slate-400 leading-normal font-semibold px-2">
+                    El cliente puede escanear el QR o hacer clic directamente en el link desde su celular para registrarse o acumular sus puntos.
+                  </p>
+                </div>
+              )
+            })()}
 
             <button
               onClick={() => setGeneratedVoucher(null)}
@@ -1853,6 +2902,385 @@ export default function AdminPage() {
             >
               Cerrar y Continuar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Editar Premio */}
+      {editingReward && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 animate-fade-in"
+            onClick={() => setEditingReward(null)}
+          />
+          <div className="relative w-full max-w-[420px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 z-10 animate-in fade-in zoom-in-95 slide-in-from-bottom-10 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gift className="size-5 text-blue-500" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                  Editar Premio del Catálogo
+                </h3>
+              </div>
+              <button 
+                onClick={() => setEditingReward(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Foto del premio y cambio interactivo */}
+            <div className="flex flex-col items-center gap-2 py-1">
+              <div className="relative group w-24 h-24 rounded-2xl border border-slate-200 overflow-hidden bg-gradient-to-br from-[#8dd5e3]/20 via-white to-pink-50/30 flex items-center justify-center shadow-xs">
+                <img
+                  src={editingReward.image_url || '/logo-principal.jpg'}
+                  alt={editingReward.title}
+                  className={`w-full h-full ${editingReward.image_url?.includes('logo') ? 'object-contain p-2' : 'object-cover'}`}
+                />
+                {uploadingRewardId === editingReward.id ? (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <Loader2 className="size-5 animate-spin text-blue-500" />
+                  </div>
+                ) : (
+                  <label 
+                    className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[8px] font-black uppercase text-center p-1"
+                    title="Subir nueva foto"
+                  >
+                    <Camera className="size-4 mb-0.5" />
+                    <span>Cambiar</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        try {
+                          setUploadingRewardId(editingReward.id)
+                          const fileName = `rewards_${Date.now()}.${file.name.split('.').pop()}`
+                          const { error: uploadErr } = await supabase.storage.from('product-images').upload(`products/${fileName}`, file)
+                          if (uploadErr) throw uploadErr
+                          const { data } = supabase.storage.from('product-images').getPublicUrl(`products/${fileName}`)
+                          setEditingReward((prev: any) => ({ ...prev, image_url: data.publicUrl }))
+                        } catch (err: any) {
+                          alert(err.message || 'Error al subir foto')
+                        } finally {
+                          setUploadingRewardId(null)
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-[9px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg cursor-pointer flex items-center gap-1 transition-all">
+                  <Camera className="size-3" />
+                  <span>Subir Foto de Producto</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      try {
+                        setUploadingRewardId(editingReward.id)
+                        const fileName = `rewards_${Date.now()}.${file.name.split('.').pop()}`
+                        const { error: uploadErr } = await supabase.storage.from('product-images').upload(`products/${fileName}`, file)
+                        if (uploadErr) throw uploadErr
+                        const { data } = supabase.storage.from('product-images').getPublicUrl(`products/${fileName}`)
+                        setEditingReward((prev: any) => ({ ...prev, image_url: data.publicUrl }))
+                      } catch (err: any) {
+                        alert(err.message || 'Error al subir foto')
+                      } finally {
+                        setUploadingRewardId(null)
+                      }
+                    }}
+                  />
+                </label>
+                {editingReward.image_url && !editingReward.image_url.includes('logo') && (
+                  <button
+                    onClick={() => setEditingReward((prev: any) => ({ ...prev, image_url: '/logo-principal.jpg' }))}
+                    className="text-[9px] font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg cursor-pointer transition-all"
+                  >
+                    Usar Logo
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Inputs */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Título</Label>
+                <Input
+                  value={editingReward.title}
+                  onChange={(e) => setEditingReward({ ...editingReward, title: e.target.value })}
+                  className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-bold text-slate-700 mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Descripción</Label>
+                <textarea
+                  value={editingReward.description || ''}
+                  onChange={(e) => setEditingReward({ ...editingReward, description: e.target.value })}
+                  className="w-full min-h-[70px] rounded-xl bg-slate-50 border-0 p-3 text-xs font-medium outline-none resize-none placeholder:text-slate-400 text-slate-750 mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Puntos Requeridos</Label>
+                <Input
+                  type="number"
+                  value={editingReward.points_required}
+                  onChange={(e) => setEditingReward({ ...editingReward, points_required: e.target.value })}
+                  className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-black text-slate-700 mt-1"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-xs font-bold text-slate-700">Estado en Tienda</p>
+                  <p className="text-[9px] text-slate-400 font-medium">Visible en el catálogo de clientes</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingReward({ ...editingReward, is_active: !editingReward.is_active })}
+                  className={`px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all ${
+                    editingReward.is_active ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {editingReward.is_active ? 'Activo' : 'Pausado'}
+                </button>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingReward(null)}
+                className="flex-1 h-11 rounded-full font-black text-slate-500 hover:bg-slate-100 text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveRewardEdit}
+                className="flex-1 h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 transition-transform cursor-pointer"
+                style={{ backgroundColor: '#8dd5e3' }}
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Editar Tarjeta de Regalo */}
+      {editingGiftCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 animate-fade-in"
+            onClick={() => setEditingGiftCard(null)}
+          />
+          <div className="relative w-full max-w-[420px] bg-white rounded-[32px] overflow-hidden shadow-2xl p-6 border border-slate-100 flex flex-col gap-4 z-10 animate-in fade-in zoom-in-95 slide-in-from-bottom-10 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Ticket className="size-5 text-rose-500" />
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                  Editar Tarjeta de Regalo
+                </h3>
+              </div>
+              <button 
+                onClick={() => setEditingGiftCard(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Foto o Diseño del Gift Card */}
+            <div className="flex flex-col items-center gap-2 py-1">
+              <div className="relative group w-32 h-20 rounded-2xl border border-slate-200 overflow-hidden bg-gradient-to-r from-blue-900 to-indigo-950 flex items-center justify-center shadow-xs">
+                <img
+                  src={editingGiftCard.image_url || '/imagem_gift_card.jpeg'}
+                  alt={editingGiftCard.title || editingGiftCard.code}
+                  className={`w-full h-full ${editingGiftCard.image_url?.includes('logo') ? 'object-contain p-2' : 'object-cover'}`}
+                />
+                {uploadingGiftCardId === editingGiftCard.id ? (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <Loader2 className="size-5 animate-spin text-blue-500" />
+                  </div>
+                ) : (
+                  <label 
+                    className="absolute inset-0 bg-slate-900/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[8px] font-black uppercase text-center p-1"
+                    title="Subir nueva foto o diseño"
+                  >
+                    <Camera className="size-4 mb-0.5" />
+                    <span>Cambiar</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        try {
+                          setUploadingGiftCardId(editingGiftCard.id)
+                          const fileName = `giftcard_${Date.now()}.${file.name.split('.').pop()}`
+                          const { error: uploadErr } = await supabase.storage.from('product-images').upload(`products/${fileName}`, file)
+                          if (uploadErr) throw uploadErr
+                          const { data } = supabase.storage.from('product-images').getPublicUrl(`products/${fileName}`)
+                          setEditingGiftCard((prev: any) => ({ ...prev, image_url: data.publicUrl }))
+                        } catch (err: any) {
+                          alert(err.message || 'Error al subir foto')
+                        } finally {
+                          setUploadingGiftCardId(null)
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-[9px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg cursor-pointer flex items-center gap-1 transition-all">
+                  <Camera className="size-3" />
+                  <span>Subir Foto / Diseño</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      try {
+                        setUploadingGiftCardId(editingGiftCard.id)
+                        const fileName = `giftcard_${Date.now()}.${file.name.split('.').pop()}`
+                        const { error: uploadErr } = await supabase.storage.from('product-images').upload(`products/${fileName}`, file)
+                        if (uploadErr) throw uploadErr
+                        const { data } = supabase.storage.from('product-images').getPublicUrl(`products/${fileName}`)
+                        setEditingGiftCard((prev: any) => ({ ...prev, image_url: data.publicUrl }))
+                      } catch (err: any) {
+                        alert(err.message || 'Error al subir foto')
+                      } finally {
+                        setUploadingGiftCardId(null)
+                      }
+                    }}
+                  />
+                </label>
+                {editingGiftCard.image_url && !editingGiftCard.image_url.includes('logo') && (
+                  <button
+                    onClick={() => setEditingGiftCard((prev: any) => ({ ...prev, image_url: '/logo-principal.jpg' }))}
+                    className="text-[9px] font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg cursor-pointer transition-all"
+                  >
+                    Usar Logo
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Inputs */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nombre / Título</Label>
+                <Input
+                  value={editingGiftCard.title || ''}
+                  onChange={(e) => setEditingGiftCard({ ...editingGiftCard, title: e.target.value })}
+                  className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-bold text-slate-700 mt-1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio / Saldo ($ USD)</Label>
+                  <Input
+                    type="number"
+                    value={editingGiftCard.balance}
+                    onChange={(e) => setEditingGiftCard({ ...editingGiftCard, balance: e.target.value })}
+                    className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-black text-slate-700 mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Código de Activación</Label>
+                  <Input
+                    value={editingGiftCard.code || ''}
+                    onChange={(e) => setEditingGiftCard({ ...editingGiftCard, code: e.target.value.toUpperCase() })}
+                    className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-mono font-bold text-slate-700 uppercase mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Descripción</Label>
+                <textarea
+                  value={editingGiftCard.description || ''}
+                  onChange={(e) => setEditingGiftCard({ ...editingGiftCard, description: e.target.value })}
+                  className="w-full min-h-[60px] rounded-xl bg-slate-50 border-0 p-3 text-xs font-medium outline-none resize-none placeholder:text-slate-400 text-slate-750 mt-1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Dueño (Opcional)</Label>
+                  <Input
+                    value={editingGiftCard.owner_name || ''}
+                    onChange={(e) => setEditingGiftCard({ ...editingGiftCard, owner_name: e.target.value })}
+                    placeholder="Sin asignar"
+                    className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-semibold text-slate-700 mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Teléfono (Opcional)</Label>
+                  <Input
+                    value={editingGiftCard.owner_phone || ''}
+                    onChange={(e) => setEditingGiftCard({ ...editingGiftCard, owner_phone: e.target.value })}
+                    placeholder="Sin teléfono"
+                    className="h-11 rounded-xl bg-slate-50 border-0 text-xs font-semibold text-slate-700 mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-xs font-bold text-slate-700">Estado de la Tarjeta</p>
+                  <p className="text-[9px] text-slate-400 font-medium">Activa para compra y canje</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingGiftCard({ ...editingGiftCard, is_active: !editingGiftCard.is_active })}
+                  className={`px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all ${
+                    editingGiftCard.is_active ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {editingGiftCard.is_active ? 'Activa' : 'Pausada'}
+                </button>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingGiftCard(null)}
+                className="flex-1 h-11 rounded-full font-black text-slate-500 hover:bg-slate-100 text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveGiftCardEdit}
+                className="flex-1 h-11 rounded-full font-black tracking-widest text-[#1e3a5f] text-[10px] uppercase shadow-sm active:scale-95 transition-transform cursor-pointer"
+                style={{ backgroundColor: '#8dd5e3' }}
+              >
+                Guardar Cambios
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -35,7 +35,9 @@ const GIFTCARDS_MOCK = [
 
 export default function GiftCardPurchasePage() {
   const router = useRouter()
-  const [selectedCard, setSelectedCard] = useState<typeof GIFTCARDS_MOCK[0] | null>(null)
+  const [cards, setCards] = useState<any[]>([])
+  const [loadingCards, setLoadingCards] = useState(true)
+  const [selectedCard, setSelectedCard] = useState<any | null>(null)
   const [formData, setFormData] = useState({ name: "", phone: "", email: "" })
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -50,9 +52,42 @@ export default function GiftCardPurchasePage() {
     fetchRate()
   }, [])
 
+  useEffect(() => {
+    async function loadCards() {
+      try {
+        setLoadingCards(true)
+        const { data } = await supabase
+          .from('gift_cards')
+          .select('*')
+          .eq('is_active', true)
+          .is('owner_name', null)
+          .order('balance', { ascending: true })
+        if (data && data.length > 0) {
+          setCards(data)
+        } else {
+          setCards(GIFTCARDS_MOCK.map(m => ({
+            id: m.amount.toString(),
+            title: m.title,
+            description: m.description,
+            balance: m.amount,
+            code: m.codePrefix,
+            image_url: '/imagem_gift_card.jpeg'
+          })))
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoadingCards(false)
+      }
+    }
+    loadCards()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedCard || !formData.name || !formData.phone || !formData.email) return
+
+    const cardAmount = Number(selectedCard.balance || selectedCard.amount)
 
     try {
       setSubmitting(true)
@@ -62,7 +97,7 @@ export default function GiftCardPurchasePage() {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         email: formData.email.trim(),
-        amount: selectedCard.amount,
+        amount: cardAmount,
         status: 'pending'
       }])
 
@@ -71,7 +106,8 @@ export default function GiftCardPurchasePage() {
       setSuccess(true)
       
       // Format WhatsApp Message
-      const msg = `¡Hola Subibaja! Mi nombre es *${formData.name}* (Tlf: ${formData.phone}, Email: ${formData.email}) y me gustaría adquirir la Tarjeta de Regalo virtual de *$${selectedCard.amount} USD* (${selectedCard.title}). Ya registré mis datos en la web, ¿cómo puedo coordinar el pago?`
+      const cardTitle = selectedCard.title || `Gift Card $${cardAmount} USD`
+      const msg = `¡Hola Subibaja! Mi nombre es *${formData.name}* (Tlf: ${formData.phone}, Email: ${formData.email}) y me gustaría adquirir la Tarjeta de Regalo virtual de *$${cardAmount} USD* (${cardTitle}). Ya registré mis datos en la web, ¿cómo puedo coordinar el pago?`
       
       // Delay redirect to WhatsApp for a better feedback experience
       setTimeout(() => {
@@ -122,75 +158,101 @@ export default function GiftCardPurchasePage() {
 
           {/* Cards List */}
           <div className="space-y-4">
-            {GIFTCARDS_MOCK.map((card) => {
-              const amountBs = (card.amount * exchangeRate).toFixed(0)
-              return (
-                <div 
-                  key={card.amount}
-                  className="bg-white rounded-[32px] p-5 shadow-sm border border-slate-100/80 flex flex-col gap-4 transition-all duration-300 hover:shadow-md"
-                >
-                  {/* Virtual Card Graphic */}
-                  <div className={`relative aspect-[1.58/1] w-full rounded-[24px] overflow-hidden shadow-lg border border-white/20 select-none bg-gradient-to-r ${card.gradient}`}>
-                    
-                    {/* Gloss / Holographic reflection overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-white/10 to-transparent mix-blend-overlay z-10" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-transparent opacity-80" />
-                    
-                    <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-10">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-[8px] font-black uppercase tracking-[0.25em] text-[#8dd5e3] font-['Poppins']">Gift Card Virtual</span>
-                          <h3 className="text-lg font-black font-['Poppins'] tracking-tight mt-0.5">Subibaja</h3>
+            {loadingCards ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="size-8 animate-spin text-blue-400" />
+              </div>
+            ) : cards.length === 0 ? (
+              <div className="bg-white rounded-[32px] p-8 text-center text-slate-400">
+                <Ticket className="size-8 mx-auto mb-2 opacity-50 text-[#8dd5e3]" />
+                <p className="text-xs font-semibold">No hay tarjetas de regalo activas en este momento</p>
+              </div>
+            ) : (
+              cards.map((card) => {
+                const cardBalance = Number(card.balance || card.amount || 50)
+                const amountBs = (cardBalance * exchangeRate).toFixed(0)
+                const cardTitle = card.title || `Gift Card $${cardBalance.toFixed(0)} USD`
+                const isLogo = card.image_url?.includes('logo')
+
+                return (
+                  <div 
+                    key={card.id || card.code}
+                    className="bg-white rounded-[32px] p-5 shadow-sm border border-slate-100/80 flex flex-col gap-4 transition-all duration-300 hover:shadow-md"
+                  >
+                    {/* Virtual Card Graphic */}
+                    <div className="relative aspect-[1.58/1] w-full rounded-[24px] overflow-hidden shadow-lg border border-white/20 select-none bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900">
+                      
+                      {card.image_url && (
+                        <img 
+                          src={card.image_url} 
+                          alt={cardTitle} 
+                          className={`absolute inset-0 w-full h-full ${isLogo ? 'object-contain p-6 bg-blue-950' : 'object-cover'}`} 
+                        />
+                      )}
+
+                      {/* Gloss / Holographic reflection overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/15 to-transparent mix-blend-overlay z-10 pointer-events-none" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-transparent opacity-80 pointer-events-none" />
+                      
+                      {/* Gradient overlay for readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30 z-10 pointer-events-none" />
+
+                      <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-20">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[8px] font-black uppercase tracking-[0.25em] text-[#8dd5e3] font-['Poppins']">Gift Card Virtual</span>
+                            <h3 className="text-lg font-black font-['Poppins'] tracking-tight mt-0.5">Subibaja</h3>
+                          </div>
+                          <div className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-lg">
+                            <Crown className="size-4 text-amber-300 fill-amber-300 animate-pulse" />
+                          </div>
                         </div>
-                        <div className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-lg">
-                          <Crown className="size-4 text-amber-300 fill-amber-300 animate-pulse" />
+                        
+                        <div className="flex justify-between items-end">
+                          <div>
+                            <p className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Código temporal</p>
+                            <p className="text-[10px] font-black tracking-widest text-[#8dd5e3] font-mono mt-0.5">{card.code || 'SB-GIFT'}-••••</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Valor</p>
+                            <p className="text-2xl font-black font-['Poppins'] tracking-tight text-white mt-0.5">${cardBalance.toFixed(0)}</p>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="flex justify-between items-end">
+
+                      {/* Decorative glows */}
+                      <div className="absolute -top-10 -left-10 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                    </div>
+
+                    {/* Info and Purchase Button */}
+                    <div className="space-y-3 px-1">
+                      <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Código temporal</p>
-                          <p className="text-[10px] font-black tracking-widest text-[#8dd5e3] font-mono mt-0.5">{card.codePrefix}-••••</p>
+                          <span className="text-[8px] font-black text-blue-500 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100/30 uppercase tracking-wider">
+                            GIFT CARD VIP
+                          </span>
+                          <h4 className="text-sm font-black text-slate-800 mt-1.5">{cardTitle}</h4>
                         </div>
                         <div className="text-right">
-                          <p className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">Valor</p>
-                          <p className="text-2xl font-black font-['Poppins'] tracking-tight text-white mt-0.5">${card.amount}</p>
+                          <span className="text-lg font-black text-blue-900 font-['Poppins']">${cardBalance.toFixed(0)} USD</span>
+                          <span className="text-[9px] text-slate-500 font-bold block">Bs {amountBs} BCV</span>
                         </div>
                       </div>
+                      <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                        {card.description || 'Tarjeta de regalo digital válida en toda la tienda física y compras online.'}
+                      </p>
+                      <button
+                        onClick={() => setSelectedCard(card)}
+                        className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
+                        style={{ backgroundColor: '#8dd5e3' }}
+                      >
+                        Solicitar Tarjeta de ${cardBalance.toFixed(0)}
+                      </button>
                     </div>
-
-                    {/* Decorative glows */}
-                    <div className="absolute -top-10 -left-10 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                   </div>
-
-                  {/* Info and Purchase Button */}
-                  <div className="space-y-3 px-1">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-[8px] font-black text-blue-500 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100/30 uppercase tracking-wider">
-                          {card.badge}
-                        </span>
-                        <h4 className="text-sm font-black text-slate-800 mt-1.5">{card.title}</h4>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-black text-blue-900">${card.amount} USD</span>
-                        <span className="text-[9px] text-slate-500 font-bold block">Bs {amountBs} BCV</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                      {card.description}
-                    </p>
-                    <button
-                      onClick={() => setSelectedCard(card)}
-                      className="w-full h-11 rounded-full font-black tracking-widest text-blue-900 text-[10px] uppercase shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 hover:bg-[#a6d5ff] cursor-pointer"
-                      style={{ backgroundColor: '#8dd5e3' }}
-                    >
-                      Solicitar Tarjeta de ${card.amount}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
 
         </main>

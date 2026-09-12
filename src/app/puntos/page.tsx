@@ -451,13 +451,21 @@ export default function LoyaltyPage() {
                   const canClaim = member && member.points >= reward.points_required
                   return (
                     <div key={reward.id} className="bg-white rounded-3xl overflow-hidden shadow-sm p-4 flex gap-4 border border-slate-100/50 hover:border-blue-100 transition-colors">
-                      {reward.image_url && (
-                        <img
-                          src={reward.image_url}
-                          alt={reward.title}
-                          className="w-20 h-20 rounded-2xl object-cover flex-shrink-0 bg-slate-50 border border-slate-100"
-                        />
-                      )}
+                      {(() => {
+                        const imgSrc = reward.image_url || '/logo-principal.jpg';
+                        const isLogo = imgSrc.includes('logo');
+                        return (
+                          <div className={`w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center border border-slate-100 overflow-hidden shadow-xs ${
+                            isLogo ? 'bg-gradient-to-br from-[#8dd5e3]/20 via-white to-pink-50/30 p-1.5' : 'bg-slate-50'
+                          }`}>
+                            <img
+                              src={imgSrc}
+                              alt={reward.title}
+                              className={`w-full h-full ${isLogo ? 'object-contain' : 'object-cover rounded-xl'}`}
+                            />
+                          </div>
+                        );
+                      })()}
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
                           <div className="flex items-start justify-between gap-1">
@@ -645,12 +653,12 @@ export default function LoyaltyPage() {
               <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Categorías</span>
             </Link>
 
-            {/* Ofertas */}
+            {/* Promociones */}
             <Link href="/?openOffers=true" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
               <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
                 <Percent className="size-4 text-blue-900/60" />
               </div>
-              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Ofertas</span>
+              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Promociones</span>
             </Link>
 
             {/* Clientes VIP — activo */}

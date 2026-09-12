@@ -186,7 +186,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     }
     return product.stock_quantity ?? 0
   }
-  const isOutOfStock = product?.stock_status === 'out_of_stock' || getStockForSelected() <= 0
+  const isOutOfStock = product?.stock_status === 'out_of_stock' || product?.badge === 'agotado' || product?.badge === 'agotado_rojo' || getStockForSelected() <= 0
 
   const getPriceRange = () => {
     if (!product) return null
@@ -345,6 +345,26 @@ export default function ProductClient({ initialProduct, initialCategories, initi
                 DESCUENTOS
               </div>
             )}
+            {(product.badge === 'rebaja' || product.badge === 'rebajas') && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#ef4444] text-white text-[10px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none">
+                REBAJA
+              </div>
+            )}
+            {product.badge === 'rebaja_azul' && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#1e40af] text-white text-[10px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none">
+                REBAJA
+              </div>
+            )}
+            {product.badge === 'agotado' && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#334155] text-white text-[10px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none uppercase">
+                AGOTADO
+              </div>
+            )}
+            {product.badge === 'agotado_rojo' && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#dc2626] text-white text-[10px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none uppercase">
+                AGOTADO
+              </div>
+            )}
             <Swiper
               pagination={{ clickable: true }}
               navigation={true}
@@ -380,10 +400,14 @@ export default function ProductClient({ initialProduct, initialCategories, initi
             {/* Badge stock + categoría */}
             <div className="flex items-center gap-2 mb-4">
               <span
-                className="px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm"
-                style={{ backgroundColor: '#8dd5e3', color: '#1e3a5f' }}
+                className={`px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase shadow-sm ${
+                  !isOutOfStock
+                    ? 'text-[#1e3a5f]'
+                    : 'bg-slate-200 text-slate-600'
+                }`}
+                style={!isOutOfStock ? { backgroundColor: '#8dd5e3' } : undefined}
               >
-                {product.stock_status === 'in_stock' ? 'DISPONIBLE' : 'AGOTADO'}
+                {!isOutOfStock ? 'DISPONIBLE' : 'AGOTADO'}
               </span>
               {getBreadcrumbs().length > 0 && (
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[280px] py-1">
@@ -560,22 +584,22 @@ export default function ProductClient({ initialProduct, initialCategories, initi
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[430px] md:max-w-none z-30 px-6 flex gap-3 justify-center md:relative md:bottom-auto md:left-auto md:translate-x-0 md:px-0 md:mt-8 md:shadow-none md:z-10 animate-fade-in">
               <button
                 onClick={handleAddToCart}
-                disabled={product.stock_status !== 'in_stock'}
+                disabled={isOutOfStock}
                 className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-slate-700 bg-white border border-slate-200 transition-all active:scale-95 disabled:opacity-40 shadow-xl md:shadow-sm cursor-pointer h-[38px] md:h-12"
               >
                 {isAdded ? '¡AÑADIDO!' : 'AÑADIR AL CARRITO'}
               </button>
               <button
                 onClick={handleOrder}
-                disabled={product.stock_status !== 'in_stock'}
+                disabled={isOutOfStock}
                 className="flex-1 rounded-full text-[9px] font-black tracking-[0.1em] text-blue-900 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-xl md:shadow-sm border border-white/20 cursor-pointer h-[38px] md:h-12"
                 style={{ 
-                  backgroundColor: 'rgba(141, 213, 227, 0.9)', 
+                  backgroundColor: isOutOfStock ? '#cbd5e1' : 'rgba(141, 213, 227, 0.9)', 
                   backdropFilter: 'blur(8px)', 
                   WebkitBackdropFilter: 'blur(8px)' 
                 }}
               >
-                {product.stock_status === 'in_stock' ? 'COMPRAR AHORA' : 'AGOTADO'}
+                {!isOutOfStock ? 'COMPRAR AHORA' : 'AGOTADO'}
               </button>
             </div>
 

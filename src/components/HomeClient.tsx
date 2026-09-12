@@ -10,8 +10,14 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import CartFloatingButton from "@/components/CartFloatingButton"
 
+const InstagramIcon = ({ className = "size-4" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+  </svg>
+)
+
 const CAT_ICONS: Record<string, React.ElementType> = {
-  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2
+  Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2, Percent
 }
 
 const FAQS = [
@@ -74,13 +80,25 @@ const FAQS = [
   }
 ]
 
+const DEFAULT_INSTAGRAM_POSTS = [
+  { id: 'ig-1', image_url: '/Imagen_portada.jpeg', title: '¡Nueva colección infantil disponible en tienda! ✨' },
+  { id: 'ig-2', image_url: '/imagem_gift_card.jpeg', title: 'Momentos llenos de sonrisas y el mejor estilo 💕' },
+  { id: 'ig-3', image_url: '/Imagen_medio.jpeg', title: 'Detalles únicos y calzado boutique para los consentidos 🎀' },
+  { id: 'ig-4', image_url: '/imagen_home.jpg', title: 'Moda y comodidad en cada paso 🌟' },
+  { id: 'ig-5', image_url: '/giftcard_kids.png', title: 'El detalle perfecto: Regala una Gift Card Subibaja 🎁' },
+  { id: 'ig-6', image_url: '/zapatos_subibaja.jpeg', title: 'Visítanos en nuestra boutique en San Luis, Caracas 📍' },
+]
+
 interface HomeClientProps {
   initialProducts: any[]
   initialCategories: any[]
   initialExchangeRate: number
+  initialBanners?: any[]
+  initialMiddleBanners?: any[]
+  initialInstagramPosts?: any[]
 }
 
-export default function HomeClient({ initialProducts, initialCategories, initialExchangeRate }: HomeClientProps) {
+export default function HomeClient({ initialProducts, initialCategories, initialExchangeRate, initialBanners, initialMiddleBanners, initialInstagramPosts }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState("Todos")
   const [activeSubCategory, setActiveSubCategory] = useState("Todos")
   const [activeLeafCategory, setActiveLeafCategory] = useState("Todos")
@@ -88,6 +106,9 @@ export default function HomeClient({ initialProducts, initialCategories, initial
   const [showOffersDrawer, setShowOffersDrawer] = useState(false)
   const [products, setProducts] = useState<any[]>(initialProducts)
   const [categories, setCategories] = useState<any[]>(initialCategories)
+  const [banners, setBanners] = useState<any[]>(initialBanners && initialBanners.length > 0 ? initialBanners : [{ id: 'default', image_url: '/portada.jpg', title: 'Portada Principal' }])
+  const [middleBanners, setMiddleBanners] = useState<any[]>(initialMiddleBanners && initialMiddleBanners.length > 0 ? initialMiddleBanners : [{ id: 'default-middle', image_url: '/imagen_home.jpg', title: 'Colección Subibaja' }])
+  const [instagramPosts, setInstagramPosts] = useState<any[]>(initialInstagramPosts && initialInstagramPosts.length > 0 ? initialInstagramPosts : DEFAULT_INSTAGRAM_POSTS)
   const [exchangeRate, setExchangeRate] = useState(initialExchangeRate)
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -140,12 +161,29 @@ export default function HomeClient({ initialProducts, initialCategories, initial
     // 2. Category Hierarchy Filter
     if (activeCategory === "Todos") return true
 
+    // Manejo unificado para la sección de Rebajas
+    if (activeCategory === "Rebajas" || activeCategory === "Rebaja") {
+      const currentMainCatObj = categories.find(c => (c.name === "Rebajas" || c.name === "Rebaja") && !c.parent_id)
+      const matchesCat = currentMainCatObj ? (p.category_ids?.includes(currentMainCatObj.id) || p.category === "Rebajas" || p.category === "Rebaja") : false
+      const hasDiscountBadge = p.badge && ['descuento', 'descuentos', 'rebaja', 'rebajas', 'oferta', 'ofertas'].includes(p.badge.toLowerCase())
+      if (matchesCat || hasDiscountBadge) return true
+      return false
+    }
+
     // Check main category match
     const currentMainCatObj = categories.find(c => c.name === activeCategory && !c.parent_id)
     if (currentMainCatObj) {
-        if (!p.category_ids?.includes(currentMainCatObj.id) && p.category !== activeCategory) return false
+      const subIds = categories.filter(c => c.parent_id === currentMainCatObj.id).map(c => c.id)
+      const leafIds = categories.filter(c => subIds.includes(c.parent_id)).map(c => c.id)
+      const allCatIds = [currentMainCatObj.id, ...subIds, ...leafIds]
+      
+      const matchesCategory = p.category === activeCategory ||
+                              allCatIds.includes(p.category_id) ||
+                              p.category_ids?.some((id: string) => allCatIds.includes(id))
+                              
+      if (!matchesCategory) return false
     } else {
-        if (p.category !== activeCategory) return false
+      if (p.category !== activeCategory) return false
     }
 
     // If main category matches, check subcategory
@@ -178,14 +216,24 @@ export default function HomeClient({ initialProducts, initialCategories, initial
       <Fragment key={product.id}>
         {showMiddleBanner && (
           <div className="col-span-2 md:col-span-4 lg:col-span-5 my-2 rounded-[32px] overflow-hidden shadow-sm border border-slate-100/50 flex flex-col bg-[#fef8f8] group">
-            <div className="relative w-full aspect-[16/8] md:aspect-[21/9]">
-              <Image 
-                src="/imagen_home.jpg" 
-                alt="Zapatos Subibaja" 
-                fill
-                sizes="(max-width: 768px) 100vw, 100vw"
-                className="object-contain transition-transform duration-700 group-hover:scale-105"
-              />
+            <div className="relative w-full aspect-[16/8] md:aspect-[21/9] overflow-hidden">
+              <Swiper
+                modules={[Autoplay, Pagination]}
+                autoplay={{ delay: 2000, disableOnInteraction: false }}
+                loop={middleBanners.length > 1}
+                pagination={middleBanners.length > 1 ? { clickable: true } : false}
+                className="w-full h-full"
+              >
+                {middleBanners.map((banner, idx) => (
+                  <SwiperSlide key={banner.id || idx} className="relative w-full h-full flex items-center justify-center">
+                    <img
+                      src={banner.image_url}
+                      alt={banner.title || "Zapatos Subibaja"}
+                      className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
             <div className="p-5 text-left bg-[#fef8f8]">
               <span className="text-[8px] font-black uppercase tracking-widest text-blue-400 font-['Poppins']">Colección Subibaja</span>
@@ -224,6 +272,34 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 return (
                   <div className="absolute top-3 -left-8 w-28 bg-[#10b981] text-white text-[7px] font-black tracking-wider py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
                     DESCUENTOS
+                  </div>
+                );
+              }
+              if (displayBadge === 'rebaja' || displayBadge === 'rebajas') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#ef4444] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                    REBAJA
+                  </div>
+                );
+              }
+              if (displayBadge === 'rebaja_azul') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#1e40af] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none">
+                    REBAJA
+                  </div>
+                );
+              }
+              if (displayBadge === 'agotado') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#334155] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
+                    AGOTADO
+                  </div>
+                );
+              }
+              if (displayBadge === 'agotado_rojo') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#dc2626] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
+                    AGOTADO
                   </div>
                 );
               }
@@ -279,13 +355,23 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 </div>
               )
             })()}
-            <Link 
-              href={`/producto/${product.id}`} 
-              className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
-              style={{ height: '24px', backgroundColor: '#8dd5e3' }}
-            >
-              LO QUIERO
-            </Link>
+            {product.badge === 'agotado' || product.badge === 'agotado_rojo' || product.stock_status === 'out_of_stock' ? (
+              <Link 
+                href={`/producto/${product.id}`} 
+                className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-slate-500 bg-slate-100 border border-slate-200 transition-transform active:scale-95 shadow-sm flex items-center justify-center uppercase"
+                style={{ height: '24px' }}
+              >
+                AGOTADO
+              </Link>
+            ) : (
+              <Link 
+                href={`/producto/${product.id}`} 
+                className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
+                style={{ height: '24px', backgroundColor: '#8dd5e3' }}
+              >
+                LO QUIERO
+              </Link>
+            )}
           </div>
         </div>
       </Fragment>
@@ -323,7 +409,59 @@ export default function HomeClient({ initialProducts, initialCategories, initial
       <div className="w-full max-w-[430px] md:max-w-7xl mx-auto flex flex-col min-h-screen pb-24 font-['Lato',sans-serif] px-4 md:px-8">
 
         {/* Header con Glassmorphism */}
-        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/50">
+        <header className="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/60 shadow-xs md:rounded-b-2xl overflow-hidden">
+          
+          {/* ── SECCIÓN DE PROMOCIONES SUPERIOR (VERSIÓN PC) ── */}
+          <div 
+            className="hidden md:flex w-full px-6 py-2.5 items-center justify-between text-blue-950 font-['Poppins'] border-b border-blue-200/50 transition-all select-none"
+            style={{ backgroundColor: '#8dd5e3' }}
+          >
+            {/* Izquierda: Badge e Información de Promoción */}
+            <div className="flex items-center gap-3">
+              <span className="bg-blue-900 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                <Sparkles className="size-3 text-amber-300 fill-amber-300 animate-pulse" /> PROMOCIONES
+              </span>
+              <p className="text-xs font-black text-blue-950 tracking-tight flex items-center gap-1.5">
+                <span>🔥 Aprovecha hasta</span>
+                <span className="bg-white/80 text-rose-600 px-2 py-0.5 rounded-md text-[11px] font-black uppercase shadow-2xs">50% OFF</span>
+                <span>en modelos seleccionados y canjea premios con el Club Subibaja</span>
+              </p>
+            </div>
+
+            {/* Centro: Chips de ofertas destacadas */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowOffersDrawer(true)} 
+                className="bg-white/60 hover:bg-white text-blue-950 text-[10px] font-black px-3 py-1 rounded-full border border-white/70 transition-all flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Percent className="size-3 text-rose-500" /> Zapato Charol 40% OFF
+              </button>
+              <button 
+                onClick={() => setShowOffersDrawer(true)} 
+                className="bg-white/60 hover:bg-white text-blue-950 text-[10px] font-black px-3 py-1 rounded-full border border-white/70 transition-all flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Percent className="size-3 text-rose-500" /> Bailarinas Glitter 50% OFF
+              </button>
+              <button 
+                onClick={() => setShowOffersDrawer(true)} 
+                className="bg-white/60 hover:bg-white text-blue-950 text-[10px] font-black px-3 py-1 rounded-full border border-white/70 transition-all flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Crown className="size-3 text-amber-600 fill-amber-500" /> Regalo Club VIP
+              </button>
+            </div>
+
+            {/* Derecha: Botón de Acción Principal */}
+            <button
+              onClick={() => setShowOffersDrawer(true)}
+              className="bg-blue-900 hover:bg-blue-950 text-white text-[11px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full shadow-sm hover:shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <Tag className="size-3 text-amber-300" />
+              <span>Ver Promociones</span>
+              <ArrowRight className="size-3.5 stroke-[2.5]" />
+            </button>
+          </div>
+
+          {/* Barra de Navegación Principal */}
           <div className="w-full px-5 h-16 flex items-center justify-between">
             {/* Logo a la izquierda */}
             <Link href="/" className="flex items-center gap-2.5 hover:scale-105 active:scale-95 transition-all">
@@ -337,6 +475,24 @@ export default function HomeClient({ initialProducts, initialCategories, initial
               />
               <span className="font-['Poppins'] font-black text-blue-900 text-xs md:text-sm tracking-widest uppercase">Subibaja</span>
             </Link>
+
+            {/* Enlaces de Navegación en Desktop */}
+            <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-600">
+              <Link href="/" className="hover:text-blue-900 transition-colors">Inicio</Link>
+              <button 
+                onClick={() => setShowOffersDrawer(true)} 
+                className="flex items-center gap-1.5 font-black text-blue-900 hover:text-blue-700 transition-colors cursor-pointer"
+              >
+                <Percent className="size-3.5 text-blue-900" />
+                <span>Promociones</span>
+              </button>
+              <Link href="/puntos" className="flex items-center gap-1.5 hover:text-blue-900 transition-colors">
+                <Crown className="size-3.5 text-amber-500 fill-amber-100" />
+                <span>Club Subibaja</span>
+              </Link>
+              <Link href="/giftcard" className="hover:text-blue-900 transition-colors">Giftcards</Link>
+              <Link href="/tallas" className="hover:text-blue-900 transition-colors">Guía de Tallas</Link>
+            </nav>
 
             {/* Menú Hamburguesa a la derecha */}
             <button
@@ -507,7 +663,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   <div className="flex items-center gap-3">
                     {/* Instagram */}
                     <a 
-                      href="https://instagram.com/subibaja_shop" 
+                      href="https://www.instagram.com/subibajatiendas/" 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="size-[60px] rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:text-rose-500 active:scale-90 transition-all"
@@ -539,18 +695,26 @@ export default function HomeClient({ initialProducts, initialCategories, initial
 
           {/* Hero Carousel */}
           <section className="w-full aspect-[16/10] md:aspect-[21/9] bg-white overflow-hidden shadow-sm">
-            <Swiper pagination={{ clickable: true }} autoplay={{ delay: 5000 }} modules={[Pagination, Autoplay]} className="w-full h-full">
-              <SwiperSlide>
-                <div className="relative w-full h-full">
-                  <Image
-                    src="/portada.jpg"
-                    alt="Portada Subibaja"
-                    fill
-                    priority
-                    className="object-contain"
-                  />
-                </div>
-              </SwiperSlide>
+            <Swiper
+              pagination={{ clickable: true }}
+              autoplay={{ delay: 2000, disableOnInteraction: false }}
+              loop={banners.length > 1}
+              modules={[Pagination, Autoplay]}
+              className="w-full h-full"
+            >
+              {banners.map((banner: any, idx: number) => (
+                <SwiperSlide key={banner.id || idx}>
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={banner.image_url}
+                      alt={banner.title || `Portada Subibaja ${idx + 1}`}
+                      fill
+                      priority={idx === 0}
+                      className="object-contain"
+                    />
+                  </div>
+                </SwiperSlide>
+              ))}
             </Swiper>
           </section>
 
@@ -980,7 +1144,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   <div className="flex items-center justify-center gap-4">
                     {/* Instagram */}
                     <a 
-                      href="https://instagram.com/subibaja_shop" 
+                      href="https://www.instagram.com/subibajatiendas/" 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="group relative size-14 rounded-2xl bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[1px] hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/30 transition-all duration-300"
@@ -1027,6 +1191,77 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                       </div>
                     </a>
                   </div>
+                </div>
+
+                {/* Separator */}
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent my-6"></div>
+
+                {/* Feed de Instagram de Último */}
+                <div className="space-y-4 pt-1">
+                  <div className="flex flex-col items-center text-center space-y-1.5">
+                    <a
+                      href="https://www.instagram.com/subibajatiendas/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-pink-50 via-purple-50 to-amber-50 border border-pink-200/80 text-pink-700 text-[10px] font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-2xs"
+                    >
+                      <InstagramIcon className="size-3.5 text-pink-600" />
+                      @subibajatiendas
+                    </a>
+                    <h4 className="text-[17px] font-black text-slate-800 tracking-tight font-['Poppins']">
+                      Feed de Instagram
+                    </h4>
+                    <p className="text-[11px] font-medium text-slate-500 max-w-[300px]">
+                      Inspírate con nuestras colecciones, novedades y momentos felices en Subibaja.
+                    </p>
+                  </div>
+
+                  {/* Grid de Fotos de Instagram */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                    {instagramPosts.slice(0, 6).map((post, idx) => (
+                      <a
+                        key={post.id || idx}
+                        href="https://www.instagram.com/subibajatiendas/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-2xs block active:scale-95 transition-all duration-300 hover:shadow-md hover:border-pink-300"
+                        title={post.title || "Ver en Instagram @subibajatiendas"}
+                      >
+                        <img
+                          src={post.image_url}
+                          alt={post.title || `Instagram Subibaja ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                        />
+                        {/* Overlay hover / tap */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-2">
+                          <div className="flex justify-end">
+                            <span className="size-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-xs">
+                              <InstagramIcon className="size-3" />
+                            </span>
+                          </div>
+                          {post.title && (
+                            <p className="text-white text-[9px] font-bold line-clamp-2 leading-tight drop-shadow-xs">
+                              {post.title}
+                            </p>
+                          )}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+
+                  {/* Botón Seguir en Instagram */}
+                  <a
+                    href="https://www.instagram.com/subibajatiendas/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-11 rounded-2xl bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[1.5px] block active:scale-95 transition-transform duration-200 shadow-sm shadow-pink-500/10"
+                  >
+                    <div className="w-full h-full bg-white hover:bg-transparent text-slate-800 hover:text-white rounded-[14px] flex items-center justify-center gap-2 text-[10.5px] font-black uppercase tracking-wider transition-colors duration-300">
+                      <InstagramIcon className="size-4" />
+                      Seguir a @subibajatiendas
+                    </div>
+                  </a>
                 </div>
 
               </div>
@@ -1078,7 +1313,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   <span className={`text-[9px] tracking-wide ${showCategoryDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Categorías</span>
                 </button>
 
-                {/* Ofertas */}
+                {/* Promociones */}
                 <button 
                   onClick={() => {
                     setShowOffersDrawer(true);
@@ -1089,7 +1324,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showOffersDrawer ? 'bg-white/30' : ''}`}>
                     <Percent className={`size-4 ${showOffersDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
                   </div>
-                  <span className={`text-[9px] tracking-wide ${showOffersDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Ofertas</span>
+                  <span className={`text-[9px] tracking-wide ${showOffersDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Promociones</span>
                 </button>
 
                 {/* Clientes VIP */}
@@ -1212,13 +1447,13 @@ export default function HomeClient({ initialProducts, initialCategories, initial
 
         {/* Drawer de Promociones VIP por Puntos */}
         {showOffersDrawer && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print">
+          <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print md:p-4">
             {/* Overlay click to close */}
             <div className="absolute inset-0" onClick={() => setShowOffersDrawer(false)} />
             
-            {/* Sliding Panel */}
+            {/* Sliding Panel (Modal en Desktop) */}
             <div 
-              className="relative w-full max-w-[430px] bg-white rounded-t-[36px] shadow-2xl p-6 pb-10 flex flex-col gap-5 max-h-[85vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
+              className="relative w-full max-w-[430px] md:max-w-xl bg-white rounded-t-[36px] md:rounded-[32px] shadow-2xl p-6 pb-10 md:p-8 flex flex-col gap-5 max-h-[85vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
               style={{ fontFamily: "'Lato', sans-serif" }}
             >
               {/* Header */}
@@ -1227,10 +1462,10 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                   <h3 className="font-black text-slate-900 text-lg font-['Poppins'] flex items-center gap-1.5">
                     <Sparkles className="size-5 text-amber-400 fill-amber-400 animate-pulse" /> Promociones VIP
                   </h3>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Canjea tus puntos por ofertas únicas</p>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Canjea tus puntos por promociones y ofertas únicas</p>
                 </div>
                 <button 
-                  onClick={() => setShowOffersDrawer(false)}
+                  onClick={() => setShowOffersDrawer(false)} 
                   className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
                 >
                   <X className="size-4" />
@@ -1248,7 +1483,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     originalPrice: 35,
                     promoPrice: 21,
                     image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800",
-                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Zapato Charol Blanco (40% OFF) por 200 puntos. ¿Cómo es el proceso?"
+                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Zapato Charol Blanco (40% OFF) por 200 puntos. ¿Cómo es el proceso?"
                   },
                   {
                     title: "Bailarinas Glitter Silver",
@@ -1258,7 +1493,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     originalPrice: 22,
                     promoPrice: 11,
                     image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?q=80&w=800&auto=format&fit=crop",
-                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Bailarinas Glitter Silver (50% OFF) por 150 puntos. ¿Cómo es el proceso?"
+                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Bailarinas Glitter Silver (50% OFF) por 150 puntos. ¿Cómo es el proceso?"
                   },
                   {
                     title: "Cintillo Floral Harmony",
@@ -1268,7 +1503,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     originalPrice: 12,
                     promoPrice: 0,
                     image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop",
-                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la oferta VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
+                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
                   }
                 ].map((offer, idx) => {
                   const bsPrice = (offer.promoPrice * exchangeRate).toFixed(0);
@@ -1318,7 +1553,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                             className="flex-1 h-7 rounded-full text-[8px] font-black tracking-wider text-blue-900 uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-sm cursor-pointer"
                             style={{ backgroundColor: '#8dd5e3' }}
                           >
-                            RECLAMAR OFERTA
+                            RECLAMAR PROMOCIÓN
                           </button>
                         </div>
                       </div>
