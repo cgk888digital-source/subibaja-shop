@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote, Trash2, Pencil,
   Type, Ruler, Info, Search, X, Plus, ChevronDown, ChevronUp, Image as ImageIcon, Palette, Smartphone, Ticket, User,
