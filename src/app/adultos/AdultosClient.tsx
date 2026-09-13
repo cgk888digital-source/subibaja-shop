@@ -1,14 +1,15 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, Fragment } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { 
-  Search, Heart, ArrowLeft, SlidersHorizontal, 
+  Search, Heart, ArrowLeft, 
   Sparkles, X, Menu, Crown, Gift, Ruler, 
-  Percent, Home as HomeIcon, ChevronRight, Check
+  Percent, Home as HomeIcon, MessageCircle
 } from "lucide-react"
 import CartFloatingButton from "@/components/CartFloatingButton"
+import AdultosLogo from "@/components/AdultosLogo"
 
 interface AdultosClientProps {
   initialProducts: any[]
@@ -118,51 +119,49 @@ export default function AdultosClient({
             <div className="flex items-center gap-2">
               <Link 
                 href="/" 
-                className="size-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:bg-slate-100 active:scale-95 transition-all"
+                className="size-9 rounded-xl bg-orange-50/60 border border-[#B94E3B]/20 flex items-center justify-center text-[#B94E3B] hover:bg-[#B94E3B]/10 active:scale-95 transition-all"
                 title="Volver a Inicio"
               >
                 <ArrowLeft className="size-4" />
               </Link>
-              <Link href="/" className="flex items-center gap-2">
-                <div className="relative size-10 rounded-full overflow-hidden shadow-xs border border-white">
-                  <Image 
-                    src="/logo-principal.jpg" 
-                    alt="Subibaja Boutique" 
-                    fill
-                    sizes="40px"
-                    priority
-                    className="object-cover"
-                  />
-                </div>
+              <Link href="/adultos" className="flex items-center gap-2.5">
+                {/* Logotipo Oficial Terracota de Subibaja Adultos */}
+                <AdultosLogo className="size-10" />
                 <div className="flex flex-col">
-                  <span className="font-black text-blue-900 text-sm tracking-tight font-['Poppins'] leading-tight">
+                  <span className="font-black text-slate-900 text-sm tracking-tight font-['Poppins'] leading-tight">
                     SUBIBAJA
                   </span>
-                  <span className="text-[9px] font-black tracking-widest text-[#7c3aed] uppercase leading-none">
+                  <span className="text-[9.5px] font-black tracking-widest text-[#B94E3B] uppercase leading-none">
                     ADULTOS
                   </span>
                 </div>
               </Link>
             </div>
 
-            {/* Centro: Navegación de Escritorio */}
+            {/* Enlaces de Navegación en Desktop */}
             <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-600">
-              <Link href="/" className="hover:text-blue-900 transition-colors">Inicio</Link>
-              <span className="text-blue-900 font-black border-b-2 border-blue-900 pb-0.5">
+              <Link href="/" className="hover:text-slate-900 transition-colors">
+                Inicio
+              </Link>
+              <span className="text-[#B94E3B] font-black border-b-2 border-[#B94E3B] pb-0.5">
                 Subibaja Adultos
               </span>
-              <Link href="/puntos" className="flex items-center gap-1.5 hover:text-blue-900 transition-colors">
+              <Link href="/puntos" className="flex items-center gap-1.5 hover:text-slate-900 transition-colors">
                 <Crown className="size-3.5 text-amber-500 fill-amber-100" />
                 <span>Club Subibaja</span>
               </Link>
-              <Link href="/giftcard" className="hover:text-blue-900 transition-colors">Giftcards</Link>
-              <Link href="/tallas" className="hover:text-blue-900 transition-colors">Guía de Tallas</Link>
+              <Link href="/giftcard" className="hover:text-slate-900 transition-colors">
+                Giftcards
+              </Link>
+              <Link href="/tallas" className="hover:text-slate-900 transition-colors">
+                Guía de Tallas
+              </Link>
             </nav>
 
-            {/* Derecha: Botón Menú Hamburguesa */}
+            {/* Menú Hamburguesa a la derecha */}
             <button
               onClick={() => setShowHamburgerMenu(!showHamburgerMenu)}
-              className="size-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-900 hover:bg-slate-100 active:scale-90 transition-all cursor-pointer"
+              className="size-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-100 active:scale-90 transition-all cursor-pointer"
               aria-label="Abrir Menú"
             >
               {showHamburgerMenu ? (
@@ -173,52 +172,109 @@ export default function AdultosClient({
             </button>
           </div>
 
-          {/* Menú Desplegable Hamburguesa */}
+          {/* Menú Desplegable Hamburguesa (Dropdown) */}
           {showHamburgerMenu && (
             <>
+              {/* Backdrop */}
               <div 
                 className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] md:bg-black/5 md:backdrop-blur-none"
                 onClick={() => setShowHamburgerMenu(false)}
               />
               <div className="absolute top-full left-0 right-0 md:left-auto md:right-0 md:w-80 z-50 bg-white/95 backdrop-blur-lg border-b md:border border-slate-200/60 md:border-slate-100 shadow-2xl rounded-b-[28px] md:rounded-3xl md:mt-2 overflow-hidden flex flex-col font-['Lato',sans-serif] max-h-[75vh]">
                 <div className="overflow-y-auto p-5 pb-7 flex flex-col gap-4 max-h-[calc(75vh-1rem)] no-scrollbar">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Navegación</span>
-                  <Link 
-                    href="/" 
-                    onClick={() => setShowHamburgerMenu(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
-                  >
-                    <HomeIcon className="size-3.5 text-blue-900" />
-                    <span>Inicio (Tienda General)</span>
-                  </Link>
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-purple-50 text-purple-900 font-black text-xs">
-                    <Sparkles className="size-3.5 text-purple-600" />
-                    <span>Subibaja Adultos (Actual)</span>
+                  
+                  {/* Navegación Principal */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">Navegación</span>
+                    <Link 
+                      href="/" 
+                      onClick={() => setShowHamburgerMenu(false)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
+                    >
+                      <HomeIcon className="size-3.5 text-slate-700" />
+                      <span>Inicio (Tienda Niños)</span>
+                    </Link>
+                    <Link 
+                      href="/adultos" 
+                      onClick={() => setShowHamburgerMenu(false)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl bg-orange-50/80 text-[#B94E3B] font-black text-xs transition-colors border border-[#B94E3B]/20"
+                    >
+                      <AdultosLogo className="size-5" showBorder={false} />
+                      <span>Subibaja Adultos</span>
+                    </Link>
+                    <Link 
+                      href="/puntos" 
+                      onClick={() => setShowHamburgerMenu(false)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
+                    >
+                      <Crown className="size-3.5 text-amber-500 fill-amber-100" />
+                      <span>Club Subibaja</span>
+                    </Link>
+                    <Link 
+                      href="/giftcard" 
+                      onClick={() => setShowHamburgerMenu(false)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
+                    >
+                      <Gift className="size-3.5 text-slate-700" />
+                      <span>Giftcards</span>
+                    </Link>
+                    <Link 
+                      href="/tallas" 
+                      onClick={() => setShowHamburgerMenu(false)}
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
+                    >
+                      <Ruler className="size-3.5 text-slate-700" />
+                      <span>Guía de Tallas</span>
+                    </Link>
                   </div>
-                  <Link 
-                    href="/puntos" 
-                    onClick={() => setShowHamburgerMenu(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
-                  >
-                    <Crown className="size-3.5 text-amber-500 fill-amber-100" />
-                    <span>Club Subibaja</span>
-                  </Link>
-                  <Link 
-                    href="/giftcard" 
-                    onClick={() => setShowHamburgerMenu(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
-                  >
-                    <Gift className="size-3.5 text-blue-900" />
-                    <span>Giftcards</span>
-                  </Link>
-                  <Link 
-                    href="/tallas" 
-                    onClick={() => setShowHamburgerMenu(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
-                  >
-                    <Ruler className="size-3.5 text-blue-900" />
-                    <span>Guía de Tallas</span>
-                  </Link>
+
+                  <div className="h-[1px] bg-slate-100 w-full" />
+
+                  {/* Subcategorías de Adultos */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">
+                      Línea Adultos ({adultProducts.length} modelos)
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSelectedSubCat("Todos")
+                        setShowHamburgerMenu(false)
+                      }}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors text-left ${
+                        selectedSubCat === "Todos" ? "bg-[#B94E3B] text-white" : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span>Todos los Modelos</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        selectedSubCat === "Todos" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {adultProducts.length}
+                      </span>
+                    </button>
+                    {adultSubCategories.map(sub => {
+                      const count = adultProducts.filter(p => p.category_id === sub.id || (p.category_ids && p.category_ids.includes(sub.id))).length
+                      const isSelected = selectedSubCat === sub.name
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => {
+                            setSelectedSubCat(sub.name)
+                            setShowHamburgerMenu(false)
+                          }}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-colors text-left ${
+                            isSelected ? "bg-[#B94E3B] text-white" : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span>{sub.name.trim()}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             </>
@@ -228,22 +284,31 @@ export default function AdultosClient({
         {/* Contenido Principal */}
         <main className="flex-1 mt-4 space-y-6">
           
-          {/* Banner Hero Especial: Subibaja Adultos */}
-          <section className="relative rounded-[32px] overflow-hidden bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white p-6 md:p-10 shadow-lg border border-slate-800">
-            <div className="absolute -right-16 -top-16 size-64 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-16 -bottom-16 size-64 bg-[#8dd5e3]/20 rounded-full blur-3xl pointer-events-none" />
+          {/* Banner Hero Especial: Subibaja Adultos (Terracota Elegante) */}
+          <section className="relative rounded-[32px] overflow-hidden bg-gradient-to-r from-[#2F1410] via-[#522119] to-[#802F21] text-white p-6 md:p-10 shadow-xl border border-[#B94E3B]/40">
+            {/* Resplandores terracota sutiles */}
+            <div className="absolute -right-16 -top-16 size-72 bg-[#B94E3B]/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-16 -bottom-16 size-72 bg-[#D3604B]/20 rounded-full blur-3xl pointer-events-none" />
             
             <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div className="space-y-2 max-w-xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-black uppercase tracking-widest text-[#8dd5e3]">
-                  <Sparkles className="size-3" />
+              <div className="space-y-3 max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-black uppercase tracking-widest text-[#F5C4BC]">
+                  <Sparkles className="size-3 text-[#F5C4BC]" />
                   Colección Exclusiva
                 </div>
-                <h1 className="text-2xl md:text-4xl font-black font-['Poppins'] tracking-tight">
-                  Subibaja Adultos
-                </h1>
-                <p className="text-xs md:text-sm text-slate-300 font-medium leading-relaxed">
-                  Modelos exclusivos seleccionados para damas y caballeros con la calidad, diseño y confort europeo característicos de nuestra boutique.
+                <div className="flex items-center gap-3">
+                  <AdultosLogo className="size-12 md:size-14 ring-2 ring-white/30 shadow-md" />
+                  <div>
+                    <h1 className="text-2xl md:text-4xl font-black font-['Poppins'] tracking-tight text-white leading-tight">
+                      Subibaja Adultos
+                    </h1>
+                    <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#F5C4BC]/90">
+                      Zapatos y accesorios para damas y caballeros
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs md:text-sm text-slate-200 font-medium leading-relaxed pt-1">
+                  Modelos exclusivos con la calidad, confort y confección europea tradicional características de nuestra boutique.
                 </p>
               </div>
 
@@ -252,7 +317,7 @@ export default function AdultosClient({
                   <span className="text-xl md:text-2xl font-black text-white font-['Poppins'] leading-none">
                     {adultProducts.length}
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[#F5C4BC] mt-1">
                     Modelos
                   </span>
                 </div>
@@ -260,8 +325,9 @@ export default function AdultosClient({
                   href="https://wa.me/584142274385?text=Hola%20Subibaja,%20tengo%20una%20consulta%20sobre%20la%20secci%C3%B3n%20Adultos"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-12 px-5 rounded-2xl bg-[#8dd5e3] hover:bg-[#7bc8d7] active:scale-95 text-blue-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer whitespace-nowrap"
+                  className="h-12 px-5 rounded-2xl bg-[#B94E3B] hover:bg-[#A33F2E] active:scale-95 text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-[#B94E3B]/40 transition-all cursor-pointer whitespace-nowrap border border-white/10"
                 >
+                  <MessageCircle className="size-4" />
                   Asesoría WhatsApp
                 </a>
               </div>
@@ -276,7 +342,7 @@ export default function AdultosClient({
               placeholder="Buscar en Subibaja Adultos (menorquinas, pantuflas, sandalias...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-gray-200/60 shadow-xs text-xs font-semibold text-slate-800 placeholder:text-gray-400 focus:outline-none focus:border-purple-300 transition-colors"
+              className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-gray-200/60 shadow-xs text-xs font-semibold text-slate-800 placeholder:text-gray-400 focus:outline-none focus:border-[#B94E3B] focus:ring-2 focus:ring-[#B94E3B]/20 transition-all"
             />
             {searchQuery && (
               <button 
@@ -294,8 +360,8 @@ export default function AdultosClient({
               onClick={() => setSelectedSubCat("Todos")}
               className={`h-8 px-4 rounded-full whitespace-nowrap text-xs font-black transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
                 selectedSubCat === "Todos"
-                  ? "bg-blue-900 text-white shadow-sm scale-105"
-                  : "bg-white text-slate-600 border border-slate-200/70 hover:bg-slate-100"
+                  ? "bg-[#B94E3B] text-white shadow-md shadow-[#B94E3B]/30 scale-105"
+                  : "bg-white text-slate-600 border border-slate-200/70 hover:bg-orange-50/50 hover:text-[#B94E3B] hover:border-[#B94E3B]/30"
               }`}
             >
               <span>Todos ({adultProducts.length})</span>
@@ -306,20 +372,22 @@ export default function AdultosClient({
                 p.category_id === sub.id || (p.category_ids && p.category_ids.includes(sub.id))
               ).length
 
+              const isSelected = selectedSubCat === sub.name
+
               return (
                 <button
                   key={sub.id}
                   onClick={() => setSelectedSubCat(sub.name)}
                   className={`h-8 px-4 rounded-full whitespace-nowrap text-xs font-black transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
-                    selectedSubCat === sub.name
-                      ? "bg-blue-900 text-white shadow-sm scale-105"
-                      : "bg-white text-slate-600 border border-slate-200/70 hover:bg-slate-100"
+                    isSelected
+                      ? "bg-[#B94E3B] text-white shadow-md shadow-[#B94E3B]/30 scale-105"
+                      : "bg-white text-slate-600 border border-slate-200/70 hover:bg-orange-50/50 hover:text-[#B94E3B] hover:border-[#B94E3B]/30"
                   }`}
                 >
                   <span>{sub.name.trim()}</span>
                   {subCount > 0 && (
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      selectedSubCat === sub.name ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                      isSelected ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"
                     }`}>
                       {subCount}
                     </span>
@@ -332,7 +400,7 @@ export default function AdultosClient({
           {/* Grid de Productos */}
           {filteredProducts.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-xs space-y-3">
-              <div className="size-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+              <div className="size-14 rounded-full bg-orange-50 text-[#B94E3B] flex items-center justify-center mx-auto">
                 <Search className="size-6" />
               </div>
               <h3 className="font-black text-slate-800 text-sm">No se encontraron modelos</h3>
@@ -344,7 +412,7 @@ export default function AdultosClient({
                   setSearchQuery("")
                   setSelectedSubCat("Todos")
                 }}
-                className="inline-block mt-2 px-4 py-2 rounded-xl bg-blue-900 text-white text-xs font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer"
+                className="inline-block mt-2 px-4 py-2 rounded-xl bg-[#B94E3B] text-white text-xs font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer shadow-md shadow-[#B94E3B]/20"
               >
                 Ver todos los adultos
               </button>
@@ -371,7 +439,7 @@ export default function AdultosClient({
                 return (
                   <div
                     key={product.id}
-                    className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-0.5 border border-slate-100/60"
+                    className="shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col group transition-transform duration-300 hover:-translate-y-0.5 border border-slate-100/60 hover:border-[#B94E3B]/30"
                   >
                     {/* Imagen */}
                     <div className="relative aspect-square overflow-hidden bg-slate-50/50">
@@ -428,7 +496,7 @@ export default function AdultosClient({
                         }
                         if (displayBadge === 'adulto' || displayBadge === 'adultos') {
                           return (
-                            <div className="absolute top-3 -left-8 w-28 bg-[#7c3aed] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
+                            <div className="absolute top-3 -left-8 w-28 bg-[#B94E3B] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
                               ADULTO
                             </div>
                           )
@@ -450,21 +518,21 @@ export default function AdultosClient({
                       <button 
                         onClick={(e) => toggleFavorite(product.id, e)}
                         className={`absolute top-3 right-3 p-1.5 bg-white/90 rounded-full shadow-sm transition-all active:scale-125 cursor-pointer ${
-                          favorites.includes(product.id) ? 'text-rose-500' : 'text-gray-300 hover:text-rose-300'
-                        } ${justLiked === product.id ? 'animate-heartbeat' : ''}`}
+                          favorites.includes(product.id) ? 'text-[#B94E3B] fill-[#B94E3B]' : 'text-gray-300 hover:text-rose-300'
+                        } ${justLiked === product.id ? 'scale-125 transition-transform duration-300' : ''}`}
                       >
-                        <Heart className={`size-3.5 ${favorites.includes(product.id) ? 'fill-current' : ''}`} />
+                        <Heart className={`size-3.5 ${favorites.includes(product.id) ? 'fill-[#B94E3B]' : ''}`} />
                       </button>
                     </div>
 
                     {/* Textos y Acción */}
                     <div className="flex flex-col items-center gap-2 px-4 py-3 bg-white">
-                      <h3 className="text-slate-600 text-[11px] font-medium uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
+                      <h3 className="text-slate-700 text-[11px] font-semibold uppercase tracking-[0.15em] text-center leading-tight font-['Poppins'] line-clamp-2 min-h-[33px]">
                         {product.title}
                       </h3>
 
                       <div className="flex flex-col items-center">
-                        <span className="text-blue-900 font-bold text-lg leading-tight">
+                        <span className="text-[#B94E3B] font-black text-lg leading-tight">
                           {prefix}${displayPriceUsd}
                         </span>
                         <span className="text-slate-500 text-[10px] uppercase tracking-widest font-bold mt-0.5">
@@ -476,15 +544,15 @@ export default function AdultosClient({
                         <Link 
                           href={`/producto/${product.id}`} 
                           className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-slate-500 bg-slate-100 border border-slate-200 transition-transform active:scale-95 shadow-sm flex items-center justify-center uppercase"
-                          style={{ height: '24px' }}
+                          style={{ height: '26px' }}
                         >
                           AGOTADO
                         </Link>
                       ) : (
                         <Link 
                           href={`/producto/${product.id}`} 
-                          className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-bold tracking-widest text-blue-900 transition-transform active:scale-95 shadow-sm flex items-center justify-center"
-                          style={{ height: '24px', backgroundColor: '#8dd5e3' }}
+                          className="w-3/4 lg:w-1/2 mb-1 rounded-full text-[9px] font-black tracking-widest text-white transition-all active:scale-95 shadow-sm hover:shadow flex items-center justify-center hover:opacity-90"
+                          style={{ height: '26px', backgroundColor: '#B94E3B' }}
                         >
                           LO QUIERO
                         </Link>
@@ -500,7 +568,7 @@ export default function AdultosClient({
           <div className="pt-8 pb-4 text-center">
             <Link 
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wider transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-orange-50/60 text-slate-700 hover:text-[#B94E3B] text-xs font-black uppercase tracking-wider transition-all border border-slate-200 hover:border-[#B94E3B]/30 shadow-xs"
             >
               <ArrowLeft className="size-4" /> Volver a toda la tienda
             </Link>
