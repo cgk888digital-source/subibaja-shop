@@ -409,8 +409,38 @@ export default function HomeClient({ initialProducts, initialCategories, initial
       <div className="w-full max-w-[430px] md:max-w-7xl mx-auto flex flex-col min-h-screen pb-24 font-['Lato',sans-serif] px-4 md:px-8">
 
         {/* Header con Glassmorphism */}
-        <header className="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/60 shadow-xs md:rounded-b-2xl overflow-hidden">
+        <header className="relative bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/60 shadow-xs md:rounded-b-2xl">
           
+          {/* ── SECCIÓN DE PROMOCIONES SUPERIOR (VERSIÓN MÓVIL) ── */}
+          <div 
+            className="flex md:hidden w-full px-3 py-2 items-center justify-between text-blue-950 font-['Poppins'] border-b border-blue-200/50 transition-all select-none"
+            style={{ backgroundColor: '#8dd5e3' }}
+          >
+            {/* Izquierda: Badge y Resumen de Oferta */}
+            <div 
+              onClick={() => setShowOffersDrawer(true)}
+              className="flex items-center gap-1.5 min-w-0 cursor-pointer flex-1 mr-2"
+            >
+              <span className="bg-blue-900 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs flex-shrink-0">
+                <Sparkles className="size-2.5 text-amber-300 fill-amber-300 animate-pulse" /> PROMOS
+              </span>
+              <p className="text-[11px] font-black text-blue-950 tracking-tight truncate flex items-center gap-1">
+                <span>🔥 Hasta</span>
+                <span className="bg-white/90 text-rose-600 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase shadow-2xs">50% OFF</span>
+              </p>
+            </div>
+
+            {/* Derecha: Botón de Acción Principal "Ver Promociones" */}
+            <button
+              onClick={() => setShowOffersDrawer(true)}
+              className="bg-blue-900 hover:bg-blue-950 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <Tag className="size-3 text-amber-300" />
+              <span>Ver Promociones</span>
+              <ArrowRight className="size-3 stroke-[2.5]" />
+            </button>
+          </div>
+
           {/* ── SECCIÓN DE PROMOCIONES SUPERIOR (VERSIÓN PC) ── */}
           <div 
             className="hidden md:flex w-full px-6 py-2.5 items-center justify-between text-blue-950 font-['Poppins'] border-b border-blue-200/50 transition-all select-none"
@@ -510,7 +540,13 @@ export default function HomeClient({ initialProducts, initialCategories, initial
 
           {/* Menú Desplegable Hamburguesa (Dropdown) */}
           {showHamburgerMenu && (
-            <div className="absolute top-16 left-0 right-0 md:left-auto md:right-0 md:w-80 z-50 bg-white/95 backdrop-blur-lg border-b md:border border-slate-200/60 md:border-slate-100 shadow-2xl rounded-b-[28px] md:rounded-3xl md:mt-2 overflow-hidden flex flex-col font-['Lato',sans-serif] max-h-[75vh]">
+            <>
+              {/* Backdrop para cerrar al hacer clic afuera (móvil y PC) */}
+              <div 
+                className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] md:bg-black/5 md:backdrop-blur-none"
+                onClick={() => setShowHamburgerMenu(false)}
+              />
+              <div className="absolute top-full left-0 right-0 md:left-auto md:right-0 md:w-80 z-50 bg-white/95 backdrop-blur-lg border-b md:border border-slate-200/60 md:border-slate-100 shadow-2xl rounded-b-[28px] md:rounded-3xl md:mt-2 overflow-hidden flex flex-col font-['Lato',sans-serif] max-h-[75vh]">
               {/* Contenedor con Scroll si excede altura */}
               <div className="overflow-y-auto p-5 pb-7 flex flex-col gap-5 max-h-[calc(75vh-1rem)] no-scrollbar">
                 
@@ -688,6 +724,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
 
               </div>
             </div>
+            </>
           )}
         </header>
 
@@ -1128,7 +1165,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 <a 
                   href="https://maps.app.goo.gl/cRsb5PJUcEt2uyws8" 
                   target="_blank" 
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer" 
                   className="w-full h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 font-black text-[11px] tracking-widest uppercase flex items-center justify-center gap-2 hover:bg-blue-100 active:scale-95 transition-all shadow-sm"
                 >
                   <Search className="size-4 text-blue-500" />
