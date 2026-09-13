@@ -21,16 +21,14 @@ const CAT_ICONS: Record<string, React.ElementType> = {
 }
 
 const FAQS = [
-  {
-    question: "¿Cómo saber la talla de zapato?",
+  {\n    question: "¿Cómo saber la talla de zapato?",
     answer: (
       <p>
         Dibuja en una hoja el contorno del pie y medir en centímetros desde la punta del dedo gordo hasta el centro del talón. Ubicarás en la tabla de tallas según los centímetros medidos la talla exacta.
       </p>
     )
   },
-  {
-    question: "¿Cuáles son los métodos de pago?",
+  {\n    question: "¿Cuáles son los métodos de pago?",
     answer: (
       <ul className="list-disc pl-4 space-y-0.5">
         <li>Efectivo (Divisa)</li>
@@ -41,8 +39,7 @@ const FAQS = [
       </ul>
     )
   },
-  {
-    question: "¿Cuánto tiempo tengo para realizar el pago de mi compra y hacer el retiro en la tienda?",
+  {\n    question: "¿Cuánto tiempo tengo para realizar el pago de mi compra y hacer el retiro en la tienda?",
     answer: (
       <div className="space-y-2">
         <p>
@@ -54,24 +51,21 @@ const FAQS = [
       </div>
     )
   },
-  {
-    question: "¿Hacen envíos nacionales?",
+  {\n    question: "¿Hacen envíos nacionales?",
     answer: (
       <p>
         Sí, hacemos envíos nacionales (MRW). Los pedidos realizados antes de las 12:00 p.m. se envían el mismo día, pedidos realizados después de las 12:00 p.m. se despachan al siguiente día hábil. Las compras realizadas los viernes después de las 12:00 p.m. (aplica fin de semana), serán enviadas el día lunes.
       </p>
     )
   },
-  {
-    question: "¿En cuánto tiempo llega mi delivery?",
+  {\n    question: "¿En cuánto tiempo llega mi delivery?",
     answer: (
       <p>
         En estos momentos contamos con un solo repartidor, su ruta de entrega maneja varios destinos. <strong>IMPORTANTE:</strong> Su pedido puede ser entregado de forma inmediata, o puede demorar máximo un lapso de 2 horas en ser entregado.
       </p>
     )
   },
-  {
-    question: "¿Realizan cambios?",
+  {\n    question: "¿Realizan cambios?",
     answer: (
       <p>
         Una vez efectuada la compra, tiene 3 días para hacer el cambio por: defecto, talla o modelo (bajo ningún concepto se hace devolución del dinero). Las piezas en: promoción, accesorios y trajes de baño NO tienen cambio.
@@ -415,31 +409,26 @@ export default function HomeClient({ initialProducts, initialCategories, initial
         {/* Header con Glassmorphism */}
         <header className="relative bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100/60 shadow-xs md:rounded-b-2xl">
           
-          {/* ── SECCIÓN DE PROMOCIONES SUPERIOR (VERSIÓN MÓVIL) ── */}
+          {/* ── SECCIÓN SUPERIOR DE ACCESO RÁPIDO (VERSIÓN MÓVIL) ── */}
           <div 
-            className="flex md:hidden w-full px-3 py-2 items-center justify-between text-blue-950 font-['Poppins'] border-b border-blue-200/50 transition-all select-none"
+            className="flex md:hidden w-full px-3 py-2 items-center justify-between text-blue-950 font-['Poppins'] border-b border-blue-200/50 transition-all select-none gap-2"
             style={{ backgroundColor: '#8dd5e3' }}
           >
-            {/* Izquierda: Badge y Resumen de Oferta */}
-            <div 
-              onClick={() => setShowOffersDrawer(true)}
-              className="flex items-center gap-1.5 min-w-0 cursor-pointer flex-1 mr-2"
+            {/* Izquierda: Acceso directo a Gift Cards */}
+            <Link 
+              href="/giftcard"
+              className="bg-white/85 hover:bg-white active:scale-95 text-blue-950 text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs border border-white/60 transition-all flex-shrink-0"
             >
-              <span className="bg-blue-900 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs flex-shrink-0">
-                <Sparkles className="size-2.5 text-amber-300 fill-amber-300 animate-pulse" /> PROMOS
-              </span>
-              <p className="text-[11px] font-black text-blue-950 tracking-tight truncate flex items-center gap-1">
-                <span>🔥 Hasta</span>
-                <span className="bg-white/90 text-rose-600 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase shadow-2xs">50% OFF</span>
-              </p>
-            </div>
+              <Gift className="size-3 text-rose-500" />
+              <span>Gift Cards</span>
+            </Link>
 
-            {/* Derecha: Botón de Acción Principal "Ver Promociones" */}
+            {/* Derecha: Botón Principal "Ver Promociones" limpio y destacado */}
             <button
               onClick={() => setShowOffersDrawer(true)}
-              className="bg-blue-900 hover:bg-blue-950 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+              className="bg-blue-900 hover:bg-blue-950 active:scale-95 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-sm transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
-              <Tag className="size-3 text-amber-300" />
+              <Tag className="size-3.5 text-amber-300" />
               <span>Ver Promociones</span>
               <ArrowRight className="size-3 stroke-[2.5]" />
             </button>
@@ -640,8 +629,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                       const MainIcon = CAT_ICONS[mainCat.icon] || Tag;
                       const isExpanded = expandedCategories[mainCat.id] || false;
 
-                      return (
-                        <div key={mainCat.id} className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
+                      return (\n                        <div key={mainCat.id} className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
                           {/* Botón de la Categoría Principal */}
                           <div className="flex items-center justify-between w-full px-3 py-2.5">
                             <button
@@ -675,8 +663,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                             <div className="bg-white border-t border-slate-100/50 p-2.5 pl-4.5 flex flex-col gap-3 animate-fade-in">
                               {mainCatSubs.map((subCat) => {
                                 const leafChildren = categories.filter(leaf => leaf.parent_id === subCat.id);
-                                return (
-                                  <div key={subCat.id} className="flex flex-col gap-1">
+                                return (\n                                  <div key={subCat.id} className="flex flex-col gap-1">
                                     <button
                                       onClick={() => {
                                         setActiveCategory(mainCat.name);
