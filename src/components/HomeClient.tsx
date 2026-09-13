@@ -21,14 +21,16 @@ const CAT_ICONS: Record<string, React.ElementType> = {
 }
 
 const FAQS = [
-  {\n    question: "¿Cómo saber la talla de zapato?",
+  {
+    question: "¿Cómo saber la talla de zapato?",
     answer: (
       <p>
         Dibuja en una hoja el contorno del pie y medir en centímetros desde la punta del dedo gordo hasta el centro del talón. Ubicarás en la tabla de tallas según los centímetros medidos la talla exacta.
       </p>
     )
   },
-  {\n    question: "¿Cuáles son los métodos de pago?",
+  {
+    question: "¿Cuáles son los métodos de pago?",
     answer: (
       <ul className="list-disc pl-4 space-y-0.5">
         <li>Efectivo (Divisa)</li>
@@ -39,7 +41,8 @@ const FAQS = [
       </ul>
     )
   },
-  {\n    question: "¿Cuánto tiempo tengo para realizar el pago de mi compra y hacer el retiro en la tienda?",
+  {
+    question: "¿Cuánto tiempo tengo para realizar el pago de mi compra y hacer el retiro en la tienda?",
     answer: (
       <div className="space-y-2">
         <p>
@@ -51,21 +54,24 @@ const FAQS = [
       </div>
     )
   },
-  {\n    question: "¿Hacen envíos nacionales?",
+  {
+    question: "¿Hacen envíos nacionales?",
     answer: (
       <p>
         Sí, hacemos envíos nacionales (MRW). Los pedidos realizados antes de las 12:00 p.m. se envían el mismo día, pedidos realizados después de las 12:00 p.m. se despachan al siguiente día hábil. Las compras realizadas los viernes después de las 12:00 p.m. (aplica fin de semana), serán enviadas el día lunes.
       </p>
     )
   },
-  {\n    question: "¿En cuánto tiempo llega mi delivery?",
+  {
+    question: "¿En cuánto tiempo llega mi delivery?",
     answer: (
       <p>
         En estos momentos contamos con un solo repartidor, su ruta de entrega maneja varios destinos. <strong>IMPORTANTE:</strong> Su pedido puede ser entregado de forma inmediata, o puede demorar máximo un lapso de 2 horas en ser entregado.
       </p>
     )
   },
-  {\n    question: "¿Realizan cambios?",
+  {
+    question: "¿Realizan cambios?",
     answer: (
       <p>
         Una vez efectuada la compra, tiene 3 días para hacer el cambio por: defecto, talla o modelo (bajo ningún concepto se hace devolución del dinero). Las piezas en: promoción, accesorios y trajes de baño NO tienen cambio.
@@ -629,7 +635,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                       const MainIcon = CAT_ICONS[mainCat.icon] || Tag;
                       const isExpanded = expandedCategories[mainCat.id] || false;
 
-                      return (\n                        <div key={mainCat.id} className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
+                      return (
+                        <div key={mainCat.id} className="bg-slate-50/50 rounded-2xl border border-slate-100/50 overflow-hidden">
                           {/* Botón de la Categoría Principal */}
                           <div className="flex items-center justify-between w-full px-3 py-2.5">
                             <button
@@ -663,7 +670,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                             <div className="bg-white border-t border-slate-100/50 p-2.5 pl-4.5 flex flex-col gap-3 animate-fade-in">
                               {mainCatSubs.map((subCat) => {
                                 const leafChildren = categories.filter(leaf => leaf.parent_id === subCat.id);
-                                return (\n                                  <div key={subCat.id} className="flex flex-col gap-1">
+                                return (
+                                  <div key={subCat.id} className="flex flex-col gap-1">
                                     <button
                                       onClick={() => {
                                         setActiveCategory(mainCat.name);
@@ -1002,8 +1010,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     </button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-4">
-                    {catProducts.map((product, index) => renderProductCard(product, index, false))}
-                  </div>
+                    {catProducts.map((product, index) => renderProductCard(product, index, false))}\n                  </div>
                 </div>
               )
             })}
@@ -1058,7 +1065,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 <div className="w-1/2 h-full relative">
                   <Image 
                     src="/imagem_gift_card.jpeg" 
-                    alt="Niños Subibaja"
+                    alt="Niños Subibaja" 
                     fill
                     sizes="(max-width: 768px) 50vw, 30vw"
                     className="object-cover object-[center_70%]"
