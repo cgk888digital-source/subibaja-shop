@@ -365,6 +365,11 @@ export default function ProductClient({ initialProduct, initialCategories, initi
                 AGOTADO
               </div>
             )}
+            {(product.badge === 'adulto' || product.badge === 'adultos') && (
+              <div className="absolute top-4 -left-10 w-32 bg-[#7c3aed] text-white text-[10px] font-black tracking-widest py-1 text-center transform -rotate-45 z-20 shadow-sm pointer-events-none uppercase">
+                ADULTO
+              </div>
+            )}
             <Swiper
               pagination={{ clickable: true }}
               navigation={true}
