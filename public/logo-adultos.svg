@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <filter id="whiteInvert">
+      <feColorMatrix type="matrix" values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 1 0"/>
+    </filter>
+  </defs>
+  <!-- Fondo circular terracota oficial de Subibaja Adultos (#B94E3B) -->
+  <circle cx="150" cy="150" r="150" fill="#B94E3B"/>
+  
+  <!-- Logotipo Subibaja en trazo blanco -->
+  <g transform="translate(30, 25) scale(0.48)">
+    <image href="/logo-fino.png" width="500" height="555" filter="url(#whiteInvert)"/>
+  </g>
+  
+  <!-- Texto ADULTOS a lo largo de la diagonal -->
+  <g transform="translate(72, 172) rotate(-39)">
+    <text x="0" y="0" fill="#ffffff" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="11" letter-spacing="4">ADULTOS</text>
+  </g>
+</svg>
