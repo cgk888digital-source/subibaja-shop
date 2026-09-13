@@ -133,6 +133,10 @@ export default function HomeClient({ initialProducts, initialCategories, initial
         setShowOffersDrawer(true)
         const newUrl = window.location.pathname
         window.history.replaceState({}, '', newUrl)
+      } else if (params.get("category")) {
+        setActiveCategory(params.get("category")!)
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
       }
     }
   }, [])
@@ -510,6 +514,17 @@ export default function HomeClient({ initialProducts, initialCategories, initial
             <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-600">
               <Link href="/" className="hover:text-blue-900 transition-colors">Inicio</Link>
               <button 
+                onClick={() => {
+                  setActiveCategory("Adultos");
+                  setActiveSubCategory("Todos");
+                  setActiveLeafCategory("Todos");
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="hover:text-blue-900 transition-colors cursor-pointer"
+              >
+                Subibaja Adultos
+              </button>
+              <button 
                 onClick={() => setShowOffersDrawer(true)} 
                 className="flex items-center gap-1.5 font-black text-blue-900 hover:text-blue-700 transition-colors cursor-pointer"
               >
@@ -561,6 +576,19 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     <HomeIcon className="size-3.5 text-blue-900" />
                     <span>Inicio</span>
                   </Link>
+                  <button 
+                    onClick={() => {
+                      setActiveCategory("Adultos");
+                      setActiveSubCategory("Todos");
+                      setActiveLeafCategory("Todos");
+                      setShowHamburgerMenu(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors w-full text-left cursor-pointer"
+                  >
+                    <User className="size-3.5 text-blue-900" />
+                    <span>Subibaja Adultos</span>
+                  </button>
                   <Link 
                     href="/puntos" 
                     onClick={() => setShowHamburgerMenu(false)}
