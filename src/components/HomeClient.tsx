@@ -174,6 +174,30 @@ export default function HomeClient({ initialProducts, initialCategories, initial
       return false
     }
 
+    // Manejo unificado para la sección de Adultos
+    if (activeCategory === "Adultos" || activeCategory === "Adulto") {
+      const adultCatIds = categories
+        .filter(c => c.name.toLowerCase().includes('adult') || c.parent_id === '1d1d1d1d-1d1d-1d1d-1d1d-1d1d1d1d1d1d')
+        .map(c => c.id)
+      adultCatIds.push('1d1d1d1d-1d1d-1d1d-1d1d-1d1d1d1d1d1d')
+      
+      const matchesCat = adultCatIds.includes(p.category_id) ||
+                         p.category_ids?.some((id: string) => adultCatIds.includes(id)) ||
+                         (p.category && p.category.toLowerCase().includes('adult'))
+      const hasAdultBadge = p.badge && (p.badge.toLowerCase() === 'adulto' || p.badge.toLowerCase() === 'adultos')
+      
+      if (!matchesCat && !hasAdultBadge) return false
+
+      if (activeSubCategory !== "Todos") {
+        const subCatObj = categories.find(c => c.name.trim().toLowerCase() === activeSubCategory.trim().toLowerCase() && (c.parent_id === '1d1d1d1d-1d1d-1d1d-1d1d-1d1d1d1d1d1d' || !c.parent_id))
+        if (subCatObj) {
+          const matchSub = p.category_ids?.includes(subCatObj.id) || p.category_id === subCatObj.id
+          if (!matchSub) return false
+        }
+      }
+      return true
+    }
+
     // Check main category match
     const currentMainCatObj = categories.find(c => c.name === activeCategory && !c.parent_id)
     if (currentMainCatObj) {
@@ -304,6 +328,13 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 return (
                   <div className="absolute top-3 -left-8 w-28 bg-[#dc2626] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
                     AGOTADO
+                  </div>
+                );
+              }
+              if (displayBadge === 'adulto' || displayBadge === 'adultos') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#7c3aed] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
+                    ADULTO
                   </div>
                 );
               }
@@ -508,17 +539,12 @@ export default function HomeClient({ initialProducts, initialCategories, initial
             {/* Enlaces de Navegación en Desktop */}
             <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-600">
               <Link href="/" className="hover:text-blue-900 transition-colors">Inicio</Link>
-              <button 
-                onClick={() => {
-                  setActiveCategory("Adultos");
-                  setActiveSubCategory("Todos");
-                  setActiveLeafCategory("Todos");
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+              <Link 
+                href="/adultos"
                 className="hover:text-blue-900 transition-colors cursor-pointer"
               >
                 Subibaja Adultos
-              </button>
+              </Link>
               <button 
                 onClick={() => setShowOffersDrawer(true)} 
                 className="flex items-center gap-1.5 font-black text-blue-900 hover:text-blue-700 transition-colors cursor-pointer"
@@ -571,19 +597,14 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     <HomeIcon className="size-3.5 text-blue-900" />
                     <span>Inicio</span>
                   </Link>
-                  <button 
-                    onClick={() => {
-                      setActiveCategory("Adultos");
-                      setActiveSubCategory("Todos");
-                      setActiveLeafCategory("Todos");
-                      setShowHamburgerMenu(false);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                  <Link 
+                    href="/adultos" 
+                    onClick={() => setShowHamburgerMenu(false)}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-bold text-xs transition-colors w-full text-left cursor-pointer"
                   >
                     <User className="size-3.5 text-blue-900" />
                     <span>Subibaja Adultos</span>
-                  </button>
+                  </Link>
                   <Link 
                     href="/puntos" 
                     onClick={() => setShowHamburgerMenu(false)}
@@ -1010,7 +1031,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     </button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-4">
-                    {catProducts.map((product, index) => renderProductCard(product, index, false))}\n                  </div>
+                    {catProducts.map((product, index) => renderProductCard(product, index, false))}
+                  </div>
                 </div>
               )
             })}
@@ -1065,7 +1087,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 <div className="w-1/2 h-full relative">
                   <Image 
                     src="/imagem_gift_card.jpeg" 
-                    alt="Niños Subibaja" 
+                    alt="Niños Subibaja"
                     fill
                     sizes="(max-width: 768px) 50vw, 30vw"
                     className="object-cover object-[center_70%]"
@@ -1187,7 +1209,7 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                 <a 
                   href="https://maps.app.goo.gl/cRsb5PJUcEt2uyws8" 
                   target="_blank" 
-                  rel="noopener noreferrer" 
+                  rel="noopener noreferrer"
                   className="w-full h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900 font-black text-[11px] tracking-widest uppercase flex items-center justify-center gap-2 hover:bg-blue-100 active:scale-95 transition-all shadow-sm"
                 >
                   <Search className="size-4 text-blue-500" />
@@ -1232,410 +1254,410 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                       <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center group-hover:bg-[#25D366] transition-colors duration-300">
                         <svg className="size-7 fill-[#25D366] group-hover:fill-white transition-colors duration-300" viewBox="0 0 24 24">
                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.517 2.266 2.27 3.51 5.284 3.509 8.486-.002 6.66-5.338 11.999-11.946 11.999-2.005-.001-3.973-.504-5.714-1.463L0 24zm6.59-4.846c1.66.986 3.292 1.503 4.908 1.504 5.342 0 9.688-4.348 9.69-9.69.001-2.588-1.004-5.02-2.83-6.847-1.826-1.827-4.256-2.83-6.846-2.831-5.345 0-9.691 4.348-9.693 9.692-.001 1.737.478 3.426 1.385 4.903l-1.026 3.743 3.841-1.007zm11.367-5.64c-.327-.164-1.938-.956-2.264-1.075-.328-.118-.567-.177-.805.177-.239.354-.925 1.166-1.134 1.402-.208.236-.417.266-.745.102-.327-.164-1.383-.509-2.636-1.627-.975-.87-1.633-1.946-1.824-2.274-.192-.329-.02-.507.143-.671.147-.147.328-.383.493-.574.165-.192.22-.32.329-.533.109-.214.055-.4-.028-.564-.082-.164-.805-1.94-.105-2.65-.296-.693-.578-.6-.805-.611-.208-.01-.447-.012-.686-.012-.239 0-.627.09-1.015.513-.388.423-1.482 1.45-1.482 3.535 0 2.085 1.52 4.093 1.731 4.38.21.286 2.99 4.566 7.244 6.398 1.011.436 1.802.696 2.42.893 1.016.323 1.941.277 2.673.168.814-.121 1.938-.792 2.21-1.52.272-.729.272-1.353.191-1.482-.081-.13-.297-.208-.624-.372z"/>
-                        </svg>
-                      </div>
-                    </a>
-
-                    {/* Facebook */}
-                    <a 
-                      href="https://facebook.com/subibajashop" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="group relative size-14 rounded-2xl bg-[#1877F2] p-[1px] hover:-translate-y-1 hover:shadow-lg hover:shadow-[#1877F2]/30 transition-all duration-300"
-                    >
-                      <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center group-hover:bg-[#1877F2] transition-colors duration-300">
-                        <svg className="size-7 fill-[#1877F2] group-hover:fill-white transition-colors duration-300" viewBox="0 0 24 24">
-                          <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-                        </svg>
-                      </div>
-                    </a>
+                    </svg>
                   </div>
-                </div>
+                </a>
 
-                {/* Separator */}
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent my-6"></div>
-
-                {/* Feed de Instagram de Último */}
-                <div className="space-y-4 pt-1">
-                  <div className="flex flex-col items-center text-center space-y-1.5">
-                    <a
-                      href="https://www.instagram.com/subibajatiendas/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-pink-50 via-purple-50 to-amber-50 border border-pink-200/80 text-pink-700 text-[10px] font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-2xs"
-                    >
-                      <InstagramIcon className="size-3.5 text-pink-600" />
-                      @subibajatiendas
-                    </a>
-                    <h4 className="text-[17px] font-black text-slate-800 tracking-tight font-['Poppins']">
-                      Feed de Instagram
-                    </h4>
-                    <p className="text-[11px] font-medium text-slate-500 max-w-[300px]">
-                      Inspírate con nuestras colecciones, novedades y momentos felices en Subibaja.
-                    </p>
+                {/* Facebook */}
+                <a 
+                  href="https://facebook.com/subibajashop" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="group relative size-14 rounded-2xl bg-[#1877F2] p-[1px] hover:-translate-y-1 hover:shadow-lg hover:shadow-[#1877F2]/30 transition-all duration-300"
+                >
+                  <div className="w-full h-full bg-white rounded-[15px] flex items-center justify-center group-hover:bg-[#1877F2] transition-colors duration-300">
+                    <svg className="size-7 fill-[#1877F2] group-hover:fill-white transition-colors duration-300" viewBox="0 0 24 24">
+                      <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+                    </svg>
                   </div>
+                </a>
+              </div>
+            </div>
 
-                  {/* Grid de Fotos de Instagram */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                    {instagramPosts.slice(0, 6).map((post, idx) => (
-                      <a
-                        key={post.id || idx}
-                        href="https://www.instagram.com/subibajatiendas/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-2xs block active:scale-95 transition-all duration-300 hover:shadow-md hover:border-pink-300"
-                        title={post.title || "Ver en Instagram @subibajatiendas"}
-                      >
-                        <img
-                          src={post.image_url}
-                          alt={post.title || `Instagram Subibaja ${idx + 1}`}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          loading="lazy"
-                        />
-                        {/* Overlay hover / tap */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-2">
-                          <div className="flex justify-end">
-                            <span className="size-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-xs">
-                              <InstagramIcon className="size-3" />
-                            </span>
-                          </div>
-                          {post.title && (
-                            <p className="text-white text-[9px] font-bold line-clamp-2 leading-tight drop-shadow-xs">
-                              {post.title}
-                            </p>
-                          )}
-                        </div>
-                      </a>
-                    ))}
-                  </div>
+            {/* Separator */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent my-6"></div>
 
-                  {/* Botón Seguir en Instagram */}
+            {/* Feed de Instagram de Último */}
+            <div className="space-y-4 pt-1">
+              <div className="flex flex-col items-center text-center space-y-1.5">
+                <a
+                  href="https://www.instagram.com/subibajatiendas/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-pink-50 via-purple-50 to-amber-50 border border-pink-200/80 text-pink-700 text-[10px] font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-2xs"
+                >
+                  <InstagramIcon className="size-3.5 text-pink-600" />
+                  @subibajatiendas
+                </a>
+                <h4 className="text-[17px] font-black text-slate-800 tracking-tight font-['Poppins']">
+                  Feed de Instagram
+                </h4>
+                <p className="text-[11px] font-medium text-slate-500 max-w-[300px]">
+                  Inspírate con nuestras colecciones, novedades y momentos felices en Subibaja.
+                </p>
+              </div>
+
+              {/* Grid de Fotos de Instagram */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                {instagramPosts.slice(0, 6).map((post, idx) => (
                   <a
+                    key={post.id || idx}
                     href="https://www.instagram.com/subibajatiendas/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-11 rounded-2xl bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[1.5px] block active:scale-95 transition-transform duration-200 shadow-sm shadow-pink-500/10"
+                    className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-2xs block active:scale-95 transition-all duration-300 hover:shadow-md hover:border-pink-300"
+                    title={post.title || "Ver en Instagram @subibajatiendas"}
                   >
-                    <div className="w-full h-full bg-white hover:bg-transparent text-slate-800 hover:text-white rounded-[14px] flex items-center justify-center gap-2 text-[10.5px] font-black uppercase tracking-wider transition-colors duration-300">
-                      <InstagramIcon className="size-4" />
-                      Seguir a @subibajatiendas
-                    </div>
-                  </a>
-                </div>
-
-              </div>
-              <div className="bg-slate-50 border-t border-slate-100 p-4 text-center">
-                <p className="text-[9px] font-black text-slate-400 tracking-wider uppercase">
-                  © {new Date().getFullYear()} SUBIBAJA SHOP. TODOS LOS DERECHOS RESERVADOS.
-                </p>
-              </div>
-            </div>
-          </section>
-        </main>
-
-            {/* Navegación Inferior con Glassmorphism */}
-            <nav 
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 md:hidden"
-              style={{ 
-                backgroundColor: 'rgba(141, 213, 227, 0.85)', 
-                backdropFilter: 'blur(16px)', 
-                WebkitBackdropFilter: 'blur(16px)' 
-              }}
-            >
-              <div className="flex justify-around items-center h-[68px] px-4 pb-1">
-
-                {/* Inicio */}
-                <button 
-                  onClick={() => {
-                    setShowCategoryDrawer(false);
-                    setShowOffersDrawer(false);
-                  }}
-                  className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
-                >
-                  <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${(!showCategoryDrawer && !showOffersDrawer) ? 'bg-white/30' : ''}`}>
-                    <HomeIcon className={`size-4 ${(!showCategoryDrawer && !showOffersDrawer) ? 'text-blue-900' : 'text-blue-900/60'}`} />
-                  </div>
-                  <span className={`text-[9px] tracking-wide ${(!showCategoryDrawer && !showOffersDrawer) ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Inicio</span>
-                </button>
-
-                {/* Categorías */}
-                <button 
-                  onClick={() => {
-                    setShowCategoryDrawer(true);
-                    setShowOffersDrawer(false);
-                  }}
-                  className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
-                >
-                  <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showCategoryDrawer ? 'bg-white/30' : ''}`}>
-                    <GridIcon className={`size-4 ${showCategoryDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
-                  </div>
-                  <span className={`text-[9px] tracking-wide ${showCategoryDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Categorías</span>
-                </button>
-
-                {/* Promociones */}
-                <button 
-                  onClick={() => {
-                    setShowOffersDrawer(true);
-                    setShowCategoryDrawer(false);
-                  }}
-                  className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
-                >
-                  <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showOffersDrawer ? 'bg-white/30' : ''}`}>
-                    <Percent className={`size-4 ${showOffersDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
-                  </div>
-                  <span className={`text-[9px] tracking-wide ${showOffersDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Promociones</span>
-                </button>
-
-                {/* Clientes VIP */}
-                <Link href="/puntos" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
-                  <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
-                    <Crown className="size-4 text-blue-900/60" />
-                  </div>
-                  <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Club Subibaja</span>
-                </Link>
-
-              </div>
-            </nav>
-
-        {/* Drawer de Categorías Jerárquicas */}
-        {showCategoryDrawer && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print">
-            {/* Overlay click to close */}
-            <div className="absolute inset-0" onClick={() => setShowCategoryDrawer(false)} />
-            
-            {/* Sliding Panel */}
-            <div 
-              className="relative w-full max-w-[430px] bg-white rounded-t-[36px] shadow-2xl p-6 pb-10 flex flex-col gap-5 max-h-[80vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
-              style={{ fontFamily: "'Lato', sans-serif" }}
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                <div>
-                  <h3 className="font-black text-slate-900 text-lg font-['Poppins']">Explorar Categorías</h3>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Todas nuestras colecciones</p>
-                </div>
-                <button 
-                  onClick={() => setShowCategoryDrawer(false)}
-                  className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-
-              {/* Categorías List */}
-              <div className="flex flex-col gap-4 py-2">
-                {categories.filter(c => !c.parent_id).map((mainCat) => {
-                  const mainCatSubs = categories.filter(sub => sub.parent_id === mainCat.id)
-                  const MainIcon = CAT_ICONS[mainCat.icon] || Tag
-                  
-                  return (
-                    <div key={mainCat.id} className="bg-slate-50/50 rounded-3xl p-4 border border-slate-100/50 space-y-3">
-                      {/* Main Cat Item */}
-                      <button
-                        onClick={() => {
-                          setActiveCategory(mainCat.name);
-                          setActiveSubCategory("Todos");
-                          setActiveLeafCategory("Todos");
-                          setShowCategoryDrawer(false);
-                        }}
-                        className="w-full flex items-center gap-3 text-left group"
-                      >
-                        <div className="w-8 h-8 rounded-xl bg-[#8dd5e3]/30 text-blue-900 flex items-center justify-center shadow-xs">
-                          <MainIcon className="size-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-black text-slate-800 text-sm tracking-tight group-hover:text-blue-600 transition-colors uppercase">{mainCat.name}</span>
-                        </div>
-                        <span className="text-[9px] font-black text-blue-500 bg-blue-50/50 px-2 py-0.5 rounded-full border border-blue-100/30">VER TODO</span>
-                      </button>
-
-                      {/* Subcategories (Level 2) list */}
-                      {mainCatSubs.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2 pl-2">
-                          {mainCatSubs.map((subCat) => {
-                            const leafChildren = categories.filter(leaf => leaf.parent_id === subCat.id)
-                            
-                            return (
-                              <div key={subCat.id} className="flex flex-col gap-1 py-1 px-2 bg-white rounded-2xl border border-slate-100/50 shadow-2xs">
-                                <button
-                                  onClick={() => {
-                                    setActiveCategory(mainCat.name);
-                                    setActiveSubCategory(subCat.name);
-                                    setActiveLeafCategory("Todos");
-                                    setShowCategoryDrawer(false);
-                                  }}
-                                  className="text-[11px] font-bold text-slate-700 hover:text-blue-600 text-left truncate w-full"
-                                >
-                                  {subCat.name}
-                                </button>
-                                
-                                {/* Leaf items inside drawer (Level 3) */}
-                                {leafChildren.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-0.5">
-                                    {leafChildren.slice(0, 3).map((leaf) => (
-                                      <button
-                                        key={leaf.id}
-                                        onClick={() => {
-                                          setActiveCategory(mainCat.name);
-                                          setActiveSubCategory(subCat.name);
-                                          setActiveLeafCategory(leaf.name);
-                                          setShowCategoryDrawer(false);
-                                        }}
-                                        className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md hover:bg-[#8dd5e3]/20 hover:text-blue-800 transition-all uppercase tracking-wide"
-                                      >
-                                        {leaf.name}
-                                      </button>
-                                    ))}
-                                    {leafChildren.length > 3 && (
-                                      <span className="text-[7px] font-bold text-slate-300 px-1 py-0.5">+{leafChildren.length - 3}</span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
+                    <img
+                      src={post.image_url}
+                      alt={post.title || `Instagram Subibaja ${idx + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    {/* Overlay hover / tap */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-2">
+                      <div className="flex justify-end">
+                        <span className="size-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-xs">
+                          <InstagramIcon className="size-3" />
+                        </span>
+                      </div>
+                      {post.title && (
+                        <p className="text-white text-[9px] font-bold line-clamp-2 leading-tight drop-shadow-xs">
+                          {post.title}
+                        </p>
                       )}
                     </div>
-                  )
-                })}
+                  </a>
+                ))}
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* Drawer de Promociones VIP por Puntos */}
-        {showOffersDrawer && (
-          <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print md:p-4">
-            {/* Overlay click to close */}
-            <div className="absolute inset-0" onClick={() => setShowOffersDrawer(false)} />
-            
-            {/* Sliding Panel (Modal en Desktop) */}
-            <div 
-              className="relative w-full max-w-[430px] md:max-w-xl bg-white rounded-t-[36px] md:rounded-[32px] shadow-2xl p-6 pb-10 md:p-8 flex flex-col gap-5 max-h-[85vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
-              style={{ fontFamily: "'Lato', sans-serif" }}
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                <div>
-                  <h3 className="font-black text-slate-900 text-lg font-['Poppins'] flex items-center gap-1.5">
-                    <Sparkles className="size-5 text-amber-400 fill-amber-400 animate-pulse" /> Promociones VIP
-                  </h3>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Canjea tus puntos por promociones y ofertas únicas</p>
+              {/* Botón Seguir en Instagram */}
+              <a
+                href="https://www.instagram.com/subibajatiendas/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-11 rounded-2xl bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[1.5px] block active:scale-95 transition-transform duration-200 shadow-sm shadow-pink-500/10"
+              >
+                <div className="w-full h-full bg-white hover:bg-transparent text-slate-800 hover:text-white rounded-[14px] flex items-center justify-center gap-2 text-[10.5px] font-black uppercase tracking-wider transition-colors duration-300">
+                  <InstagramIcon className="size-4" />
+                  Seguir a @subibajatiendas
                 </div>
-                <button 
-                  onClick={() => setShowOffersDrawer(false)} 
-                  className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
+              </a>
+            </div>
 
-              {/* List of Offers */}
-              <div className="flex flex-col gap-4 py-2 overflow-y-auto no-scrollbar max-h-[60vh]">
-                {[
-                  {
-                    title: "Zapato Charol Blanco",
-                    category: "Zapatos de Niña",
-                    points: 200,
-                    discount: "40% OFF",
-                    originalPrice: 35,
-                    promoPrice: 21,
-                    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800",
-                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Zapato Charol Blanco (40% OFF) por 200 puntos. ¿Cómo es el proceso?"
-                  },
-                  {
-                    title: "Bailarinas Glitter Silver",
-                    category: "Zapatos de Niña",
-                    points: 150,
-                    discount: "50% OFF",
-                    originalPrice: 22,
-                    promoPrice: 11,
-                    image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?q=80&w=800&auto=format&fit=crop",
-                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Bailarinas Glitter Silver (50% OFF) por 150 puntos. ¿Cómo es el proceso?"
-                  },
-                  {
-                    title: "Cintillo Floral Harmony",
-                    category: "Primera Comunión",
-                    points: 100,
-                    discount: "GRATIS",
-                    originalPrice: 12,
-                    promoPrice: 0,
-                    image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop",
-                    msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
-                  }
-                ].map((offer, idx) => {
-                  const bsPrice = (offer.promoPrice * exchangeRate).toFixed(0);
-                  const origBsPrice = (offer.originalPrice * exchangeRate).toFixed(0);
-                  return (
-                    <div key={idx} className="bg-white rounded-3xl p-4 flex gap-4 border border-slate-100/80 shadow-xs hover:border-blue-100 transition-colors">
-                      <img 
-                        src={offer.image} 
-                        alt={offer.title} 
-                        className="w-24 h-24 rounded-2xl object-cover flex-shrink-0 bg-slate-50 border border-slate-100"
-                      />
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between gap-1.5">
-                            <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest block truncate">{offer.category}</span>
-                            <span className="text-[9px] font-black text-rose-500 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full flex-shrink-0">
-                              {offer.discount}
-                            </span>
-                          </div>
-                          
-                          <h4 className="font-black text-slate-800 text-xs mt-1 leading-tight line-clamp-1">{offer.title}</h4>
-                          
-                          <div className="flex items-center gap-2 mt-1.5">
-                            {offer.promoPrice > 0 ? (
-                              <>
-                                <span className="text-sm font-black text-blue-900">${offer.promoPrice}</span>
-                                <span className="text-[10px] text-slate-400 line-through">${offer.originalPrice}</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md uppercase">¡Gratis!</span>
-                                <span className="text-[10px] text-slate-400 line-through">${offer.originalPrice}</span>
-                              </>
+          </div>
+          <div className="bg-slate-50 border-t border-slate-100 p-4 text-center">
+            <p className="text-[9px] font-black text-slate-400 tracking-wider uppercase">
+              © {new Date().getFullYear()} SUBIBAJA SHOP. TODOS LOS DERECHOS RESERVADOS.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+        {/* Navegación Inferior con Glassmorphism */}
+        <nav 
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 rounded-t-[32px] shadow-2xl border-t border-white/20 md:hidden"
+          style={{ 
+            backgroundColor: 'rgba(141, 213, 227, 0.85)', 
+            backdropFilter: 'blur(16px)', 
+            WebkitBackdropFilter: 'blur(16px)' 
+          }}
+        >
+          <div className="flex justify-around items-center h-[68px] px-4 pb-1">
+
+            {/* Inicio */}
+            <button 
+              onClick={() => {
+                setShowCategoryDrawer(false);
+                setShowOffersDrawer(false);
+              }}
+              className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
+            >
+              <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${(!showCategoryDrawer && !showOffersDrawer) ? 'bg-white/30' : ''}`}>
+                <HomeIcon className={`size-4 ${(!showCategoryDrawer && !showOffersDrawer) ? 'text-blue-900' : 'text-blue-900/60'}`} />
+              </div>
+              <span className={`text-[9px] tracking-wide ${(!showCategoryDrawer && !showOffersDrawer) ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Inicio</span>
+            </button>
+
+            {/* Categorías */}
+            <button 
+              onClick={() => {
+                setShowCategoryDrawer(true);
+                setShowOffersDrawer(false);
+              }}
+              className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
+            >
+              <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showCategoryDrawer ? 'bg-white/30' : ''}`}>
+                <GridIcon className={`size-4 ${showCategoryDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
+              </div>
+              <span className={`text-[9px] tracking-wide ${showCategoryDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Categorías</span>
+            </button>
+
+            {/* Promociones */}
+            <button 
+              onClick={() => {
+                setShowOffersDrawer(true);
+                setShowCategoryDrawer(false);
+              }}
+              className="flex flex-col items-center gap-1 transition-opacity active:opacity-70 cursor-pointer"
+            >
+              <div className={`w-10 h-8 rounded-2xl flex items-center justify-center ${showOffersDrawer ? 'bg-white/30' : ''}`}>
+                <Percent className={`size-4 ${showOffersDrawer ? 'text-blue-900' : 'text-blue-900/60'}`} />
+              </div>
+              <span className={`text-[9px] tracking-wide ${showOffersDrawer ? 'font-black text-blue-900' : 'font-bold text-blue-900/60'}`}>Promociones</span>
+            </button>
+
+            {/* Clientes VIP */}
+            <Link href="/puntos" className="flex flex-col items-center gap-1 transition-opacity active:opacity-70">
+              <div className="w-10 h-8 rounded-2xl flex items-center justify-center">
+                <Crown className="size-4 text-blue-900/60" />
+              </div>
+              <span className="text-[9px] font-bold text-blue-900/60 tracking-wide">Club Subibaja</span>
+            </Link>
+
+          </div>
+        </nav>
+
+    {/* Drawer de Categorías Jerárquicas */}
+    {showCategoryDrawer && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print">
+        {/* Overlay click to close */}
+        <div className="absolute inset-0" onClick={() => setShowCategoryDrawer(false)} />
+        
+        {/* Sliding Panel */}
+        <div 
+          className="relative w-full max-w-[430px] bg-white rounded-t-[36px] shadow-2xl p-6 pb-10 flex flex-col gap-5 max-h-[80vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
+          style={{ fontFamily: "'Lato', sans-serif" }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-black text-slate-900 text-lg font-['Poppins']">Explorar Categorías</h3>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Todas nuestras colecciones</p>
+            </div>
+            <button 
+              onClick={() => setShowCategoryDrawer(false)} 
+              className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {/* Categorías List */}
+          <div className="flex flex-col gap-4 py-2">
+            {categories.filter(c => !c.parent_id).map((mainCat) => {
+              const mainCatSubs = categories.filter(sub => sub.parent_id === mainCat.id)
+              const MainIcon = CAT_ICONS[mainCat.icon] || Tag
+              
+              return (
+                <div key={mainCat.id} className="bg-slate-50/50 rounded-3xl p-4 border border-slate-100/50 space-y-3">
+                  {/* Main Cat Item */}
+                  <button
+                    onClick={() => {
+                      setActiveCategory(mainCat.name);
+                      setActiveSubCategory("Todos");
+                      setActiveLeafCategory("Todos");
+                      setShowCategoryDrawer(false);
+                    }}
+                    className="w-full flex items-center gap-3 text-left group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-[#8dd5e3]/30 text-blue-900 flex items-center justify-center shadow-xs">
+                      <MainIcon className="size-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-black text-slate-800 text-sm tracking-tight group-hover:text-blue-600 transition-colors uppercase">{mainCat.name}</span>
+                    </div>
+                    <span className="text-[9px] font-black text-blue-500 bg-blue-50/50 px-2 py-0.5 rounded-full border border-blue-100/30">VER TODO</span>
+                  </button>
+
+                  {/* Subcategories (Level 2) list */}
+                  {mainCatSubs.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 pl-2">
+                      {mainCatSubs.map((subCat) => {
+                        const leafChildren = categories.filter(leaf => leaf.parent_id === subCat.id)
+                        
+                        return (
+                          <div key={subCat.id} className="flex flex-col gap-1 py-1 px-2 bg-white rounded-2xl border border-slate-100/50 shadow-2xs">
+                            <button
+                              onClick={() => {
+                                setActiveCategory(mainCat.name);
+                                setActiveSubCategory(subCat.name);
+                                setActiveLeafCategory("Todos");
+                                setShowCategoryDrawer(false);
+                              }}
+                              className="text-[11px] font-bold text-slate-700 hover:text-blue-600 text-left truncate w-full"
+                            >
+                              {subCat.name}
+                            </button>
+                            
+                            {/* Leaf items inside drawer (Level 3) */}
+                            {leafChildren.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-0.5">
+                                {leafChildren.slice(0, 3).map((leaf) => (
+                                  <button
+                                    key={leaf.id}
+                                    onClick={() => {
+                                      setActiveCategory(mainCat.name);
+                                      setActiveSubCategory(subCat.name);
+                                      setActiveLeafCategory(leaf.name);
+                                      setShowCategoryDrawer(false);
+                                    }}
+                                    className="text-[8px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md hover:bg-[#8dd5e3]/20 hover:text-blue-800 transition-all uppercase tracking-wide"
+                                  >
+                                    {leaf.name}
+                                  </button>
+                                ))}
+                                {leafChildren.length > 3 && (
+                                  <span className="text-[7px] font-bold text-slate-300 px-1 py-0.5">+{leafChildren.length - 3}</span>
+                                )}
+                              </div>
                             )}
                           </div>
-                          <span className="text-[8px] text-slate-500 font-bold">
-                            {offer.promoPrice > 0 ? `Bs ${bsPrice} BCV` : `Bs 0 BCV`} (antes: Bs {origBsPrice} BCV)
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="h-7 px-2 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center gap-1 text-[8px] font-black text-amber-500 flex-shrink-0">
-                            <Crown className="size-3 fill-amber-500" /> {offer.points} PTS
-                          </span>
-                          <button
-                            onClick={() => window.open(`https://wa.me/584142274385?text=${encodeURIComponent(offer.msg)}`, '_blank')}
-                            className="flex-1 h-7 rounded-full text-[8px] font-black tracking-wider text-blue-900 uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-sm cursor-pointer"
-                            style={{ backgroundColor: '#8dd5e3' }}
-                          >
-                            RECLAMAR PROMOCIÓN
-                          </button>
-                        </div>
-                      </div>
+                        )
+                      })}
                     </div>
-                  )
-                })}
-              </div>
-
-              {/* Note / Terms */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-center">
-                <p className="text-[9px] text-slate-400 leading-normal font-bold">
-                  ⚠️ NOTA: Al reclamar, se verificará tu saldo de puntos con tu número de teléfono registrado en el Club Subibaja.
-                </p>
-              </div>
-
-            </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
-        )}
-
-        {/* Carrito Flotante */}
-        <CartFloatingButton />
-
+        </div>
       </div>
-    </div>
-  )
+    )}
+
+    {/* Drawer de Promociones VIP por Puntos */}
+    {showOffersDrawer && (
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in no-print md:p-4">
+        {/* Overlay click to close */}
+        <div className="absolute inset-0" onClick={() => setShowOffersDrawer(false)} />
+        
+        {/* Sliding Panel (Modal en Desktop) */}
+        <div 
+          className="relative w-full max-w-[430px] md:max-w-xl bg-white rounded-t-[36px] md:rounded-[32px] shadow-2xl p-6 pb-10 md:p-8 flex flex-col gap-5 max-h-[85vh] overflow-y-auto z-10 transition-transform duration-300 translate-y-0"
+          style={{ fontFamily: "'Lato', sans-serif" }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-black text-slate-900 text-lg font-['Poppins'] flex items-center gap-1.5">
+                <Sparkles className="size-5 text-amber-400 fill-amber-400 animate-pulse" /> Promociones VIP
+              </h3>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Canjea tus puntos por promociones y ofertas únicas</p>
+            </div>
+            <button 
+              onClick={() => setShowOffersDrawer(false)} 
+              className="size-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-90 transition-transform"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {/* List of Offers */}
+          <div className="flex flex-col gap-4 py-2 overflow-y-auto no-scrollbar max-h-[60vh]">
+            {[
+              {
+                title: "Zapato Charol Blanco",
+                category: "Zapatos de Niña",
+                points: 200,
+                discount: "40% OFF",
+                originalPrice: 35,
+                promoPrice: 21,
+                image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&q=80&w=800",
+                msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Zapato Charol Blanco (40% OFF) por 200 puntos. ¿Cómo es el proceso?"
+              },
+              {
+                title: "Bailarinas Glitter Silver",
+                category: "Zapatos de Niña",
+                points: 150,
+                discount: "50% OFF",
+                originalPrice: 22,
+                promoPrice: 11,
+                image: "https://images.unsplash.com/photo-1603808033192-082d6919d3e1?q=80&w=800&auto=format&fit=crop",
+                msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Bailarinas Glitter Silver (50% OFF) por 150 puntos. ¿Cómo es el proceso?"
+              },
+              {
+                title: "Cintillo Floral Harmony",
+                category: "Primera Comunión",
+                points: 100,
+                discount: "GRATIS",
+                originalPrice: 12,
+                promoPrice: 0,
+                image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop",
+                msg: "¡Hola Subibaja! Me gustaría canjear mis puntos por la promoción VIP de Cintillo Floral Harmony (¡GRATIS!) por 100 puntos. ¿Cómo es el proceso?"
+              }
+            ].map((offer, idx) => {
+              const bsPrice = (offer.promoPrice * exchangeRate).toFixed(0);
+              const origBsPrice = (offer.originalPrice * exchangeRate).toFixed(0);
+              return (
+                <div key={idx} className="bg-white rounded-3xl p-4 flex gap-4 border border-slate-100/80 shadow-xs hover:border-blue-100 transition-colors">
+                  <img 
+                    src={offer.image} 
+                    alt={offer.title} 
+                    className="w-24 h-24 rounded-2xl object-cover flex-shrink-0 bg-slate-50 border border-slate-100"
+                  />
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest block truncate">{offer.category}</span>
+                        <span className="text-[9px] font-black text-rose-500 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                          {offer.discount}
+                        </span>
+                      </div>
+                      
+                      <h4 className="font-black text-slate-800 text-xs mt-1 leading-tight line-clamp-1">{offer.title}</h4>
+                      
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {offer.promoPrice > 0 ? (
+                          <>
+                            <span className="text-sm font-black text-blue-900">${offer.promoPrice}</span>
+                            <span className="text-[10px] text-slate-400 line-through">${offer.originalPrice}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md uppercase">¡Gratis!</span>
+                            <span className="text-[10px] text-slate-400 line-through">${offer.originalPrice}</span>
+                          </>
+                        )}
+                      </div>
+                      <span className="text-[8px] text-slate-500 font-bold">
+                        {offer.promoPrice > 0 ? `Bs ${bsPrice} BCV` : `Bs 0 BCV`} (antes: Bs {origBsPrice} BCV)
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="h-7 px-2 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center gap-1 text-[8px] font-black text-amber-500 flex-shrink-0">
+                        <Crown className="size-3 fill-amber-500" /> {offer.points} PTS
+                      </span>
+                      <button
+                        onClick={() => window.open(`https://wa.me/584142274385?text=${encodeURIComponent(offer.msg)}`, '_blank')}
+                        className="flex-1 h-7 rounded-full text-[8px] font-black tracking-wider text-blue-900 uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-sm cursor-pointer"
+                        style={{ backgroundColor: '#8dd5e3' }}
+                      >
+                        RECLAMAR PROMOCIÓN
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Note / Terms */}
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-center">
+            <p className="text-[9px] text-slate-400 leading-normal font-bold">
+              ⚠️ NOTA: Al reclamar, se verificará tu saldo de puntos con tu número de teléfono registrado en el Club Subibaja.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    )}
+
+    {/* Carrito Flotante */}
+    <CartFloatingButton />
+
+  </div>
+</div>
+)
 }
