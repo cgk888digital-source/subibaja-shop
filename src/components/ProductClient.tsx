@@ -70,6 +70,13 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     }
   }, [])
 
+  const isShoeProduct = () => {
+    if (!product) return false
+    const cat = (product.category || '').toLowerCase()
+    const bc = getBreadcrumbs().map(b => b.toLowerCase()).join(' ')
+    return cat.includes('zapato') || cat.includes('calzado') || bc.includes('zapato') || bc.includes('calzado')
+  }
+
   const getParsedSizes = () => {
     if (!product) return []
     let list = product.sizes || []
@@ -78,9 +85,6 @@ export default function ProductClient({ initialProduct, initialCategories, initi
       if (raw.includes(',') || raw.includes(' ')) {
         list = raw.split(/[\s,]+/).map((s: string) => s.trim()).filter(Boolean)
       }
-    }
-    if (list.length === 0 && product?.category?.toLowerCase().includes('zapatos')) {
-      list = ['24', '26', '28']
     }
     return list
   }
@@ -94,29 +98,6 @@ export default function ProductClient({ initialProduct, initialCategories, initi
         list = raw.split(/[\s,]+/).map((c: string) => c.trim()).filter(Boolean)
       }
     }
-    // Si tiene menos de 2 colores, agregamos colores ficticios para la demo
-    if (list.length < 2) {
-      let defaultMock = ['#ffffff', '#8dd5e3', '#FAD2E1'] // Blanco, Azul, Rosa
-      const title = (product.title || '').toLowerCase()
-      if (title.includes('silver') || title.includes('glitter')) {
-        defaultMock = ['#E2E8F0', '#FFFFFF', '#BAE6FD'] // Plata, Blanco, Azul cielo
-      } else if (title.includes('harmony') || title.includes('cintillo') || title.includes('floral')) {
-        defaultMock = ['#FCE7F3', '#CCFBF1', '#FFFFFF'] // Rosa suave, Menta, Blanco
-      } else if (title.includes('blanco') || title.includes('charol')) {
-        defaultMock = ['#FFFFFF', '#0F172A', '#FECDD3'] // Blanco, Negro charol, Rosa pastel
-      } else if (title.includes('gold') || title.includes('mariposa')) {
-        defaultMock = ['#FEF08A', '#FDE2E4', '#E2E8F0'] // Oro, Oro rosa, Plata
-      } else if (title.includes('beige')) {
-        defaultMock = ['#F5F5DC', '#F1F5F9', '#FFFFFF'] // Beige, Crema/Nude, Blanco
-      } else if (title.includes('gala') || title.includes('vestido')) {
-        defaultMock = ['#FAD2E1', '#FFF5C3', '#E8E8FF'] // Rosa pastel, Amarillo pastel, Lavanda
-      } else if (title.includes('sinderella')) {
-        defaultMock = ['#8dd5e3', '#FFFFFF', '#FFCAD4'] // Azul Cenicienta, Blanco, Rosa suave
-      }
-
-      const extra = defaultMock.filter(c => !list.includes(c))
-      list = [...list, ...extra].slice(0, 3)
-    }
     return list
   }
 
@@ -124,8 +105,8 @@ export default function ProductClient({ initialProduct, initialCategories, initi
     if (product) {
       const parsedSizes = getParsedSizes()
       const parsedColors = getParsedColors()
-      if (parsedSizes.length > 0) setSelectedSize(parsedSizes[0])
-      if (parsedColors.length > 0) setSelectedColor(parsedColors[0])
+      setSelectedSize(parsedSizes.length > 0 ? parsedSizes[0] : "")
+      setSelectedColor(parsedColors.length > 0 ? parsedColors[0] : "")
     }
   }, [product])
 
@@ -467,7 +448,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
             </div>
 
             {/* ── ACORDEÓN DE COMPRA Y DETALLES: Tallas + Colores + Descripción + Cuidados ── */}
-            <Accordion multiple defaultValue={["size"]}>
+            <Accordion multiple defaultValue={getParsedSizes().length > 0 ? ["size"] : ["description"]}>
               {getParsedSizes().length > 0 && (
                 <AccordionItem value="size">
                   <AccordionTrigger className="hover:no-underline py-3.5">
@@ -486,19 +467,21 @@ export default function ProductClient({ initialProduct, initialCategories, initi
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 pb-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowSizeGuide(true)}
-                      className="w-full mb-3 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100/70 border border-blue-200/60 text-blue-950 text-[10px] font-black uppercase tracking-wider flex items-center justify-between transition-all active:scale-98 cursor-pointer shadow-2xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Ruler className="size-3.5 text-blue-800" />
-                        <span>¿Cómo medir el pie? Ver Guía de Tallas</span>
-                      </div>
-                      <span className="bg-blue-900 text-white text-[8px] font-black px-2 py-0.5 rounded-full">
-                        10 PASOS
-                      </span>
-                    </button>
+                    {isShoeProduct() && (
+                      <button
+                        type="button"
+                        onClick={() => setShowSizeGuide(true)}
+                        className="w-full mb-3 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100/70 border border-blue-200/60 text-blue-950 text-[10px] font-black uppercase tracking-wider flex items-center justify-between transition-all active:scale-98 cursor-pointer shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Ruler className="size-3.5 text-blue-800" />
+                          <span>¿Cómo medir el pie? Ver Guía de Tallas</span>
+                        </div>
+                        <span className="bg-blue-900 text-white text-[8px] font-black px-2 py-0.5 rounded-full">
+                          10 PASOS
+                        </span>
+                      </button>
+                    )}
 
                     <div className="flex flex-wrap gap-2.5">
                       {getParsedSizes().map((size: string) => (
