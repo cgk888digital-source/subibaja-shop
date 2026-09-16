@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import {
   Camera, Package, Loader2, Lock, DollarSign, RefreshCcw, Wallet, Banknote, Trash2, Pencil,
-  Type, Ruler, Info, Search, X, Plus, ChevronDown, ChevronUp, Image as ImageIcon, Palette, Smartphone, Ticket, User,
+  Type, Ruler, Info, Search, X, Plus, Minus, ShoppingCart, ChevronDown, ChevronUp, Image as ImageIcon, Palette, Smartphone, Ticket, User,
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2,
   Copy, ExternalLink, MessageCircle
 } from "lucide-react"
@@ -26,6 +26,17 @@ const InstagramIcon = ({ className = "size-4" }: { className?: string }) => (
 const ADMIN_PASSWORD = "SUBIBAJA2024"
 const CAT_ICONS: Record<string, React.ElementType> = {
   Footprints, Shirt, Star, ShoppingBag, Heart, Baby, Gift, Crown, Sparkles, Gem, Tag, Flower2, BookOpen, Gamepad2
+}
+
+export interface SaleCartItem {
+  id: string
+  productId?: string | null
+  title: string
+  category?: string | null
+  price: number
+  quantity: number
+  imageUrl?: string
+  stockAvailable?: number
 }
 
 export default function AdminPage() {
@@ -55,10 +66,13 @@ export default function AdminPage() {
   const [showLeafDropdown, setShowLeafDropdown] = useState(false)
   const [colors, setColors] = useState<string[]>([])
   const [colorPick, setColorPick] = useState("#8dd5e3")
-  const [saleForm, setSaleForm] = useState({
-    productId: "", productTitle: "", productCategory: "",
-    amount: "", method: "$ Efectivo"
-  })
+  // Multi-product Sale POS Cart state
+  const [saleCart, setSaleCart] = useState<SaleCartItem[]>([])
+  const [saleMethod, setSaleMethod] = useState<string>("$ Efectivo")
+  const [showManualItemForm, setShowManualItemForm] = useState(false)
+  const [manualItemTitle, setManualItemTitle] = useState("")
+  const [manualItemPrice, setManualItemPrice] = useState("")
+  const [manualItemCategory, setManualItemCategory] = useState("Varios")
   const [productSearch, setProductSearch] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
   const [showCatDropdown, setShowCatDropdown] = useState(false)
@@ -475,97 +489,200 @@ export default function AdminPage() {
     await supabase.from('settings').upsert({ id: 'exchange_rate', value: rate.toString() })
   }
 
-  const selectProduct = (p: any) => {
-    setSaleForm({ ...saleForm, productId: p.id, productTitle: p.title, productCategory: p.category, amount: p.price.toString() })
-    setProductSearch(p.title)
+  const addProductToSaleCart = (p: any) => {
+    setSaleCart(prev => {
+      const existing = prev.find(item => item.productId === p.id)
+      if (existing) {
+        return prev.map(item =>
+          item.productId === p.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
+      }
+      return [
+        ...prev,
+        {
+          id: p.id,
+          productId: p.id,
+          title: p.title,
+          category: p.category,
+          price: Number(p.price) || 0,
+          quantity: 1,
+          imageUrl: p.image_url,
+          stockAvailable: p.stock_quantity ?? 999
+        }
+      ]
+    })
+    setProductSearch("")
     setShowDropdown(false)
   }
 
-  const clearProductSelection = () => {
-    setSaleForm({ ...saleForm, productId: "", productTitle: "", productCategory: "", amount: "" })
+  const addManualItemToSaleCart = () => {
+    const price = parseFloat(manualItemPrice)
+    if (isNaN(price) || price <= 0) {
+      alert("Por favor ingresa un monto válido mayor a 0")
+      return
+    }
+    const title = manualItemTitle.trim() || "Venta manual / Varios"
+    setSaleCart(prev => [
+      ...prev,
+      {
+        id: `manual-${Date.now()}`,
+        productId: null,
+        title,
+        category: manualItemCategory || "Varios",
+        price,
+        quantity: 1,
+        imageUrl: undefined,
+        stockAvailable: 9999
+      }
+    ])
+    setManualItemTitle("")
+    setManualItemPrice("")
+    setShowManualItemForm(false)
+  }
+
+  const updateSaleCartQty = (id: string, delta: number) => {
+    setSaleCart(prev => {
+      return prev
+        .map(item => {
+          if (item.id === id) {
+            const nextQty = item.quantity + delta
+            return nextQty > 0 ? { ...item, quantity: nextQty } : null
+          }
+          return item
+        })
+        .filter(Boolean) as SaleCartItem[]
+    })
+  }
+
+  const updateSaleCartPrice = (id: string, newPriceStr: string) => {
+    const newPrice = parseFloat(newPriceStr)
+    setSaleCart(prev => prev.map(item => {
+      if (item.id === id) {
+        return { ...item, price: isNaN(newPrice) || newPrice < 0 ? 0 : newPrice }
+      }
+      return item
+    }))
+  }
+
+  const removeSaleCartItem = (id: string) => {
+    setSaleCart(prev => prev.filter(item => item.id !== id))
+  }
+
+  const clearSaleCart = () => {
+    setSaleCart([])
     setProductSearch("")
   }
 
+  const saleCartTotalUsd = saleCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const saleCartTotalBs = saleCartTotalUsd * exchangeRate
+  const saleCartTotalItems = saleCart.reduce((sum, item) => sum + item.quantity, 0)
+
   const handleRegisterSale = async () => {
-    if (!saleForm.amount) return
+    if (saleCart.length === 0 || saleCartTotalUsd <= 0) {
+      alert("Agrega al menos un producto a la factura con monto mayor a 0.")
+      return
+    }
     try {
-      const amountUsd = parseFloat(saleForm.amount)
-      await supabase.from('sales').insert([{
-        amount_usd: amountUsd,
-        amount_bs: amountUsd * exchangeRate,
-        payment_method: saleForm.method,
-        exchange_rate: exchangeRate,
-        product_id: saleForm.productId || null,
-        product_title: saleForm.productTitle || null,
-        category: saleForm.productCategory || null,
-      }])
-      if (saleForm.productId) {
-        const prod = products.find(p => p.id === saleForm.productId)
-        if (prod) {
-          const newQty = Math.max(0, (prod.stock_quantity || 0) - 1)
-          await supabase.from('products').update({
-            stock_quantity: newQty,
-            stock_status: newQty === 0 ? 'out_of_stock' : 'in_stock'
-          }).eq('id', saleForm.productId)
+      setGeneratingQr(true)
+
+      // 1. Descontar stock de cada producto en la factura
+      for (const item of saleCart) {
+        if (item.productId) {
+          const prod = products.find(p => p.id === item.productId)
+          if (prod) {
+            const newQty = Math.max(0, (prod.stock_quantity || 0) - item.quantity)
+            await supabase.from('products').update({
+              stock_quantity: newQty,
+              stock_status: newQty === 0 ? 'out_of_stock' : 'in_stock'
+            }).eq('id', item.productId)
+          }
         }
       }
 
-      // Award points if customer is registered in loyalty club
+      // 2. Registrar en la tabla sales (una fila por producto vendido para mantener analítica por categoría)
+      const salesRows = saleCart.map(item => ({
+        amount_usd: item.price * item.quantity,
+        amount_bs: (item.price * item.quantity) * exchangeRate,
+        payment_method: saleMethod,
+        exchange_rate: exchangeRate,
+        product_id: item.productId || null,
+        product_title: item.quantity > 1 ? `${item.title} (x${item.quantity})` : item.title,
+        category: item.category || null,
+      }))
+
+      const { error: saleError } = await supabase.from('sales').insert(salesRows)
+      if (saleError) throw saleError
+
+      // 3. Puntos de fidelidad Club VIP
       if (customerPhone.trim()) {
         const cleanPhone = customerPhone.trim()
         const { data: member } = await supabase.from('loyalty_members').select('*').eq('phone', cleanPhone).single()
         if (member) {
-          const pointsEarned = Math.round(amountUsd)
+          const pointsEarned = Math.round(saleCartTotalUsd)
           await supabase.from('loyalty_members').update({ points: member.points + pointsEarned }).eq('id', member.id)
-          alert(`¡Venta registrada! Se sumaron ${pointsEarned} puntos al programa VIP de ${member.name}.`)
+          alert(`¡Venta registrada con éxito (${saleCartTotalItems} ${saleCartTotalItems === 1 ? 'artículo' : 'artículos'})! Se sumaron ${pointsEarned} puntos al programa VIP de ${member.name}.`)
         } else {
-          alert("Venta registrada. El teléfono ingresado no está registrado en el programa Clientes VIP.")
+          alert(`Venta registrada con éxito (${saleCartTotalItems} ${saleCartTotalItems === 1 ? 'artículo' : 'artículos'}). El teléfono ingresado no está registrado en el programa Clientes VIP.`)
         }
+      } else {
+        alert(`¡Venta registrada con éxito! Total: $${saleCartTotalUsd.toFixed(2)} (${saleCartTotalItems} ${saleCartTotalItems === 1 ? 'artículo' : 'artículos'}).`)
       }
 
-      setSaleForm({ productId: "", productTitle: "", productCategory: "", amount: "", method: "$ Efectivo" })
+      setSaleCart([])
       setCustomerPhone("")
       setProductSearch("")
       fetchInitialData()
-    } catch (err) { console.error(err) }
+    } catch (err: any) {
+      console.error(err)
+      alert("Error al registrar venta: " + (err.message || err))
+    } finally {
+      setGeneratingQr(false)
+    }
   }
 
   const handleRegisterSaleAndGenerateQr = async () => {
-    if (!saleForm.amount) return
+    if (saleCart.length === 0 || saleCartTotalUsd <= 0) {
+      alert("Agrega al menos un producto a la factura con monto mayor a 0.")
+      return
+    }
     try {
       setGeneratingQr(true)
-      const amountUsd = parseFloat(saleForm.amount)
-      const points = Math.round(amountUsd)
-      
-      // 1. Registrar venta
-      const { error: saleError } = await supabase.from('sales').insert([{
-        amount_usd: amountUsd,
-        amount_bs: amountUsd * exchangeRate,
-        payment_method: saleForm.method,
-        exchange_rate: exchangeRate,
-        product_id: saleForm.productId || null,
-        product_title: saleForm.productTitle || null,
-        category: saleForm.productCategory || null,
-      }])
+      const points = Math.round(saleCartTotalUsd)
 
-      if (saleError) throw saleError
-
-      // 2. Descontar stock
-      if (saleForm.productId) {
-        const prod = products.find(p => p.id === saleForm.productId)
-        if (prod) {
-          const newQty = Math.max(0, (prod.stock_quantity || 0) - 1)
-          await supabase.from('products').update({
-            stock_quantity: newQty,
-            stock_status: newQty === 0 ? 'out_of_stock' : 'in_stock'
-          }).eq('id', saleForm.productId)
+      // 1. Descontar stock de cada producto en la factura
+      for (const item of saleCart) {
+        if (item.productId) {
+          const prod = products.find(p => p.id === item.productId)
+          if (prod) {
+            const newQty = Math.max(0, (prod.stock_quantity || 0) - item.quantity)
+            await supabase.from('products').update({
+              stock_quantity: newQty,
+              stock_status: newQty === 0 ? 'out_of_stock' : 'in_stock'
+            }).eq('id', item.productId)
+          }
         }
       }
 
-      // 3. Generar Voucher QR
+      // 2. Registrar en sales
+      const salesRows = saleCart.map(item => ({
+        amount_usd: item.price * item.quantity,
+        amount_bs: (item.price * item.quantity) * exchangeRate,
+        payment_method: saleMethod,
+        exchange_rate: exchangeRate,
+        product_id: item.productId || null,
+        product_title: item.quantity > 1 ? `${item.title} (x${item.quantity})` : item.title,
+        category: item.category || null,
+      }))
+
+      const { error: saleError } = await supabase.from('sales').insert(salesRows)
+      if (saleError) throw saleError
+
+      // 3. Generar Voucher QR único con el acumulado total
       const { data: voucherData, error: voucherError } = await supabase.from('points_vouchers').insert([{
         points: points,
-        amount_usd: amountUsd,
+        amount_usd: saleCartTotalUsd,
         is_used: false
       }]).select().single()
 
@@ -574,18 +691,18 @@ export default function AdminPage() {
       setGeneratedVoucher({
         id: voucherData.id,
         points: voucherData.points,
-        amount_usd: amountUsd,
+        amount_usd: saleCartTotalUsd,
         phone: customerPhone ? customerPhone.trim() : ""
       })
 
       // Reset form
-      setSaleForm({ productId: "", productTitle: "", productCategory: "", amount: "", method: "$ Efectivo" })
+      setSaleCart([])
       setCustomerPhone("")
       setProductSearch("")
       fetchInitialData()
     } catch (err: any) { 
       console.error(err)
-      alert("Error al registrar venta y generar QR: " + err.message)
+      alert("Error al registrar venta y generar QR: " + (err.message || err))
     } finally {
       setGeneratingQr(false)
     }
@@ -1072,98 +1189,294 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* Formulario de venta con buscador de producto */}
-            <div className="bg-white rounded-[32px] shadow-sm p-5 space-y-3">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registrar Venta</p>
+            {/* Facturación Multi-Producto / Punto de Venta */}
+            <div className="bg-white rounded-[32px] shadow-sm p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-xl bg-[#8dd5e3]/20 flex items-center justify-center text-blue-900">
+                    <ShoppingCart className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facturar Productos (POS)</p>
+                    <p className="text-xs font-bold text-slate-800">Cesta de Venta</p>
+                  </div>
+                </div>
+                {saleCart.length > 0 && (
+                  <button
+                    onClick={clearSaleCart}
+                    className="text-[10px] font-bold text-rose-500 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="size-3" /> Vaciar
+                  </button>
+                )}
+              </div>
 
-              {/* Buscador de producto */}
-              <div className="relative" ref={dropdownRef}>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
-                  <input
-                    type="text"
-                    placeholder="Buscar producto..."
-                    value={productSearch}
-                    onChange={(e) => { setProductSearch(e.target.value); setShowDropdown(true) }}
-                    onFocus={() => setShowDropdown(true)}
-                    className="w-full h-12 rounded-xl bg-slate-50 pl-11 pr-10 text-sm font-medium outline-none border-0 placeholder:text-slate-300"
-                  />
-                  {productSearch && (
-                    <button onClick={clearProductSelection} className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <X className="size-4 text-slate-300" />
-                    </button>
+              {/* Buscador de producto + Botón Ítem Manual */}
+              <div className="flex gap-2">
+                <div className="relative flex-1" ref={dropdownRef}>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
+                    <input
+                      type="text"
+                      placeholder="Buscar y añadir producto..."
+                      value={productSearch}
+                      onChange={(e) => { setProductSearch(e.target.value); setShowDropdown(true) }}
+                      onFocus={() => setShowDropdown(true)}
+                      className="w-full h-12 rounded-xl bg-slate-50 pl-11 pr-10 text-sm font-medium outline-none border-0 placeholder:text-slate-300"
+                    />
+                    {productSearch && (
+                      <button onClick={() => setProductSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 cursor-pointer">
+                        <X className="size-4" />
+                      </button>
+                    )}
+                  </div>
+                  {showDropdown && (
+                    <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100 max-h-72 overflow-y-auto divide-y divide-slate-50">
+                      {filteredProducts.length > 0 ? (
+                        filteredProducts.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => addProductToSaleCart(p)}
+                            className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img src={p.image_url} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-700 line-clamp-1 group-hover:text-blue-900 transition-colors">{p.title}</p>
+                                <p className="text-[10px] font-black text-blue-500 mt-0.5">${p.price} · <span className="text-slate-400 font-semibold">Stock: {p.stock_quantity}</span></p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-[11px] font-black text-blue-600 bg-blue-50 group-hover:bg-[#8dd5e3] group-hover:text-blue-900 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0">
+                              <Plus className="size-3" /> Añadir
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-xs text-slate-400 font-medium">
+                          No se encontraron productos disponibles con ese nombre
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                {showDropdown && filteredProducts.length > 0 && (
-                  <div className="absolute z-20 w-full bg-white shadow-xl rounded-2xl mt-1.5 overflow-hidden border border-slate-100">
-                    {filteredProducts.map(p => (
-                      <button key={p.id} onClick={() => selectProduct(p)}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left">
-                        <img src={p.image_url} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+
+                <button
+                  type="button"
+                  onClick={() => setShowManualItemForm(!showManualItemForm)}
+                  className={`px-3 h-12 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all flex-shrink-0 cursor-pointer ${
+                    showManualItemForm 
+                      ? 'bg-blue-900 text-white shadow-sm' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                  title="Añadir ítem no registrado en catálogo"
+                >
+                  <Plus className="size-4" />
+                  <span className="hidden sm:inline">Ítem Manual</span>
+                </button>
+              </div>
+
+              {/* Formulario desplegable de Ítem Manual */}
+              {showManualItemForm && (
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Añadir Ítem / Monto Personalizado</p>
+                    <button onClick={() => setShowManualItemForm(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Descripción (ej. Accesorio, Lazo)"
+                      value={manualItemTitle}
+                      onChange={(e) => setManualItemTitle(e.target.value)}
+                      className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs font-medium outline-none focus:border-blue-400"
+                    />
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="Precio USD"
+                        value={manualItemPrice}
+                        onChange={(e) => setManualItemPrice(e.target.value)}
+                        className="w-full h-10 pl-8 pr-3 rounded-xl bg-white border border-slate-200 text-xs font-bold outline-none focus:border-blue-400"
+                      />
+                    </div>
+                    <select
+                      value={manualItemCategory}
+                      onChange={(e) => setManualItemCategory(e.target.value)}
+                      className="h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs font-medium outline-none focus:border-blue-400"
+                    >
+                      <option value="Varios">Cat: Varios</option>
+                      {categories.filter(c => !c.parent_id).map(c => (
+                        <option key={c.id} value={c.name}>Cat: {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addManualItemToSaleCart}
+                    className="w-full h-9 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Plus className="size-3.5" /> Agregar ítem a la factura
+                  </button>
+                </div>
+              )}
+
+              {/* Lista de Productos en la Cesta */}
+              <div className="space-y-2">
+                {saleCart.length === 0 ? (
+                  <div className="border border-dashed border-slate-200 rounded-2xl p-6 text-center">
+                    <ShoppingBag className="size-8 mx-auto text-slate-300 mb-2 stroke-1" />
+                    <p className="text-xs font-bold text-slate-500">Factura vacía</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Usa el buscador arriba para agregar todos los productos que el cliente desea llevar.</p>
+                  </div>
+                ) : (
+                  <div className="border border-slate-100 rounded-2xl divide-y divide-slate-100 overflow-hidden bg-white shadow-xs">
+                    {saleCart.map(item => (
+                      <div key={item.id} className="p-3 flex items-center gap-3">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} className="size-11 rounded-xl object-cover flex-shrink-0 bg-slate-50" />
+                        ) : (
+                          <div className="size-11 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center flex-shrink-0 font-black text-xs">
+                            <Tag className="size-5 text-blue-400" />
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-700 line-clamp-1">{p.title}</p>
-                          <p className="text-[10px] font-black text-blue-500 mt-0.5">${p.price} · Stock: {p.stock_quantity}</p>
+                          <p className="text-xs font-bold text-slate-800 line-clamp-1">{item.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5 rounded-md">
+                              {item.category || 'Varios'}
+                            </span>
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-600">
+                              <span>$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={item.price}
+                                onChange={(e) => updateSaleCartPrice(item.id, e.target.value)}
+                                className="w-14 h-5 px-1 bg-slate-50 rounded border border-slate-200 text-xs font-bold text-slate-800 focus:outline-blue-400"
+                                title="Precio unitario (editable si hay rebaja)"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </button>
+
+                        {/* Controles de Cantidad */}
+                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200/60">
+                          <button
+                            type="button"
+                            onClick={() => updateSaleCartQty(item.id, -1)}
+                            className="size-6 rounded-lg bg-white shadow-xs flex items-center justify-center text-slate-600 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                            title="Restar 1"
+                          >
+                            <Minus className="size-3" />
+                          </button>
+                          <span className="text-xs font-black text-slate-800 min-w-[20px] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateSaleCartQty(item.id, 1)}
+                            className="size-6 rounded-lg bg-white shadow-xs flex items-center justify-center text-slate-600 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                            title="Sumar 1"
+                          >
+                            <Plus className="size-3" />
+                          </button>
+                        </div>
+
+                        {/* Subtotal del ítem */}
+                        <div className="text-right min-w-[65px]">
+                          <p className="text-xs font-black text-blue-900">${(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="text-[9px] font-semibold text-slate-400">{((item.price * item.quantity) * exchangeRate).toFixed(0)} Bs</p>
+                        </div>
+
+                        {/* Eliminar ítem */}
+                        <button
+                          type="button"
+                          onClick={() => removeSaleCartItem(item.id)}
+                          className="text-slate-300 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                          title="Quitar producto de la factura"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Monto + Método */}
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-300" />
-                  <Input placeholder="Monto" type="number" value={saleForm.amount}
-                    onChange={(e) => setSaleForm({ ...saleForm, amount: e.target.value })}
-                    className="h-12 rounded-xl bg-slate-50 border-0 font-bold pl-9" />
+              {/* Totalizador y Resumen */}
+              {saleCart.length > 0 && (
+                <div className="bg-[#8dd5e3]/15 border border-[#8dd5e3]/30 rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[#1e3a5f]/70">
+                      Total a Cobrar ({saleCartTotalItems} {saleCartTotalItems === 1 ? 'artículo' : 'artículos'})
+                    </span>
+                    <p className="text-2xl font-black text-blue-950 font-['Poppins']">
+                      ${saleCartTotalUsd.toFixed(2)} <span className="text-xs font-bold text-slate-400">USD</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Tasa BCV {exchangeRate.toFixed(2)}
+                    </span>
+                    <p className="text-sm font-black text-slate-700">
+                      {saleCartTotalBs.toLocaleString('es-VE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Bs
+                    </p>
+                  </div>
                 </div>
-                <Select onValueChange={(v) => setSaleForm({ ...saleForm, method: v ?? "$ Efectivo" })} defaultValue="$ Efectivo">
-                  <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-0 font-bold text-xs w-36">
-                    <SelectValue />
+              )}
+
+              {/* Método de Pago y Teléfono Club Puntos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Select onValueChange={(v) => setSaleMethod(v ?? "$ Efectivo")} value={saleMethod}>
+                  <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-0 font-bold text-xs w-full">
+                    <SelectValue placeholder="Método de Pago" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="$ Efectivo">$ Efectivo</SelectItem>
                     <SelectItem value="Zelle">Zelle</SelectItem>
-                    <SelectItem value="Pago Móvil (Bs)">P. Móvil (Bs)</SelectItem>
+                    <SelectItem value="Pago Móvil (Bs)">Pago Móvil (Bs)</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <div className="relative">
+                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
+                  <input
+                    type="tel"
+                    placeholder="Teléfono Cliente (Club Puntos)"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full h-12 rounded-xl bg-slate-50 pl-11 pr-4 text-xs font-semibold outline-none border-0 placeholder:text-slate-300 text-slate-700"
+                  />
+                </div>
               </div>
 
-              {/* Teléfono Cliente para Club Puntos */}
-              <div className="relative">
-                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none" />
-                <input
-                  type="tel"
-                  placeholder="Teléfono Cliente (Opcional - Club Puntos)"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full h-12 rounded-xl bg-slate-50 pl-11 pr-4 text-xs font-semibold outline-none border-0 placeholder:text-slate-300 text-slate-700"
-                />
-              </div>
-
-              <div className="flex gap-2">
+              {/* Botones de Cobro / Facturación */}
+              <div className="flex gap-2 pt-1">
                 <button 
                   onClick={handleRegisterSale} 
-                  disabled={!saleForm.amount || generatingQr}
+                  disabled={saleCart.length === 0 || saleCartTotalUsd <= 0 || generatingQr}
                   className="flex-1 rounded-full font-bold tracking-widest text-blue-900 disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase cursor-pointer"
-                  style={{ height: '44px', backgroundColor: '#8dd5e380' }}
+                  style={{ height: '46px', backgroundColor: '#8dd5e380' }}
                 >
-                  Solo Registrar
+                  Solo Registrar Factura
                 </button>
                 <button 
                   onClick={handleRegisterSaleAndGenerateQr} 
-                  disabled={!saleForm.amount || generatingQr}
-                  className="flex-1 rounded-full font-black tracking-widest text-[#1e3a5f] disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase flex items-center justify-center gap-1 cursor-pointer"
-                  style={{ height: '44px', backgroundColor: '#8dd5e3' }}
+                  disabled={saleCart.length === 0 || saleCartTotalUsd <= 0 || generatingQr}
+                  className="flex-1 rounded-full font-black tracking-widest text-[#1e3a5f] disabled:opacity-40 transition-transform active:scale-95 text-[9px] uppercase flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                  style={{ height: '46px', backgroundColor: '#8dd5e3' }}
                 >
                   {generatingQr ? (
                     <>
-                      <Loader2 className="size-3.5 animate-spin" /> Creando...
+                      <Loader2 className="size-3.5 animate-spin" /> Procesando...
                     </>
                   ) : (
                     <>
-                      <Ticket className="size-3.5" /> Registrar y QR
+                      <Ticket className="size-3.5" /> Facturar y QR ({saleCartTotalUsd > 0 ? Math.round(saleCartTotalUsd) : 0} pts)
                     </>
                   )}
                 </button>
@@ -1220,9 +1533,11 @@ export default function AdminPage() {
                           ? 'bg-[#ef4444] text-white'
                           : product.badge === 'rebaja_azul'
                           ? 'bg-[#1e40af] text-white'
+                          : product.badge === 'adulto'
+                          ? 'bg-[#7c3aed] text-white'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}>
-                        {product.badge === 'agotado' || product.badge === 'agotado_rojo' ? 'AGOTADO' : product.badge}
+                        {product.badge === 'agotado' || product.badge === 'agotado_rojo' ? 'AGOTADO' : product.badge === 'adulto' ? 'ADULTO' : product.badge}
                       </span>
                     )}
                   </div>
@@ -1366,6 +1681,7 @@ export default function AdminPage() {
                       <option value="rebaja_azul">REBAJA (Azul)</option>
                       <option value="agotado">AGOTADO (Gris oscuro)</option>
                       <option value="agotado_rojo">AGOTADO (Rojo)</option>
+                      <option value="adulto">ADULTO (Púrpura)</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                   </div>

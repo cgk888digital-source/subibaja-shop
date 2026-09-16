@@ -330,6 +330,12 @@ export default function HomeClient({ initialProducts, initialCategories, initial
                     AGOTADO
                   </div>
                 );
+              if (displayBadge === 'adulto' || displayBadge === 'adultos') {
+                return (
+                  <div className="absolute top-3 -left-8 w-28 bg-[#7c3aed] text-white text-[8px] font-black tracking-widest py-1 text-center transform -rotate-45 z-10 shadow-sm pointer-events-none uppercase">
+                    ADULTO
+                  </div>
+                );
               }
               if (displayBadge === 'adulto' || displayBadge === 'adultos') {
                 return (
