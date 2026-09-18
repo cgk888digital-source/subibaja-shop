@@ -9,6 +9,7 @@ import "swiper/css/pagination"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import CartFloatingButton from "@/components/CartFloatingButton"
+import SubibajaKidsLogo from "@/components/SubibajaKidsLogo"
 
 const InstagramIcon = ({ className = "size-4" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -526,11 +527,11 @@ export default function HomeClient({ initialProducts, initialCategories, initial
             {/* Logo a la izquierda */}
             <Link href="/" className="flex items-center gap-2.5 hover:scale-105 active:scale-95 transition-all">
               <Image
-                src="/logo-principal.jpg"
+                src="/logo-fino.png"
                 alt="Subibaja"
                 width={48}
                 height={48}
-                className="rounded-full object-cover"
+                className="h-10 w-auto object-contain select-none"
                 priority
               />
               <span className="font-['Poppins'] font-black text-blue-900 text-xs md:text-sm tracking-widest uppercase">Subibaja</span>
@@ -828,16 +829,8 @@ export default function HomeClient({ initialProducts, initialCategories, initial
               
               <div className="relative p-5 border border-white/30 rounded-[32px]">
                 <div className="flex gap-4 items-center">
-                  {/* Logotipo en círculo blanco fuerte sólido para máxima legibilidad */}
-                  <div className="relative size-24 rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0">
-                    <Image 
-                      src="/logo-principal.jpg" 
-                      alt="Logo Subibaja" 
-                      fill
-                      sizes="96px"
-                      className="object-cover rounded-full"
-                    />
-                  </div>
+                  {/* Logotipo en círculo oficial con máxima legibilidad */}
+                  <SubibajaKidsLogo className="size-20 md:size-24 flex-shrink-0" />
 
                   {/* Detalles de acumulación */}
                   <div className="flex-1 space-y-1 text-left">

@@ -126,7 +126,7 @@ export default function AdultosClient({
               </Link>
               <Link href="/adultos" className="flex items-center gap-2.5">
                 {/* Logotipo Oficial Terracota de Subibaja Adultos */}
-                <AdultosLogo className="size-10" />
+                <AdultosLogo className="size-11 sm:size-12" />
                 <div className="flex flex-col">
                   <span className="font-black text-slate-900 text-sm tracking-tight font-['Poppins'] leading-tight">
                     SUBIBAJA
@@ -199,7 +199,7 @@ export default function AdultosClient({
                       onClick={() => setShowHamburgerMenu(false)}
                       className="flex items-center gap-3 px-3 py-2 rounded-xl bg-orange-50/80 text-[#B94E3B] font-black text-xs transition-colors border border-[#B94E3B]/20"
                     >
-                      <AdultosLogo className="size-5" showBorder={false} />
+                      <AdultosLogo className="size-6" showBorder={false} />
                       <span>Subibaja Adultos</span>
                     </Link>
                     <Link 
@@ -297,7 +297,7 @@ export default function AdultosClient({
                   Colección Exclusiva
                 </div>
                 <div className="flex items-center gap-3">
-                  <AdultosLogo className="size-12 md:size-14 ring-2 ring-white/30 shadow-md" />
+                  <AdultosLogo className="size-14 md:size-16" />
                   <div>
                     <h1 className="text-2xl md:text-4xl font-black font-['Poppins'] tracking-tight text-white leading-tight">
                       Subibaja Adultos

@@ -1,6 +1,20 @@
 import { supabase } from "@/lib/supabase"
 import HomeClient from "@/components/HomeClient"
 import { fetchBCVRate } from "@/lib/bcv"
+import fs from "fs"
+import path from "path"
+import os from "os"
+
+// Sincronizar automáticamente el nuevo logo de Subibaja si existe en Descargas
+try {
+  const downloadKids = path.join(os.homedir(), "Downloads", "Subibaja logo.jpeg")
+  const targetKids = path.join(process.cwd(), "public", "logo-principal.jpg")
+  if (fs.existsSync(downloadKids)) {
+    fs.copyFileSync(downloadKids, targetKids)
+  }
+} catch {
+  // En producción Vercel
+}
 
 export const revalidate = 60 // Revalidate cache every 60 seconds
 

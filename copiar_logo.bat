@@ -1,21 +1,19 @@
 @echo off
-title Copiar Logo Oficial Subibaja Adultos
+title Copiar Logos Oficiales Subibaja
 color 0a
 echo ========================================================
-echo    COPIANDO LOGO OFICIAL DE ADULTOS A LA APP
+echo    COPIANDO LOGOS OFICIALES A LA APP SUBIBAJA
 echo ========================================================
 echo.
 
-set "ORIGEN=%USERPROFILE%\Downloads\Subibaja Adultos logo.jpeg"
-set "DESTINO=%~dp0public\logo-adultos.jpg"
+if exist "%USERPROFILE%\Downloads\Subibaja Adultos logo.jpeg" (
+    copy /y "%USERPROFILE%\Downloads\Subibaja Adultos logo.jpeg" "%~dp0public\logo-adultos.jpg" >nul
+    echo [EXITO] Logo Adultos copiado a public\logo-adultos.jpg
+)
 
-if exist "%ORIGEN%" (
-    copy /y "%ORIGEN%" "%DESTINO%" >nul
-    echo [EXITO] Archivo copiado exitosamente a:
-    echo        %DESTINO%
-) else (
-    echo [ERROR] No se encontro el archivo en Descargas:
-    echo         %ORIGEN%
+if exist "%USERPROFILE%\Downloads\Subibaja logo.jpeg" (
+    copy /y "%USERPROFILE%\Downloads\Subibaja logo.jpeg" "%~dp0public\logo-principal.jpg" >nul
+    echo [EXITO] Logo Subibaja (Kids) copiado a public\logo-principal.jpg
 )
 
 echo.
