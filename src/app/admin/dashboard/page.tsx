@@ -634,9 +634,9 @@ export default function DashboardPage() {
           </div>
 
           {/* ── ACTIVIDAD RECIENTE ── */}
-          {recentActivity.length > 0 && (
-            <div className="bg-white rounded-[28px] shadow-sm p-5">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Actividad Reciente</p>
+          <div className="bg-white rounded-[28px] shadow-sm p-5">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Actividad Reciente</p>
+            {recentActivity.length > 0 ? (
               <div className="space-y-1">
                 {recentActivity.map((item, i) => (
                   <div key={i} className="flex items-center gap-3 py-2.5">
@@ -664,8 +664,13 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="py-6 text-center text-slate-400 space-y-1">
+                <p className="text-xs font-bold text-slate-700">Sin movimientos registrados</p>
+                <p className="text-[11px] text-slate-400">Las ventas y gastos que se registren a partir de ahora aparecerán en este historial.</p>
+              </div>
+            )}
+          </div>
 
           {/* ── REGISTRAR GASTO ── */}
           <div className="bg-white rounded-[28px] shadow-sm p-5 space-y-3">

@@ -478,7 +478,7 @@ export default function ProductClient({ initialProduct, initialCategories, initi
                           <span>¿Cómo medir el pie? Ver Guía de Tallas</span>
                         </div>
                         <span className="bg-blue-900 text-white text-[8px] font-black px-2 py-0.5 rounded-full">
-                          10 PASOS
+                          GUÍA OFICIAL
                         </span>
                       </button>
                     )}

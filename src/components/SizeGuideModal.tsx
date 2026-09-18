@@ -13,72 +13,44 @@ export const TALLA_SLIDES = [
   {
     id: 1,
     title: "¿Quieres saber tu talla?",
-    subtitle: "Aprende a medir la talla del pie paso a paso",
-    image: "/tallas/01-intro-talla.png",
+    subtitle: "Te presentamos nuestra guía de tallas oficial",
+    image: "/tallas/guia-talla-1.jpeg",
     badge: "Inicio"
   },
   {
     id: 2,
-    title: "¿Cómo saber la medida del pie?",
-    subtitle: "Guía rápida para calcular la talla correcta",
-    image: "/tallas/02-medida-pie.png",
-    badge: "Info"
+    title: "De 0 a 12 meses",
+    subtitle: "Tallas EU 16 a 19 | Americana 0.5 a 4 | 9.5 a 11.3 cm",
+    image: "/tallas/guia-talla-2.jpeg",
+    badge: "0-12 Meses"
   },
   {
     id: 3,
-    title: "¿Qué necesitas?",
-    subtitle: "Hoja de papel, lápiz y una regla",
-    image: "/tallas/03-que-necesitas.png",
-    badge: "Materiales"
+    title: "De 12 a 24 meses",
+    subtitle: "Tallas EU 20 a 23 | Americana 4.5 a 7 | 12 a 13.9 cm",
+    image: "/tallas/guia-talla-3.jpeg",
+    badge: "12-24 Meses"
   },
   {
     id: 4,
-    title: "Paso 1",
-    subtitle: "Coloca el pie sobre la hoja y marca el talón y punta",
-    image: "/tallas/04-paso-1.png",
-    badge: "Paso 1"
+    title: "De 2 a 4 años",
+    subtitle: "Tallas EU 24 a 30 | Americana 7.5 a 12.5 | 14.6 a 18.5 cm",
+    image: "/tallas/guia-talla-4.jpeg",
+    badge: "2-4 Años"
   },
   {
     id: 5,
-    title: "Paso 2",
-    subtitle: "Mide la distancia en centímetros de extremo a extremo",
-    image: "/tallas/05-paso-2.png",
-    badge: "Paso 2"
+    title: "De 4 a 8 años",
+    subtitle: "Tallas EU 31 a 34 | Americana 13 a 3 | 19.2 a 21.3 cm",
+    image: "/tallas/guia-talla-5.jpeg",
+    badge: "4-8 Años"
   },
   {
     id: 6,
-    title: "Paso 3",
-    subtitle: "Suma 0.5 cm de margen de holgura y comodidad",
-    image: "/tallas/06-paso-3.png",
-    badge: "Paso 3"
-  },
-  {
-    id: 7,
-    title: "Tips importantes",
-    subtitle: "Recomendaciones clave para un ajuste perfecto",
-    image: "/tallas/07-tips.png",
-    badge: "Consejos"
-  },
-  {
-    id: 8,
-    title: "Tabla de Tallas (1 - 2 años)",
-    subtitle: "Equivalencia en cm para los más pequeños",
-    image: "/tallas/08-tallas-1-2-anos.png",
-    badge: "1-2 Años"
-  },
-  {
-    id: 9,
-    title: "Tabla de Tallas (3 - 6 años)",
-    subtitle: "Equivalencia en cm para pre-escolares y escolares",
-    image: "/tallas/09-tallas-3-6-anos.png",
-    badge: "3-6 Años"
-  },
-  {
-    id: 10,
-    title: "Tabla de Tallas (11+ años)",
-    subtitle: "Equivalencia en cm para juveniles y más",
-    image: "/tallas/10-tallas-11-mas-anos.png",
-    badge: "11+ Años"
+    title: "De 8 años en adelante",
+    subtitle: "Tallas EU 35 a 40 | Americana 3.5 a 7.5 | 22 a 25.5 cm",
+    image: "/tallas/guia-talla-6.jpeg",
+    badge: "8+ Años"
   }
 ]
 
@@ -107,11 +79,11 @@ export default function SizeGuideModal({ isOpen, onClose }: SizeGuideModalProps)
               <h3 className="text-xs md:text-sm font-black tracking-tight font-['Poppins'] text-white uppercase flex items-center gap-1.5">
                 Guía de Tallas
                 <span className="bg-[#8dd5e3] text-blue-950 text-[9px] font-black px-2 py-0.5 rounded-full">
-                  10 Pasos
+                  {TALLA_SLIDES.length} Guías
                 </span>
               </h3>
               <p className="text-[10px] text-slate-300 font-medium truncate max-w-[200px]">
-                {activeSlide + 1}/10: {TALLA_SLIDES[activeSlide]?.title}
+                {activeSlide + 1}/{TALLA_SLIDES.length}: {TALLA_SLIDES[activeSlide]?.title}
               </p>
             </div>
           </div>

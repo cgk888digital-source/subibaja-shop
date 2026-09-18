@@ -12,6 +12,28 @@ try {
   if (fs.existsSync(downloadKids)) {
     fs.copyFileSync(downloadKids, targetKids)
   }
+  // Sincronizar las 6 imágenes de la guía de tallas desde Descargas si existen
+  const tallasDir = path.join(process.cwd(), "public", "tallas")
+  if (!fs.existsSync(tallasDir)) {
+    fs.mkdirSync(tallasDir, { recursive: true })
+  }
+  const tallasMap = [
+    { src: ["Tallas 1.jpeg", "tallas 1.jpeg"], dest: "guia-talla-1.jpeg" },
+    { src: ["tallas 2.jpeg", "Tallas 2.jpeg"], dest: "guia-talla-2.jpeg" },
+    { src: ["tallas 3.jpeg", "Tallas 3.jpeg"], dest: "guia-talla-3.jpeg" },
+    { src: ["tallas 4.jpeg", "Tallas 4.jpeg"], dest: "guia-talla-4.jpeg" },
+    { src: ["tallas 5.jpeg", "Tallas 5.jpeg"], dest: "guia-talla-5.jpeg" },
+    { src: ["tallas 6.jpeg", "Tallas 6.jpeg"], dest: "guia-talla-6.jpeg" },
+  ]
+  for (const item of tallasMap) {
+    for (const s of item.src) {
+      const srcPath = path.join(os.homedir(), "Downloads", s)
+      if (fs.existsSync(srcPath)) {
+        fs.copyFileSync(srcPath, path.join(tallasDir, item.dest))
+        break
+      }
+    }
+  }
 } catch {
   // En producción Vercel
 }

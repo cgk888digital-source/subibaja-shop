@@ -62,18 +62,18 @@ export default function TallasPage() {
               ¿Cómo medir la talla del pie para zapatos?
             </h2>
             <p className="text-xs text-slate-300 font-normal leading-relaxed max-w-lg">
-              Sigue nuestra guía ilustrada de 10 imágenes explicativas paso a paso para asegurarte de pedir el calzado perfecto sin errores de talla.
+              Sigue nuestra guía oficial de 6 tablas de equivalencias por edades para asegurarte de pedir el calzado perfecto sin errores de talla.
             </p>
           </div>
         </div>
 
-        {/* ── CARRUSEL PRINCIPAL DE 10 IMÁGENES (FORMATO VERTICAL AMPLIO / REEL) ── */}
+        {/* ── CARRUSEL PRINCIPAL DE 6 IMÁGENES (FORMATO VERTICAL AMPLIO / REEL) ── */}
         <section className="bg-white rounded-3xl p-3 md:p-6 shadow-sm border border-slate-100 flex flex-col gap-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-1">
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-black text-blue-900 uppercase tracking-wider font-['Poppins']">
-                Paso {activeSlide + 1} de {TALLA_SLIDES.length}
+                Guía {activeSlide + 1} de {TALLA_SLIDES.length}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default function TallasPage() {
               <div>
                 <h4 className="text-xs font-bold text-slate-800">Compara con las tablas de tallas</h4>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Consulta las diapositivas 8, 9 y 10 para ubicar los centímetros en las edades correspondientes (1-2 años, 3-6 años y 11+ años).
+                  Consulta las tablas para ubicar los centímetros en el rango de edad correspondiente (0-12 meses, 12-24 meses, 2-4 años, 4-8 años y 8+ años).
                 </p>
               </div>
             </div>

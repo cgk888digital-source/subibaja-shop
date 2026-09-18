@@ -60,6 +60,7 @@ export default function AdminPage() {
     image_url: "", stock_quantity: "10", description: "", badge: ""
   })
   const [hasSizes, setHasSizes] = useState(true)
+  const [hasColors, setHasColors] = useState(true)
   const [sizeGroups, setSizeGroups] = useState<{ sizes: string; price: string; color: string; stock: string }[]>([])
   const [selectedSubCat, setSelectedSubCat] = useState<any>(null)
   const [selectedLeafCat, setSelectedLeafCat] = useState<any>(null)
@@ -927,6 +928,8 @@ export default function AdminPage() {
     
     // Set colors & gallery & categories
     setSelectedCategoryIds(p.category_ids && p.category_ids.length > 0 ? p.category_ids : (p.category_id ? [p.category_id] : []))
+    const hasExistingColors = !!(p.colors && p.colors.length > 0)
+    setHasColors(hasExistingColors)
     setColors(p.colors || [])
     setGalleryUrls(p.gallery_urls || [])
     
@@ -978,10 +981,10 @@ export default function AdminPage() {
       nextIds = [...selectedCategoryIds, cat.id]
       setFormData(prev => ({ ...prev, category: cat.name }))
       
-      // Auto-detectar si la categoría NO maneja tallas (cuentos, juguetes, accesorios, etc.)
+      // Auto-detectar si la categoría NO maneja tallas ni colores (libros, cuentos, juguetes, accesorios, etc.)
       const catNameLower = (cat.name || '').toLowerCase()
       const noSizeKeywords = [
-        'cuento', 'juguete', 'accesorio', 'canastilla', 'estuche', 'bolso', 
+        'libro', 'libros', 'cuento', 'cuentos', 'lectura', 'juguete', 'accesorio', 'canastilla', 'estuche', 'bolso', 
         'termo', 'lentes', 'llavero', 'almohada', 'anillo', 'cadena', 
         'collar', 'pulsera', 'zarcillo', 'billetera', 'cartera', 'cartuchera', 
         'corbata', 'lazo', 'cinta', 'soporte'
@@ -992,8 +995,13 @@ export default function AdminPage() {
         setHasSizes(false)
         setFormData(prev => ({ ...prev, sizes: "", category: cat.name }))
         setSizeGroups([])
+        if (['libro', 'cuento', 'lectura'].some(k => catNameLower.includes(k))) {
+          setHasColors(false)
+          setColors([])
+        }
       } else if (sizeKeywords.some(k => catNameLower.includes(k))) {
         setHasSizes(true)
+        setHasColors(true)
       }
     } else {
       nextIds = selectedCategoryIds.filter(id => id !== cat.id)
@@ -1080,7 +1088,7 @@ export default function AdminPage() {
           image_url: formData.image_url,
           description: formData.description.trim() || null,
           sizes: hasSizes ? finalSizes : [],
-          colors,
+          colors: hasColors ? colors : [],
           stock_quantity: parseInt(formData.stock_quantity),
           gallery_urls: galleryUrls,
           prices_by_size: hasSizes ? pricesBySizesObj : {},
@@ -1099,7 +1107,7 @@ export default function AdminPage() {
           image_url: formData.image_url,
           description: formData.description.trim() || null,
           sizes: hasSizes ? finalSizes : [],
-          colors,
+          colors: hasColors ? colors : [],
           stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
           gallery_urls: galleryUrls,
           prices_by_size: hasSizes ? pricesBySizesObj : {},
@@ -1113,6 +1121,7 @@ export default function AdminPage() {
       
       setFormData({ title: "", price: "", category: "", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
       setHasSizes(true)
+      setHasColors(true)
       setSizeGroups([])
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
@@ -1533,10 +1542,10 @@ export default function AdminPage() {
             </div>
 
             {/* Últimas ventas */}
-            {sales.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Últimas ventas</p>
-                {sales.slice(0, 8).map(s => (
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Últimas ventas</p>
+              {sales.length > 0 ? (
+                sales.slice(0, 8).map(s => (
                   <div key={s.id} className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between">
                     <div>
                       <p className="text-xs font-bold text-slate-700 line-clamp-1">{s.product_title || 'Venta manual'}</p>
@@ -1544,9 +1553,14 @@ export default function AdminPage() {
                     </div>
                     <p className="text-sm font-black text-blue-900">${Number(s.amount_usd).toFixed(2)}</p>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="bg-white rounded-[28px] p-6 text-center text-slate-400 border border-dashed border-slate-200 space-y-1">
+                  <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Caja en cero ($0.00)</p>
+                  <p className="text-[11px] text-slate-400 font-medium">No hay ventas registradas. Todas las ventas que registres en este punto de venta o facturación aparecerán aquí.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1927,89 +1941,152 @@ export default function AdminPage() {
                   </>
                 )}
 
-                {/* Colores */}
-                <div className="space-y-2.5">
-                  <div className="flex justify-between items-center px-1">
-                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Colores disponibles</Label>
-                    <span className="text-[8px] text-slate-450 font-bold uppercase">Haz clic para agregar o eliminar</span>
+                {/* Switch / Toggle: ¿Este producto maneja colores? */}
+                <div className="flex items-center justify-between p-4 bg-slate-50/80 rounded-3xl border border-slate-200/70 shadow-2xs">
+                  <div>
+                    <p className="text-xs font-black text-slate-800 uppercase tracking-wider">¿Este producto maneja colores?</p>
+                    <p className="text-[10px] text-slate-400 font-medium">Si es un libro, cuento, juguete o producto sin variantes de color, marca "NO"</p>
                   </div>
-
-                  {/* Preajustes Rápidos */}
-                  <div className="flex gap-2 items-center flex-wrap px-1">
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Preajustes:</span>
-                    {[
-                      { hex: '#FFFFFF', name: 'Blanco' },
-                      { hex: '#000000', name: 'Negro' },
-                      { hex: '#8dd5e3', name: 'Celeste' },
-                      { hex: '#FAD2E1', name: 'Rosa' },
-                      { hex: '#F5F5DC', name: 'Beige' },
-                      { hex: '#FEF08A', name: 'Dorado' },
-                      { hex: '#E2E8F0', name: 'Plata' },
-                      { hex: '#F87171', name: 'Rojo' },
-                    ].map(preset => {
-                      const isSelected = colorPick.toLowerCase() === preset.hex.toLowerCase()
-                      return (
-                        <button
-                          key={preset.hex}
-                          type="button"
-                          onClick={() => setColorPick(preset.hex)}
-                          title={preset.name}
-                          className={`size-6 rounded-full border transition-all active:scale-90 cursor-pointer ${
-                            isSelected ? 'ring-2 ring-offset-1 ring-blue-500 border-blue-500 scale-105 shadow-sm' : 'border-slate-200 hover:scale-105'
-                          }`}
-                          style={{ backgroundColor: preset.hex }}
-                        />
-                      )
-                    })}
-                  </div>
-
-                  {/* Selector y Botón Agregar */}
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex-shrink-0 w-24 h-14 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center cursor-pointer hover:bg-slate-100/50 transition-colors">
-                      <Palette className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none z-10" />
-                      
-                      {/* Círculo de color que muestra la selección actual */}
-                      <div className="w-7 h-7 rounded-full border-2 border-white shadow-sm ml-6 flex-shrink-0" style={{ backgroundColor: colorPick }} />
-                      
-                      {/* Input oculto que abarca todo el botón para abrir el selector nativo al tocar */}
-                      <input
-                        type="color"
-                        value={colorPick}
-                        onChange={e => setColorPick(e.target.value)}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                    </div>
-
+                  <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => { if (!colors.includes(colorPick)) setColors([...colors, colorPick]) }}
-                      className="h-14 flex-1 rounded-2xl font-black text-[10px] tracking-[0.12em] transition-all active:scale-95 shadow-xs cursor-pointer"
-                      style={{ backgroundColor: '#8dd5e3', color: '#1e3a5f' }}
+                      onClick={() => setHasColors(true)}
+                      className={`px-3.5 py-1.5 text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer ${
+                        hasColors ? 'bg-blue-900 text-white shadow-2xs' : 'text-slate-400 hover:text-slate-700'
+                      }`}
                     >
-                      + AGREGAR COLOR
+                      SÍ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasColors(false)
+                        setColors([])
+                      }}
+                      className={`px-3.5 py-1.5 text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer ${
+                        !hasColors ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      NO
                     </button>
                   </div>
-
-                  {/* Listado de colores agregados */}
-                  {colors.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1.5 px-2 bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50">
-                      {colors.map(c => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setColors(colors.filter(x => x !== c))}
-                          title="Click para eliminar"
-                          className="flex items-center gap-2 h-8 pl-2 pr-3.5 rounded-full border bg-white text-[9px] font-black transition-transform active:scale-95 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 shadow-3xs cursor-pointer group"
-                          style={{ borderColor: c }}
-                        >
-                          <div className="w-3.5 h-3.5 rounded-full shadow-2xs group-hover:scale-90 transition-transform" style={{ backgroundColor: c }} />
-                          <span className="text-slate-500 group-hover:text-rose-600 font-mono text-[8px] uppercase">{c}</span>
-                          <X className="size-2.5 text-slate-400 group-hover:text-rose-500" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
+
+                {/* Colores (solo si maneja colores) */}
+                {hasColors && (
+                  <div className="space-y-2.5">
+                    <div className="flex justify-between items-center px-1">
+                      <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Colores disponibles</Label>
+                      {colors.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setColors([])}
+                          className="text-[9px] text-rose-500 hover:text-rose-700 font-bold uppercase transition-colors cursor-pointer flex items-center gap-1 bg-rose-50/80 hover:bg-rose-100/80 px-2 py-0.5 rounded-lg"
+                          title="Eliminar todos los colores"
+                        >
+                          <Trash2 className="size-2.5" />
+                          <span>Eliminar todos ({colors.length})</span>
+                        </button>
+                      ) : (
+                        <span className="text-[8px] text-slate-400 font-bold uppercase">Haz clic en un color para agregar o quitar</span>
+                      )}
+                    </div>
+
+                    {/* Preajustes Rápidos */}
+                    <div className="flex gap-2 items-center flex-wrap px-1">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Preajustes:</span>
+                      {[
+                        { hex: '#FFFFFF', name: 'Blanco' },
+                        { hex: '#000000', name: 'Negro' },
+                        { hex: '#8dd5e3', name: 'Celeste' },
+                        { hex: '#FAD2E1', name: 'Rosa' },
+                        { hex: '#F5F5DC', name: 'Beige' },
+                        { hex: '#FEF08A', name: 'Dorado' },
+                        { hex: '#E2E8F0', name: 'Plata' },
+                        { hex: '#F87171', name: 'Rojo' },
+                      ].map(preset => {
+                        const isAdded = colors.some(c => c.toLowerCase() === preset.hex.toLowerCase())
+                        const isCurrentPick = colorPick.toLowerCase() === preset.hex.toLowerCase()
+                        return (
+                          <button
+                            key={preset.hex}
+                            type="button"
+                            onClick={() => {
+                              setColorPick(preset.hex)
+                              if (isAdded) {
+                                setColors(colors.filter(c => c.toLowerCase() !== preset.hex.toLowerCase()))
+                              } else {
+                                setColors([...colors, preset.hex])
+                              }
+                            }}
+                            title={`${preset.name}: ${isAdded ? 'Haz clic para eliminar' : 'Haz clic para agregar'}`}
+                            className={`size-6 rounded-full border transition-all active:scale-90 cursor-pointer relative flex items-center justify-center ${
+                              isAdded 
+                                ? 'ring-2 ring-offset-1 ring-blue-600 border-blue-600 scale-105 shadow-sm' 
+                                : isCurrentPick 
+                                  ? 'ring-1 ring-offset-1 ring-slate-400 border-slate-400' 
+                                  : 'border-slate-200 hover:scale-105'
+                            }`}
+                            style={{ backgroundColor: preset.hex }}
+                          >
+                            {isAdded && (
+                              <span className={`text-[9px] font-black leading-none ${['#ffffff', '#f5f5dc', '#fef08a', '#fad2e1', '#e2e8f0', '#8dd5e3'].includes(preset.hex.toLowerCase()) ? 'text-slate-900' : 'text-white'}`}>
+                                ✓
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Selector y Botón Agregar */}
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-shrink-0 w-24 h-14 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center cursor-pointer hover:bg-slate-100/50 transition-colors">
+                        <Palette className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-350 pointer-events-none z-10" />
+                        
+                        {/* Círculo de color que muestra la selección actual */}
+                        <div className="w-7 h-7 rounded-full border-2 border-white shadow-sm ml-6 flex-shrink-0" style={{ backgroundColor: colorPick }} />
+                        
+                        {/* Input oculto que abarca todo el botón para abrir el selector nativo al tocar */}
+                        <input
+                          type="color"
+                          value={colorPick}
+                          onChange={e => setColorPick(e.target.value)}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => { if (!colors.includes(colorPick)) setColors([...colors, colorPick]) }}
+                        className="h-14 flex-1 rounded-2xl font-black text-[10px] tracking-[0.12em] transition-all active:scale-95 shadow-xs cursor-pointer"
+                        style={{ backgroundColor: '#8dd5e3', color: '#1e3a5f' }}
+                      >
+                        + AGREGAR COLOR
+                      </button>
+                    </div>
+
+                    {/* Listado de colores agregados */}
+                    {colors.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1.5 px-2 bg-slate-50/50 p-2.5 rounded-2xl border border-slate-100/50">
+                        {colors.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setColors(colors.filter(x => x !== c))}
+                            title="Click para eliminar"
+                            className="flex items-center gap-2 h-8 pl-2 pr-3.5 rounded-full border bg-white text-[9px] font-black transition-transform active:scale-95 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 shadow-3xs cursor-pointer group"
+                            style={{ borderColor: c }}
+                          >
+                            <div className="w-3.5 h-3.5 rounded-full shadow-2xs group-hover:scale-90 transition-transform" style={{ backgroundColor: c }} />
+                            <span className="text-slate-500 group-hover:text-rose-600 font-mono text-[8px] uppercase">{c}</span>
+                            <X className="size-2.5 text-slate-400 group-hover:text-rose-500" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* NUEVO MULTI-CATEGORIA UI */}
                 <div className="space-y-3 bg-slate-50/50 border border-slate-100 rounded-3xl p-5">
