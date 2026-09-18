@@ -7,6 +7,7 @@ interface AdultosLogoProps {
   priority?: boolean
 }
 
+// Componente oficial del logotipo Subibaja Adultos (versión idéntica de alta fidelidad)
 export default function AdultosLogo({ 
   className = "size-10", 
   showBorder = false,
