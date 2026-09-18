@@ -56,9 +56,10 @@ export default function AdminPage() {
   const [uploadingGallery, setUploadingGallery] = useState(false)
 
   const [formData, setFormData] = useState({
-    title: "", price: "", category: "Zapatos", sizes: "",
+    title: "", price: "", category: "", sizes: "",
     image_url: "", stock_quantity: "10", description: "", badge: ""
   })
+  const [hasSizes, setHasSizes] = useState(true)
   const [sizeGroups, setSizeGroups] = useState<{ sizes: string; price: string; color: string; stock: string }[]>([])
   const [selectedSubCat, setSelectedSubCat] = useState<any>(null)
   const [selectedLeafCat, setSelectedLeafCat] = useState<any>(null)
@@ -876,11 +877,15 @@ export default function AdminPage() {
   const handleStartEditProduct = (p: any) => {
     setEditingProductId(p.id)
     
+    // Determinar si el producto tiene tallas
+    const hasExistingSizes = (p.sizes && p.sizes.length > 0) || (p.prices_by_size && Object.keys(p.prices_by_size).length > 0)
+    setHasSizes(!!hasExistingSizes)
+
     // Set form fields
     setFormData({
       title: p.title || "",
       price: p.price ? p.price.toString() : "",
-      category: p.category || "Zapatos",
+      category: p.category || "",
       sizes: p.sizes ? p.sizes.join(", ") : "",
       image_url: p.image_url || "",
       stock_quantity: p.stock_quantity ? p.stock_quantity.toString() : "10",
@@ -920,12 +925,12 @@ export default function AdminPage() {
     }
     setSizeGroups(reconstructedGroups)
     
-    // Set colors & gallery
-    setSelectedCategoryIds(p.category_ids || (p.category_id ? [p.category_id] : []))
+    // Set colors & gallery & categories
+    setSelectedCategoryIds(p.category_ids && p.category_ids.length > 0 ? p.category_ids : (p.category_id ? [p.category_id] : []))
     setColors(p.colors || [])
     setGalleryUrls(p.gallery_urls || [])
     
-    // Resolve category hierarchy
+    // Resolve category hierarchy for legacy dropdowns
     if (p.category_id) {
       const cat = categories.find(c => c.id === p.category_id)
       if (cat) {
@@ -943,20 +948,17 @@ export default function AdminPage() {
               setFormData(prev => ({ ...prev, category: parent.name }))
               setSelectedSubCat(cat)
               setSelectedLeafCat(null)
-                      setSelectedCategoryIds([])
             }
           }
         } else {
           setFormData(prev => ({ ...prev, category: cat.name }))
           setSelectedSubCat(null)
           setSelectedLeafCat(null)
-                      setSelectedCategoryIds([])
         }
       }
     } else {
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
-                      setSelectedCategoryIds([])
     }
     
     // Switch to upload tab
@@ -970,24 +972,52 @@ export default function AdminPage() {
     return mainCat ? mainCat.id : null
   }
 
+  const handleToggleCategory = (cat: any, checked: boolean) => {
+    let nextIds: string[]
+    if (checked) {
+      nextIds = [...selectedCategoryIds, cat.id]
+      setFormData(prev => ({ ...prev, category: cat.name }))
+      
+      // Auto-detectar si la categoría NO maneja tallas (cuentos, juguetes, accesorios, etc.)
+      const catNameLower = (cat.name || '').toLowerCase()
+      const noSizeKeywords = [
+        'cuento', 'juguete', 'accesorio', 'canastilla', 'estuche', 'bolso', 
+        'termo', 'lentes', 'llavero', 'almohada', 'anillo', 'cadena', 
+        'collar', 'pulsera', 'zarcillo', 'billetera', 'cartera', 'cartuchera', 
+        'corbata', 'lazo', 'cinta', 'soporte'
+      ]
+      const sizeKeywords = ['zapato', 'calzado', 'bota', 'sandalia', 'mocas', 'ropa', 'vestido', 'falda', 'camisa', 'sueter', 'uniforme']
+      
+      if (noSizeKeywords.some(k => catNameLower.includes(k))) {
+        setHasSizes(false)
+        setFormData(prev => ({ ...prev, sizes: "", category: cat.name }))
+        setSizeGroups([])
+      } else if (sizeKeywords.some(k => catNameLower.includes(k))) {
+        setHasSizes(true)
+      }
+    } else {
+      nextIds = selectedCategoryIds.filter(id => id !== cat.id)
+    }
+    setSelectedCategoryIds(nextIds)
+  }
+
   const handleSaveProduct = async () => {
-    const activeGroups = sizeGroups.filter(g => g.sizes.trim() && g.price.trim())
+    const activeGroups = hasSizes ? sizeGroups.filter(g => g.sizes.trim() && g.price.trim()) : []
     const hasBasePrice = !!formData.price.trim()
-    const hasBaseSizes = !!formData.sizes.trim()
     
     if (!formData.title || !formData.image_url) { alert("Faltan datos (título o foto principal)"); return }
-    if (!hasBasePrice && activeGroups.length === 0) { alert("Debes ingresar un precio base o al menos un grupo de precios por talla"); return }
+    if (!hasBasePrice && activeGroups.length === 0) { alert("Debes ingresar el precio del producto"); return }
 
     try {
       setSaving(true)
       
       let finalPrice = parseFloat(formData.price) || 0
-      let finalSizes: string[] = formData.sizes.split(',').map(s => s.trim()).filter(Boolean)
+      let finalSizes: string[] = hasSizes ? formData.sizes.split(',').map(s => s.trim()).filter(Boolean) : []
       const pricesBySizesObj: Record<string, number> = {}
       const stockBySizesObj: Record<string, number> = {}
 
       // Procesar grupos de tallas si existen
-      if (activeGroups.length > 0) {
+      if (hasSizes && activeGroups.length > 0) {
         const groupSizes: string[] = []
         activeGroups.forEach(g => {
           const groupPrice = parseFloat(g.price) || 0
@@ -1023,21 +1053,39 @@ export default function AdminPage() {
         }
       }
 
+      // Determinar categoría y categoría ID
+      let chosenCategory = formData.category || "General"
+      let chosenCategoryId = getSelectedCategoryId()
+      
+      if (selectedCategoryIds.length > 0) {
+        const foundCat = categories.find(c => selectedCategoryIds.includes(c.id))
+        if (foundCat) {
+          chosenCategoryId = foundCat.id
+          let rootCat = foundCat
+          while (rootCat.parent_id) {
+            const parent = categories.find(c => c.id === rootCat.parent_id)
+            if (parent) rootCat = parent
+            else break
+          }
+          chosenCategory = rootCat.name
+        }
+      }
+
       if (editingProductId) {
         const { error } = await supabase.from('products').update({
           title: formData.title,
           price: finalPrice,
-          category: formData.category,
-          category_id: getSelectedCategoryId(),
+          category: chosenCategory,
+          category_id: chosenCategoryId,
           image_url: formData.image_url,
           description: formData.description.trim() || null,
-          sizes: finalSizes,
+          sizes: hasSizes ? finalSizes : [],
           colors,
           stock_quantity: parseInt(formData.stock_quantity),
           gallery_urls: galleryUrls,
-          prices_by_size: pricesBySizesObj,
+          prices_by_size: hasSizes ? pricesBySizesObj : {},
           category_ids: selectedCategoryIds,
-          stock_by_size: stockBySizesObj,
+          stock_by_size: hasSizes ? stockBySizesObj : {},
           badge: formData.badge || null
         }).eq('id', editingProductId)
         if (error) throw error
@@ -1046,28 +1094,29 @@ export default function AdminPage() {
         const { error } = await supabase.from('products').insert([{
           title: formData.title,
           price: finalPrice,
-          category: formData.category,
-          category_id: getSelectedCategoryId(),
+          category: chosenCategory,
+          category_id: chosenCategoryId,
           image_url: formData.image_url,
           description: formData.description.trim() || null,
-          sizes: finalSizes,
+          sizes: hasSizes ? finalSizes : [],
           colors,
           stock_quantity: parseInt(formData.stock_quantity), stock_status: 'in_stock',
           gallery_urls: galleryUrls,
-          prices_by_size: pricesBySizesObj,
+          prices_by_size: hasSizes ? pricesBySizesObj : {},
           category_ids: selectedCategoryIds,
-          stock_by_size: stockBySizesObj,
+          stock_by_size: hasSizes ? stockBySizesObj : {},
           badge: formData.badge || null
         }])
         if (error) throw error
         alert("¡Producto creado con éxito!")
       }
       
-      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
+      setFormData({ title: "", price: "", category: "", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
+      setHasSizes(true)
       setSizeGroups([])
       setSelectedSubCat(null)
       setSelectedLeafCat(null)
-                      setSelectedCategoryIds([])
+      setSelectedCategoryIds([])
       setColors([])
       setColorPick("#8dd5e3")
       setGalleryUrls([])
@@ -1698,149 +1747,185 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tallas (separadas por coma)</Label>
-                  <div className="relative"><Ruler className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" /><Input placeholder="24, 25, 26" value={formData.sizes} onChange={(e) => setFormData({ ...formData, sizes: e.target.value })} className="h-14 rounded-2xl bg-slate-50 border-0 pl-12 font-medium" /></div>
-                </div>
-
-                {/* Precios Diferenciados por Grupos de Tallas */}
-                <div className="space-y-3 bg-slate-50/50 border border-slate-100 rounded-3xl p-5 mt-2">
-                  <div className="flex justify-between items-center px-1">
-                    <Label className="text-[10px] font-black text-slate-550 uppercase tracking-widest">Precios por Grupos (Opcional)</Label>
+                {/* Switch / Toggle: ¿Este producto maneja tallas? */}
+                <div className="flex items-center justify-between p-4 bg-slate-50/80 rounded-3xl border border-slate-200/70 shadow-2xs">
+                  <div>
+                    <p className="text-xs font-black text-slate-800 uppercase tracking-wider">¿Este producto maneja tallas?</p>
+                    <p className="text-[10px] text-slate-400 font-medium">Si es un cuento, juguete, accesorio o producto único sin tallas, marca "NO"</p>
+                  </div>
+                  <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => setSizeGroups([...sizeGroups, { sizes: "", price: "", color: "", stock: "10" }])}
-                      className="text-[8px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                      onClick={() => setHasSizes(true)}
+                      className={`px-3.5 py-1.5 text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer ${
+                        hasSizes ? 'bg-blue-900 text-white shadow-2xs' : 'text-slate-400 hover:text-slate-700'
+                      }`}
                     >
-                      + AGREGAR GRUPO
+                      SÍ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasSizes(false)
+                        setFormData(prev => ({ ...prev, sizes: "" }))
+                        setSizeGroups([])
+                      }}
+                      className={`px-3.5 py-1.5 text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer ${
+                        !hasSizes ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      NO
                     </button>
                   </div>
-                  
-                  {sizeGroups.length === 0 ? (
-                    <p className="text-[10px] text-slate-400 font-semibold pl-1 leading-normal">
-                      No has agregado grupos. Se usará el precio base y la lista de tallas principal.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {sizeGroups.map((group, idx) => (
-                        <div key={idx} className="flex flex-col gap-3 bg-white p-4.5 rounded-2xl border border-slate-100/80 shadow-2xs">
-                          {/* Fila superior: Tallas, Precio y Eliminar */}
-                          <div className="flex gap-2.5 items-end">
-                            {/* Campo Tallas */}
-                            <div className="flex-1 space-y-1">
-                              <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Tallas (ej: 30,31,32)</label>
-                              <input
-                                type="text"
-                                placeholder="Ej: 30, 31, 32"
-                                value={group.sizes}
-                                onChange={(e) => {
-                                  const next = [...sizeGroups]
-                                  next[idx].sizes = e.target.value
-                                  setSizeGroups(next)
-                                }}
-                                className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold focus:outline-none focus:border-blue-200 transition-colors"
-                              />
-                            </div>
-                            
-                            {/* Campo Precio */}
-                            <div className="w-24 space-y-1">
-                              <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Precio $</label>
-                              <div className="relative">
-                                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-slate-350" />
-                                <input
-                                  type="number"
-                                  placeholder="0.00"
-                                  value={group.price}
-                                  onChange={(e) => {
-                                    const next = [...sizeGroups]
-                                    next[idx].price = e.target.value
-                                    setSizeGroups(next)
-                                  }}
-                                  className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
-                                />
-                              </div>
-                            </div>
+                </div>
 
-                            {/* Campo Stock */}
-                            <div className="w-20 space-y-1">
-                              <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Stock</label>
-                              <div className="relative">
-                                <Package className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-slate-350" />
-                                <input
-                                  type="number"
-                                  placeholder="10"
-                                  value={group.stock || ''}
-                                  onChange={(e) => {
-                                    const next = [...sizeGroups]
-                                    next[idx].stock = e.target.value
-                                    setSizeGroups(next)
-                                  }}
-                                  className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
-                                />
-                              </div>
-                            </div>
-                            
-                            {/* Botón Eliminar */}
-                            <button
-                              type="button"
-                              onClick={() => setSizeGroups(sizeGroups.filter((_, i) => i !== idx))}
-                              className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100 hover:border-rose-100 transition-all active:scale-90 cursor-pointer flex-shrink-0"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
+                {hasSizes && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tallas (separadas por coma)</Label>
+                      <div className="relative"><Ruler className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-300" /><Input placeholder="Ej: 24, 26, 28 (o S, M, L)" value={formData.sizes} onChange={(e) => setFormData({ ...formData, sizes: e.target.value })} className="h-14 rounded-2xl bg-slate-50 border-0 pl-12 font-medium" /></div>
+                    </div>
 
-                          {/* Fila inferior: Selección de Color */}
-                          {colors.length > 0 && (
-                            <div className="space-y-1.5 pt-1.5 border-t border-slate-100/50">
-                              <label className="text-[8.5px] font-black text-slate-450 uppercase tracking-wider block">Vincular a Color (Opcional)</label>
-                              <div className="flex flex-wrap gap-2 items-center">
+                    {/* Precios Diferenciados por Grupos de Tallas */}
+                    <div className="space-y-3 bg-slate-50/50 border border-slate-100 rounded-3xl p-5 mt-2">
+                      <div className="flex justify-between items-center px-1">
+                        <Label className="text-[10px] font-black text-slate-550 uppercase tracking-widest">Precios por Grupos (Opcional)</Label>
+                        <button
+                          type="button"
+                          onClick={() => setSizeGroups([...sizeGroups, { sizes: "", price: "", color: "", stock: "10" }])}
+                          className="text-[8px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider cursor-pointer flex items-center gap-1"
+                        >
+                          + AGREGAR GRUPO
+                        </button>
+                      </div>
+                      
+                      {sizeGroups.length === 0 ? (
+                        <p className="text-[10px] text-slate-400 font-semibold pl-1 leading-normal">
+                          No has agregado grupos. Se usará el precio base y la lista de tallas principal.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {sizeGroups.map((group, idx) => (
+                            <div key={idx} className="flex flex-col gap-3 bg-white p-4.5 rounded-2xl border border-slate-100/80 shadow-2xs">
+                              {/* Fila superior: Tallas, Precio y Eliminar */}
+                              <div className="flex gap-2.5 items-end">
+                                {/* Campo Tallas */}
+                                <div className="flex-1 space-y-1">
+                                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Tallas (ej: 30,31,32)</label>
+                                  <input
+                                    type="text"
+                                    placeholder="Ej: 30, 31, 32"
+                                    value={group.sizes}
+                                    onChange={(e) => {
+                                      const next = [...sizeGroups]
+                                      next[idx].sizes = e.target.value
+                                      setSizeGroups(next)
+                                    }}
+                                    className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-100 text-xs font-semibold focus:outline-none focus:border-blue-200 transition-colors"
+                                  />
+                                </div>
+                                
+                                {/* Campo Precio */}
+                                <div className="w-24 space-y-1">
+                                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Precio $</label>
+                                  <div className="relative">
+                                    <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-slate-350" />
+                                    <input
+                                      type="number"
+                                      placeholder="0.00"
+                                      value={group.price}
+                                      onChange={(e) => {
+                                        const next = [...sizeGroups]
+                                        next[idx].price = e.target.value
+                                        setSizeGroups(next)
+                                      }}
+                                      className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Campo Stock */}
+                                <div className="w-20 space-y-1">
+                                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Stock</label>
+                                  <div className="relative">
+                                    <Package className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3 text-slate-350" />
+                                    <input
+                                      type="number"
+                                      placeholder="10"
+                                      value={group.stock || ''}
+                                      onChange={(e) => {
+                                        const next = [...sizeGroups]
+                                        next[idx].stock = e.target.value
+                                        setSizeGroups(next)
+                                      }}
+                                      className="w-full h-9 pl-6 pr-2 rounded-xl bg-slate-50 border border-slate-100 text-xs font-black focus:outline-none focus:border-blue-200 transition-colors"
+                                    />
+                                  </div>
+                                </div>
+                                
+                                {/* Botón Eliminar */}
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    const next = [...sizeGroups]
-                                    next[idx].color = ""
-                                    setSizeGroups(next)
-                                  }}
-                                  className={`h-6 px-2.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center border ${
-                                    !group.color
-                                      ? 'bg-blue-50 text-blue-900 border-blue-200/50 font-black'
-                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
-                                  }`}
+                                  onClick={() => setSizeGroups(sizeGroups.filter((_, i) => i !== idx))}
+                                  className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-100 hover:border-rose-100 transition-all active:scale-90 cursor-pointer flex-shrink-0"
                                 >
-                                  Todos
+                                  <X className="size-3.5" />
                                 </button>
-                                {colors.map(c => {
-                                  const isSelected = group.color === c
-                                  return (
+                              </div>
+
+                              {/* Fila inferior: Selección de Color */}
+                              {colors.length > 0 && (
+                                <div className="space-y-1.5 pt-1.5 border-t border-slate-100/50">
+                                  <label className="text-[8.5px] font-black text-slate-450 uppercase tracking-wider block">Vincular a Color (Opcional)</label>
+                                  <div className="flex flex-wrap gap-2 items-center">
                                     <button
-                                      key={c}
                                       type="button"
                                       onClick={() => {
                                         const next = [...sizeGroups]
-                                        next[idx].color = c
+                                        next[idx].color = ""
                                         setSizeGroups(next)
                                       }}
-                                      className={`size-6 rounded-full border transition-all relative flex items-center justify-center ${
-                                        isSelected ? 'ring-2 ring-offset-1 ring-blue-500 border-blue-500 scale-110 shadow-sm' : 'border-slate-200 hover:scale-105'
+                                      className={`h-6 px-2.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center border ${
+                                        !group.color
+                                          ? 'bg-blue-50 text-blue-900 border-blue-200/50 font-black'
+                                          : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
                                       }`}
-                                      style={{ backgroundColor: c }}
-                                      title={c}
                                     >
-                                      {isSelected && (
-                                        <div className="size-1.5 rounded-full bg-white shadow-xs mix-blend-difference" />
-                                      )}
+                                      Todos
                                     </button>
-                                  )
-                                })}
-                              </div>
+                                    {colors.map(c => {
+                                      const isSelected = group.color === c
+                                      return (
+                                        <button
+                                          key={c}
+                                          type="button"
+                                          onClick={() => {
+                                            const next = [...sizeGroups]
+                                            next[idx].color = c
+                                            setSizeGroups(next)
+                                          }}
+                                          className={`size-6 rounded-full border transition-all relative flex items-center justify-center ${
+                                            isSelected ? 'ring-2 ring-offset-1 ring-blue-500 border-blue-500 scale-110 shadow-sm' : 'border-slate-200 hover:scale-105'
+                                          }`}
+                                          style={{ backgroundColor: c }}
+                                          title={c}
+                                        >
+                                          {isSelected && (
+                                            <div className="size-1.5 rounded-full bg-white shadow-xs mix-blend-difference" />
+                                          )}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
 
                 {/* Colores */}
                 <div className="space-y-2.5">
@@ -1937,10 +2022,7 @@ export default function AdminPage() {
                       return (
                         <div key={mainCat.id} className="space-y-1">
                           <label className="flex items-center gap-2 cursor-pointer font-bold text-sm text-slate-800 hover:bg-slate-50 p-1.5 rounded-lg">
-                            <input type="checkbox" checked={mainChecked} onChange={(e) => {
-                              if (e.target.checked) setSelectedCategoryIds([...selectedCategoryIds, mainCat.id])
-                              else setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== mainCat.id))
-                            }} className="size-4 rounded text-blue-500" />
+                            <input type="checkbox" checked={mainChecked} onChange={(e) => handleToggleCategory(mainCat, e.target.checked)} className="size-4 rounded text-blue-500" />
                             {mainCat.name}
                           </label>
                           <div className="pl-6 space-y-1">
@@ -1949,10 +2031,7 @@ export default function AdminPage() {
                               return (
                                 <div key={subCat.id} className="space-y-1">
                                   <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-600 hover:bg-slate-50 p-1 rounded-lg">
-                                    <input type="checkbox" checked={subChecked} onChange={(e) => {
-                                      if (e.target.checked) setSelectedCategoryIds([...selectedCategoryIds, subCat.id])
-                                      else setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== subCat.id))
-                                    }} className="size-3.5 rounded text-blue-500" />
+                                    <input type="checkbox" checked={subChecked} onChange={(e) => handleToggleCategory(subCat, e.target.checked)} className="size-3.5 rounded text-blue-500" />
                                     {subCat.name}
                                   </label>
                                   <div className="pl-5 flex flex-wrap gap-2 pt-1">
@@ -1960,10 +2039,7 @@ export default function AdminPage() {
                                       const leafChecked = selectedCategoryIds.includes(leafCat.id)
                                       return (
                                         <label key={leafCat.id} className={`flex items-center gap-1.5 cursor-pointer text-[10px] font-medium border px-2 py-0.5 rounded-full transition-colors ${leafChecked ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                                          <input type="checkbox" checked={leafChecked} onChange={(e) => {
-                                            if (e.target.checked) setSelectedCategoryIds([...selectedCategoryIds, leafCat.id])
-                                            else setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== leafCat.id))
-                                          }} className="hidden" />
+                                          <input type="checkbox" checked={leafChecked} onChange={(e) => handleToggleCategory(leafCat, e.target.checked)} className="hidden" />
                                           {leafCat.name}
                                         </label>
                                       )
@@ -2187,7 +2263,8 @@ export default function AdminPage() {
                 {editingProductId && (
                   <button
                     onClick={() => {
-                      setFormData({ title: "", price: "", category: "Zapatos", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
+                      setFormData({ title: "", price: "", category: "", sizes: "", image_url: "", stock_quantity: "10", description: "", badge: "" })
+                      setHasSizes(true)
                       setSizeGroups([])
                       setSelectedSubCat(null)
                       setSelectedLeafCat(null)
